@@ -166,6 +166,23 @@ jobs:
       - name: 设置发布通道为 stable
         run: echo stable > crates/zed/RELEASE_CHANNEL
 
+      # Xcode 15.4 自带 libc++ 18 存在 pointer_traits SFINAE 回归：
+      # webrtc-sys 的 cxx 桥接头在 C++20 下无条件 static_assert
+      # std::ranges::contiguous_range<rust::Slice>，15.4 下硬错误编译失败
+      # （cxx 1.0.187 亦如此）。选取除 15.4 外最高可用版本
+      # （16.x/26.x 及 15.3 以下均可正常编译）。
+      - name: 选择 Xcode（跳过不兼容的 15.4）
+        run: |
+          ls -d /Applications/Xcode*.app
+          ver=$(ls -d /Applications/Xcode_*.app 2>/dev/null \
+            | sed -E 's|.*/Xcode_([0-9.]+)\.app|\1|' \
+            | grep -vx '15.4' \
+            | sort -t . -k 1,1n -k 2,2n -k 3,3n | tail -1)
+          if [ -n "$ver" ]; then
+            sudo xcode-select -s "/Applications/Xcode_${ver}.app/Contents/Developer"
+          fi
+          xcodebuild -version
+
       - name: 安装 Rust 工具链
         run: rustup show
 
