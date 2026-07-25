@@ -5,6 +5,8 @@
 #   - 使用 GitHub 官方 runner（ubuntu-22.04 / windows-2022）替代私有 runner
 #   - 去掉 Sentry / Slack / R2 sccache / Azure 签名 / Apple 公证 / 合规检查
 #   - 产物均为未签名版（fork 分发无官方证书）
+#   - 发布通道：仓库内 RELEASE_CHANNEL 保持 dev（本地开发可与正式版共存），
+#     各 bundle job 检出后统一覆盖为 stable
 #
 # 触发方式：
 #   - 推送 v* 标签
@@ -44,6 +46,12 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+
+      # 仓库内 RELEASE_CHANNEL 保持 dev 供本地开发（dev 通道与正式版
+      # AppId/配置目录互相独立），发布构建统一覆盖为 stable 通道。
+      # 通道经 include_str! 编译进二进制，必须在 cargo 构建前写入。
+      - name: 设置发布通道为 stable
+        run: echo stable > crates/zed/RELEASE_CHANNEL
 
       # 复用 rust-toolchain.toml 中固定的工具链版本
       - name: 安装 Rust 工具链
@@ -115,6 +123,10 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 设置发布通道为 stable
+        run: echo stable > crates/zed/RELEASE_CHANNEL
+        shell: bash
+
       - name: 安装 Rust 工具链
         run: rustup show
         shell: pwsh
@@ -150,6 +162,9 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+
+      - name: 设置发布通道为 stable
+        run: echo stable > crates/zed/RELEASE_CHANNEL
 
       - name: 安装 Rust 工具链
         run: rustup show
