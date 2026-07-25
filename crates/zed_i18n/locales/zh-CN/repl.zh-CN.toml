@@ -67,6 +67,9 @@ kernel_change_tooltip = "%{name}（%{status}）。点击以更改内核。"
 kernel_status_tooltip = "内核: %{name}（%{status}）。点击以更改。"
 restart_kernel = "重启内核"
 interrupt_kernel = "中断内核"
+empty_notebook = "此笔记本为空。"
+add_code_cell = "添加代码单元格"
+add_markdown_cell = "添加 Markdown 单元格"
 
 [repl.repl_editor]
 installing_ipykernel = "正在为 %{name} 安装 ipykernel…"

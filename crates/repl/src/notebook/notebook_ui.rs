@@ -1319,12 +1319,12 @@ impl NotebookEditor {
             .items_center()
             .justify_center()
             .gap_3()
-            .child(Label::new("This notebook is empty.").color(Color::Muted))
+            .child(Label::new(t!("repl.notebook.empty_notebook")).color(Color::Muted))
             .child(
                 h_flex()
                     .gap_2()
                     .child(
-                        Button::new("empty-state-add-code", "Add code cell")
+                        Button::new("empty-state-add-code", t!("repl.notebook.add_code_cell"))
                             .start_icon(Icon::new(IconName::Code))
                             .key_binding(KeyBinding::for_action_in(
                                 &AddCodeBlock,
@@ -1336,17 +1336,20 @@ impl NotebookEditor {
                             ),
                     )
                     .child(
-                        Button::new("empty-state-add-markdown", "Add markdown cell")
-                            .style(ButtonStyle::Subtle)
-                            .start_icon(Icon::new(IconName::FileMarkdown))
-                            .key_binding(KeyBinding::for_action_in(
-                                &AddMarkdownBlock,
-                                &self.focus_handle,
-                                cx,
-                            ))
-                            .on_click(cx.listener(|this, _, window, cx| {
-                                this.add_markdown_block(window, cx)
-                            })),
+                        Button::new(
+                            "empty-state-add-markdown",
+                            t!("repl.notebook.add_markdown_cell"),
+                        )
+                        .style(ButtonStyle::Subtle)
+                        .start_icon(Icon::new(IconName::FileMarkdown))
+                        .key_binding(KeyBinding::for_action_in(
+                            &AddMarkdownBlock,
+                            &self.focus_handle,
+                            cx,
+                        ))
+                        .on_click(
+                            cx.listener(|this, _, window, cx| this.add_markdown_block(window, cx)),
+                        ),
                     ),
             )
     }

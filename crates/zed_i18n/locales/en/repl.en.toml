@@ -67,6 +67,9 @@ kernel_change_tooltip = "%{name} (%{status}). Click to change kernel."
 kernel_status_tooltip = "Kernel: %{name} (%{status}). Click to change."
 restart_kernel = "Restart Kernel"
 interrupt_kernel = "Interrupt Kernel"
+empty_notebook = "This notebook is empty."
+add_code_cell = "Add code cell"
+add_markdown_cell = "Add markdown cell"
 
 [repl.repl_editor]
 installing_ipykernel = "Installing ipykernel in %{name}..."
