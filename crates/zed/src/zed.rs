@@ -5292,6 +5292,8 @@ mod tests {
         use workspace::ActivatePreviousPane;
         // From the JetBrains keymap
         use workspace::ActivatePreviousItem;
+        // From the VSCode keymap
+        use debugger_ui::Start;
 
         app_state
             .fs
@@ -5382,6 +5384,36 @@ mod tests {
                 ("backspace", &ActionB),
                 ("{", &ActivatePreviousItem::default()),
             ],
+            line!(),
+        );
+
+        // Test the VSCode keymap overlay
+        app_state
+            .fs
+            .save(
+                paths::settings_file(),
+                &r#"{"base_keymap": "VSCode"}"#.into(),
+                Default::default(),
+            )
+            .await
+            .unwrap();
+
+        executor.run_until_parked();
+
+        window
+            .update(cx, |_, _, cx| {
+                workspace.update(cx, |workspace, cx| {
+                    workspace.register_action(|_, _: &Start, _window, _cx| {});
+                    cx.notify();
+                });
+            })
+            .unwrap();
+        executor.run_until_parked();
+
+        assert_key_bindings_for(
+            window.into(),
+            cx,
+            vec![("backspace", &ActionB), ("f5", &Start)],
             line!(),
         );
     }

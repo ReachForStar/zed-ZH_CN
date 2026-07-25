@@ -467,7 +467,6 @@ impl TitleBar {
         );
 
         subscriptions.push(cx.observe(&active_call, |this, _, cx| this.active_call_changed(cx)));
-        subscriptions.push(cx.observe_window_activation(window, Self::window_activation_changed));
         subscriptions.push(
             cx.subscribe(&git_store, move |_, _, event, cx| match event {
                 GitStoreEvent::ActiveRepositoryChanged(_)
@@ -1144,23 +1143,6 @@ impl TitleBar {
                 .children(branch_picker)
                 .into_any_element(),
         )
-    }
-
-    fn window_activation_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if window.is_window_active() {
-            ActiveCall::global(cx)
-                .update(cx, |call, cx| call.set_location(Some(&self.project), cx))
-                .detach_and_log_err(cx);
-        } else if cx.active_window().is_none() {
-            ActiveCall::global(cx)
-                .update(cx, |call, cx| call.set_location(None, cx))
-                .detach_and_log_err(cx);
-        }
-        self.workspace
-            .update(cx, |workspace, cx| {
-                workspace.update_active_view_for_followers(window, cx);
-            })
-            .ok();
     }
 
     fn active_call_changed(&mut self, cx: &mut Context<Self>) {

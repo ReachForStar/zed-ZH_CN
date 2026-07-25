@@ -1140,7 +1140,7 @@ impl Sidebar {
                     this.sync_active_entry_from_panel(agent_panel, cx);
                     this.schedule_update_entries(false, cx);
                 }
-                AgentPanelEvent::TerminalClosed { metadata } => {
+                AgentPanelEvent::TerminalCloseRequested { metadata } => {
                     if let Some(workspace) = workspace.upgrade() {
                         let workspace = ThreadEntryWorkspace::Open(workspace);
                         this.close_terminal(metadata, &workspace, window, cx);
@@ -5238,6 +5238,7 @@ impl Sidebar {
         cx: &mut Context<Self>,
     ) {
         let terminal_id = metadata.terminal_id;
+        let defer_draft_activation = activate_panel_draft && is_active && neighbor.is_some();
 
         // Closing from the sidebar must not steal focus, since the row's
         // workspace may not be the active workspace.
@@ -5245,10 +5246,10 @@ impl Sidebar {
             workspace.update(cx, |workspace, cx| {
                 if let Some(panel) = workspace.panel::<AgentPanel>(cx) {
                     panel.update(cx, |panel, cx| {
-                        if activate_panel_draft {
-                            panel.close_terminal(terminal_id, window, cx);
-                        } else {
+                        if defer_draft_activation || !activate_panel_draft {
                             panel.close_terminal_without_activating_draft(terminal_id, window, cx);
+                        } else {
+                            panel.close_terminal(terminal_id, window, cx);
                         }
                     });
                 }
@@ -5269,6 +5270,15 @@ impl Sidebar {
                 .is_some_and(|neighbor| self.activate_entry(neighbor, window, cx))
             {
                 return;
+            }
+            if defer_draft_activation && let ThreadEntryWorkspace::Open(workspace) = workspace {
+                workspace.update(cx, |workspace, cx| {
+                    if let Some(panel) = workspace.panel::<AgentPanel>(cx) {
+                        panel.update(cx, |panel, cx| {
+                            panel.activate_draft(false, AgentThreadSource::AgentPanel, window, cx);
+                        });
+                    }
+                });
             }
             self.sync_active_entry_from_active_workspace(cx);
         }

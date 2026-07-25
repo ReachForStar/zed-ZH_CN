@@ -3272,9 +3272,9 @@ impl Pane {
 
                         if capability != Capability::ReadOnly {
                             let read_only_label = if capability.editable() {
-                                "Make File Read-Only"
+                                "Make Tab Read-Only"
                             } else {
-                                "Make File Editable"
+                                "Make Tab Editable"
                             };
                             menu = menu.separator().entry(
                                 read_only_label,
