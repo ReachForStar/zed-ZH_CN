@@ -269,12 +269,15 @@ function DownloadAMDGpuServices {
     $url = "https://codeload.github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK/zip/refs/tags/v6.3.0"
     $zipPath = ".\AGS_SDK_v6.3.0.zip"
     $extractDir = ".\AGS_SDK-6.3.0"
-    # 已解压则跳过：既避免重复下载，也允许在断网时手动放置解压目录后续跑
-    if (Test-Path $extractDir) {
+    # 以关键 dll 存在作为解压完成标志：目录存在但文件不全（如解压中断、杀软误删）时重新解压
+    if (Test-Path "$extractDir\ags_lib\lib\amd_ags_x64.dll") {
         Write-Output "AGS SDK 已存在于 $extractDir，跳过下载"
         return
     }
-    Invoke-DownloadWithRetry -Url $url -OutFile $zipPath
+    # zip 已存在且非空则复用，避免解压中断后重复下载
+    if (-not ((Test-Path $zipPath) -and (Get-Item $zipPath).Length -gt 0)) {
+        Invoke-DownloadWithRetry -Url $url -OutFile $zipPath
+    }
     # Extract the AGS SDK zip file
     Expand-Archive -Path $zipPath -DestinationPath "." -Force
 }
@@ -283,12 +286,15 @@ function DownloadConpty {
     $url = "https://github.com/microsoft/terminal/releases/download/v1.23.13503.0/Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg"
     $zipPath = ".\Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg"
     $extractDir = ".\conpty"
-    # 已解压则跳过：与 DownloadAMDGpuServices 同理，支持离线续跑
-    if (Test-Path $extractDir) {
+    # 以关键文件存在作为解压完成标志：目录存在但文件不全（如解压中断）时重新解压
+    if ((Test-Path "$extractDir\runtimes\win-x64\native\conpty.dll") -and (Test-Path "$extractDir\build\native\runtimes\arm64\OpenConsole.exe")) {
         Write-Output "ConPTY 已存在于 $extractDir，跳过下载"
         return
     }
-    Invoke-DownloadWithRetry -Url $url -OutFile $zipPath
+    # nupkg 已存在且非空则复用，避免解压中断后重复下载
+    if (-not ((Test-Path $zipPath) -and (Get-Item $zipPath).Length -gt 0)) {
+        Invoke-DownloadWithRetry -Url $url -OutFile $zipPath
+    }
     Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
 }
 
