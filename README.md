@@ -92,16 +92,17 @@ Zed 源代码主要采用 GPL-3.0-or-later 许可，标注部分采用 Apache-2.
 
 ## 赞助
 
-Zed 由 **Zed Industries, Inc.** 开发。
+Zed 由 **Zed Industries, Inc.** 开发。如希望支持上游项目，可通过其 GitHub Sponsors 赞助，资金直接进入 Zed Industries，不附带任何特权。
 
-如需经济支持该项目，可通过 GitHub Sponsors 赞助。
-赞助直接进入 Zed Industries，作为公司通用收入，不附带任何特权。
+本汉化版由 **MindFlowLab** 独立维护，与 Zed Industries 无隶属关系。如果你认可这份本地化工作，欢迎扫码支持本仓库的持续维护：
+
+| 微信支付 | 支付宝 |
+|:---:|:---:|
+| <img src="assets/donate/wechat.png" alt="微信支付收款码" width="220"> | <img src="assets/donate/alipay.png" alt="支付宝收款码" width="220"> |
 
 ---
 
 ## 关键词 / Keywords
-
-本区块用于提升项目在 GitHub 与搜索引擎中的可检索性，所列关键词均与本项目真实属性对应。
 
 **中文**
 Zed 汉化、Zed 汉化版、Zed 中文、Zed 中文版、Zed 简体中文、Zed 中文设置、Zed 中文教程、Zed 改中文、Zed 语言设置、Zed 界面汉化、代码编辑器汉化、中文代码编辑器、中文 AI 编辑器、编辑器国际化、i18n 中文翻译、Zed 翻译补丁、高性能编辑器中文、协作编辑器汉化
