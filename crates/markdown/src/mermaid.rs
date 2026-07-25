@@ -853,7 +853,7 @@ mod tests {
         let rendered = render_markdown_with_options(
             "```mermaid\ngraph TD;\n```",
             MarkdownOptions {
-                render_mermaid_diagrams: true,
+                render_embedded_diagrams: true,
                 ..Default::default()
             },
             cx,
@@ -888,7 +888,7 @@ mod tests {
                 None,
                 None,
                 MarkdownOptions {
-                    render_mermaid_diagrams: true,
+                    render_embedded_diagrams: true,
                     ..Default::default()
                 },
                 cx,

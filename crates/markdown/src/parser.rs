@@ -20,7 +20,8 @@ pub const PARSE_OPTIONS: Options = Options::ENABLE_TABLES
     .union(Options::ENABLE_OLD_FOOTNOTES)
     .union(Options::ENABLE_GFM)
     .union(Options::ENABLE_SUPERSCRIPT)
-    .union(Options::ENABLE_SUBSCRIPT);
+    .union(Options::ENABLE_SUBSCRIPT)
+    .union(Options::ENABLE_MATH);
 
 #[derive(Default)]
 struct ParseState {
@@ -666,7 +667,14 @@ pub(crate) fn parse_markdown_with_options(
             pulldown_cmark::Event::TaskListMarker(checked) => {
                 state.push_event(range, MarkdownEvent::TaskListMarker(checked))
             }
-            pulldown_cmark::Event::InlineMath(_) | pulldown_cmark::Event::DisplayMath(_) => {}
+            pulldown_cmark::Event::InlineMath(parsed) => state.push_event(
+                range,
+                MarkdownEvent::InlineMath(SharedString::from(parsed.into_string())),
+            ),
+            pulldown_cmark::Event::DisplayMath(parsed) => state.push_event(
+                range,
+                MarkdownEvent::DisplayMath(SharedString::from(parsed.into_string())),
+            ),
         }
     }
 
@@ -771,6 +779,10 @@ pub enum MarkdownEvent {
     Code,
     /// An inline code node that differs from the markdown source due to escape decoding.
     SubstitutedCode(String),
+    /// An inline math node.
+    InlineMath(SharedString),
+    /// A display math node.
+    DisplayMath(SharedString),
     /// An HTML node.
     Html,
     /// An inline HTML node.
@@ -944,8 +956,7 @@ mod tests {
     use super::*;
 
     const CONDITIONAL_OPTIONS: Options = Options::ENABLE_YAML_STYLE_METADATA_BLOCKS;
-    const UNWANTED_OPTIONS: Options = Options::ENABLE_MATH
-        .union(Options::ENABLE_DEFINITION_LIST)
+    const UNWANTED_OPTIONS: Options = Options::ENABLE_DEFINITION_LIST
         .union(Options::ENABLE_WIKILINKS);
 
     #[test]
@@ -1588,6 +1599,61 @@ mod tests {
         assert_eq!(parsed.footnote_definitions.len(), 2);
         assert!(parsed.footnote_definitions.contains_key("a"));
         assert!(parsed.footnote_definitions.contains_key("b"));
+    }
+
+    #[test]
+    fn test_math_events_are_preserved() {
+        use MarkdownEvent::{DisplayMath, InlineMath, RootEnd, RootStart, Start, Text};
+        use MarkdownTag::Paragraph;
+
+        let parsed = parse_markdown_with_options("Before $x^2$ after\n\n$$y$$", false, false, false);
+
+        assert_eq!(
+            parsed.events,
+            vec![
+                (0..19, RootStart),
+                (0..19, Start(Paragraph)),
+                (0..7, Text),
+                (7..12, InlineMath("x^2".into())),
+                (12..18, Text),
+                (0..19, End(MarkdownTagEnd::Paragraph)),
+                (0..19, RootEnd(0)),
+                (20..25, RootStart),
+                (20..25, Start(Paragraph)),
+                (20..25, DisplayMath("y".into())),
+                (20..25, End(MarkdownTagEnd::Paragraph)),
+                (20..25, RootEnd(1)),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_heading_inline_math_event_ranges_are_preserved() {
+        use MarkdownEvent::{InlineMath, RootEnd, RootStart, Start, Text};
+        use MarkdownTag::Heading;
+        use pulldown_cmark::HeadingLevel;
+
+        let parsed = parse_markdown_with_options("# Title $x^2$", false, false, false);
+
+        assert_eq!(
+            parsed.events,
+            vec![
+                (0..13, RootStart),
+                (
+                    0..13,
+                    Start(Heading {
+                        level: HeadingLevel::H1,
+                        id: None,
+                        classes: Vec::new(),
+                        attrs: Vec::new(),
+                    })
+                ),
+                (2..8, Text),
+                (8..13, InlineMath("x^2".into())),
+                (0..13, End(MarkdownTagEnd::Heading(HeadingLevel::H1))),
+                (0..13, RootEnd(0)),
+            ]
+        );
     }
 
     #[test]
