@@ -3510,7 +3510,8 @@ impl MarkdownElementBuilder {
 
     fn push_block_text(&mut self, text: &str, source_range: Range<usize>) {
         self.flush_text();
-        self.div_stack.push(DivStackEntry::new(div().w_full().flex_none()));
+        self.div_stack
+            .push(DivStackEntry::new(div().w_full().flex_none()));
         self.push_text(text, source_range);
         self.pop_div();
     }

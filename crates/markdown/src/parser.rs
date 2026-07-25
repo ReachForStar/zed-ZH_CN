@@ -956,8 +956,8 @@ mod tests {
     use super::*;
 
     const CONDITIONAL_OPTIONS: Options = Options::ENABLE_YAML_STYLE_METADATA_BLOCKS;
-    const UNWANTED_OPTIONS: Options = Options::ENABLE_DEFINITION_LIST
-        .union(Options::ENABLE_WIKILINKS);
+    const UNWANTED_OPTIONS: Options =
+        Options::ENABLE_DEFINITION_LIST.union(Options::ENABLE_WIKILINKS);
 
     #[test]
     fn all_options_considered() {
@@ -1606,7 +1606,8 @@ mod tests {
         use MarkdownEvent::{DisplayMath, InlineMath, RootEnd, RootStart, Start, Text};
         use MarkdownTag::Paragraph;
 
-        let parsed = parse_markdown_with_options("Before $x^2$ after\n\n$$y$$", false, false, false);
+        let parsed =
+            parse_markdown_with_options("Before $x^2$ after\n\n$$y$$", false, false, false);
 
         assert_eq!(
             parsed.events,
