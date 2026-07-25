@@ -94,20 +94,26 @@ jobs:
       # pet 依赖的测试夹具路径极长，默认 CARGO_HOME 下 checkout 会超限。
       CARGO_HOME: 'C:\c'
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      - name: 配置 Windows 长路径与 cargo 目录
+      # 必须先于 checkout 执行：仓库含约 240 个符号链接（AGENTS.md、crates/*/LICENSE-GPL 等），
+      # GitHub Windows runner 默认未启用长路径支持与开发者模式，actions/checkout 创建符号链接
+      # 会报 "unable to create symlink ... Filename too long" 导致检出失败。
+      - name: 配置 Windows 长路径与符号链接支持
         run: |
           New-Item -ItemType Directory -Path C:\c -Force | Out-Null
           try {
             New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
               -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force | Out-Null
             git config --system core.longpaths true
+            # 启用开发者模式，允许非管理员进程创建符号链接（无需重启，后续进程立即生效）
+            New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" `
+              -Name "AllowDevelopmentWithoutDevLicense" -Value 1 -PropertyType DWORD -Force | Out-Null
           } catch {
-            Write-Warning "启用长路径支持失败（已用缩短 CARGO_HOME 规避）: $_"
+            Write-Warning "启用长路径/符号链接支持失败（已用缩短 CARGO_HOME 规避 cargo 路径问题）: $_"
           }
         shell: pwsh
+
+      - name: 检出代码
+        uses: actions/checkout@v4
 
       - name: 安装 Rust 工具链
         run: rustup show
