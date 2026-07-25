@@ -46,6 +46,9 @@ window_title = "关于 Zed"
 commit_label = "提交"
 version_label = "版本"
 copy_button = "复制"
+# 汉化分支关于页面标注（GPL-3.0 §5 合规）
+fork_notice = "社区简体中文汉化版，基于 Zed（GPL-3.0）修改"
+source_repo = "源码仓库"
 
 [zed.notification]
 invalid_user_settings = "用户设置文件无效\n%{error}"

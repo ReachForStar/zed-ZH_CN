@@ -46,6 +46,9 @@ window_title = "About Zed"
 commit_label = "Commit"
 version_label = "Version"
 copy_button = "Copy"
+# 汉化分支关于页面标注（GPL-3.0 §5 合规）
+fork_notice = "Community Simplified Chinese build, based on Zed (GPL-3.0)"
+source_repo = "Source Repository"
 
 [zed.notification]
 invalid_user_settings = "Invalid user settings file\n%{error}"

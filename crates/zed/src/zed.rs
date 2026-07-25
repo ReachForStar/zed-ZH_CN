@@ -1433,6 +1433,9 @@ fn initialize_pane(
 }
 
 fn open_about_window(cx: &mut App) {
+    // 汉化分支源码仓库，用于关于页面标注修改版身份（GPL-3.0 §5 合规）
+    const ZH_CN_REPO_URL: &str = "https://github.com/MindFlowLab/zed-ZH_CN";
+
     fn about_window_icon(release_channel: ReleaseChannel) -> Arc<Image> {
         let bytes = match release_channel {
             ReleaseChannel::Dev => include_bytes!("../resources/app-icon-dev.png").as_slice(),
@@ -1488,7 +1491,8 @@ fn open_about_window(cx: &mut App) {
         }
 
         fn copy_details(&self, window: &mut Window, cx: &mut Context<Self>) {
-            let content = match self.commit.as_ref() {
+            // 复制内容附带汉化版标识与仓库地址，便于反馈问题时溯源
+            let mut content = match self.commit.as_ref() {
                 Some(commit) => {
                     format!(
                         "{}\nCommit: {}\nVersion: {}",
@@ -1497,6 +1501,11 @@ fn open_about_window(cx: &mut App) {
                 }
                 None => format!("{}\nVersion: {}", self.message, self.full_version),
             };
+            content.push_str(&format!(
+                "\n{}\n{}",
+                t!("zed.about.fork_notice"),
+                ZH_CN_REPO_URL
+            ));
             cx.write_to_clipboard(ClipboardItem::new_string(content));
             window.remove_window();
         }
@@ -1543,7 +1552,21 @@ fn open_about_window(cx: &mut App) {
                                     .color(Color::Muted)
                                     .size(LabelSize::XSmall),
                             )
-                            .child(Label::new(self.full_version.clone()).size(LabelSize::Small)),
+                            .child(Label::new(self.full_version.clone()).size(LabelSize::Small))
+                            // 修改版身份标注 + 源码仓库入口（GPL-3.0 §5 合规）
+                            .child(
+                                Label::new(t!("zed.about.fork_notice"))
+                                    .color(Color::Muted)
+                                    .size(LabelSize::XSmall),
+                            )
+                            .child(
+                                Button::new("source-repo", t!("zed.about.source_repo"))
+                                    .style(ButtonStyle::Transparent)
+                                    .size(ButtonSize::Compact)
+                                    .on_click(cx.listener(|_, _, _window, cx| {
+                                        cx.open_url(ZH_CN_REPO_URL);
+                                    })),
+                            ),
                     )
                     .child(
                         h_flex()
@@ -1616,9 +1639,10 @@ fn open_about_window(cx: &mut App) {
         return;
     }
 
+    // 高度含汉化标识与仓库入口两行，较上游 300 适当加高
     let window_size = Size {
         width: px(440.),
-        height: px(300.),
+        height: px(340.),
     };
 
     cx.open_window(
