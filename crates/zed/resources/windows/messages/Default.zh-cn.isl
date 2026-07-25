@@ -222,24 +222,27 @@ ReadyMemoComponents=已选择组件：
 ReadyMemoGroup=开始菜单文件夹：
 ReadyMemoTasks=附加任务：
 
-; *** TExtractionWizardPage wizard page and Extract7ZipArchive
-ExtractionLabel=正在提取附加文件...
-ButtonStopExtraction=停止提取(&S)
-StopExtraction=您确定要停止提取吗？
-ErrorExtractionAborted=提取已中止
-ErrorExtractionFailed=提取失败：%1
-
 ; *** TDownloadWizardPage wizard page and DownloadTemporaryFile
-DownloadingLabel=正在下载附加文件...
+DownloadingLabel2=正在下载文件...
 ButtonStopDownload=停止下载(&S)
 StopDownload=您确定要停止下载吗？
 ErrorDownloadAborted=下载已中止
 ErrorDownloadFailed=下载失败：%1 %2
 ErrorDownloadSizeFailed=获取下载大小失败：%1 %2
-ErrorFileHash1=校验文件哈希失败：%1
-ErrorFileHash2=无效的文件哈希：预期 %1，实际 %2
 ErrorProgress=无效的进度：%1 / %2
 ErrorFileSize=文件大小错误：预期 %1，实际 %2
+
+; *** TExtractionWizardPage wizard page and ExtractArchive
+ExtractingLabel=正在提取文件...
+ButtonStopExtraction=停止提取(&S)
+StopExtraction=您确定要停止提取吗？
+ErrorExtractionAborted=提取已中止
+ErrorExtractionFailed=提取失败：%1
+
+; *** Archive extraction failure details
+ArchiveIncorrectPassword=密码不正确
+ArchiveIsCorrupted=压缩包已损坏
+ArchiveUnsupportedFormat=不支持该压缩包格式
 
 ; *** “正在准备安装”向导页
 WizardPreparing=正在准备安装
@@ -285,11 +288,15 @@ AbortRetryIgnoreSelectAction=选择操作
 AbortRetryIgnoreRetry=重试(&T)
 AbortRetryIgnoreIgnore=忽略错误并继续(&I)
 AbortRetryIgnoreCancel=关闭安装程序
+RetryCancelSelectAction=选择操作
+RetryCancelRetry=重试(&T)
+RetryCancelCancel=取消
 
 ; *** 安装状态消息
 StatusClosingApplications=正在关闭应用程序...
 StatusCreateDirs=正在创建目录...
 StatusExtractFiles=正在解压缩文件...
+StatusDownloadFiles=正在下载文件...
 StatusCreateIcons=正在创建快捷方式...
 StatusCreateIniEntries=正在创建 INI 条目...
 StatusCreateRegistryEntries=正在创建注册表条目...
@@ -319,6 +326,14 @@ FileAbortRetryIgnoreSkipNotRecommended=跳过此文件(&S) (不推荐)
 FileAbortRetryIgnoreIgnoreNotRecommended=忽略错误并继续(&I) (不推荐)
 SourceIsCorrupted=源文件已损坏
 SourceDoesntExist=源文件“%1”不存在
+SourceVerificationFailed=源文件校验失败：%1
+VerificationSignatureDoesntExist=签名文件“%1”不存在
+VerificationSignatureInvalid=签名文件“%1”无效
+VerificationKeyNotFound=签名文件“%1”使用了未知密钥
+VerificationFileNameIncorrect=文件名不正确
+VerificationFileTagIncorrect=文件标签不正确
+VerificationFileSizeIncorrect=文件大小不正确
+VerificationFileHashIncorrect=文件哈希不正确
 ExistingFileReadOnly2=无法替换现有文件，它是只读的。
 ExistingFileReadOnlyRetry=移除只读属性并重试(&R)
 ExistingFileReadOnlyKeepExisting=保留现有文件(&K)
@@ -337,6 +352,8 @@ ErrorChangingAttr=尝试更改下列现有文件的属性时出错：
 ErrorCreatingTemp=尝试在目标目录创建文件时出错：
 ErrorReadingSource=尝试读取下列源文件时出错：
 ErrorCopying=尝试复制下列文件时出错：
+ErrorDownloading=尝试下载文件时出错：
+ErrorExtracting=尝试提取压缩包时出错：
 ErrorReplacingExistingFile=尝试替换现有文件时出错：
 ErrorRestartReplace=重启并替换失败：
 ErrorRenamingTemp=尝试重命名下列目标目录中的一个文件时出错：
