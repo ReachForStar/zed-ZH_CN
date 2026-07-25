@@ -237,12 +237,44 @@ function SignZedAndItsFriends {
     & "$innoDir\sign.ps1" $files
 }
 
+# 带重试的下载：codeload.github.com / releases 在国内或 CI 上常瞬时断流，
+# 裸 Invoke-WebRequest 一次失败即中断整个打包，故统一加重试 + 退避。
+function Invoke-DownloadWithRetry {
+    param(
+        [Parameter(Mandatory)][string]$Url,
+        [Parameter(Mandatory)][string]$OutFile,
+        [int]$Attempts = 5
+    )
+    # 防御性启用 TLS1.2，避免部分环境默认协议过旧导致握手失败
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    for ($i = 1; $i -le $Attempts; $i++) {
+        try {
+            Write-Output "下载 $Url （第 $i/$Attempts 次）"
+            Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing
+            if ((Test-Path $OutFile) -and (Get-Item $OutFile).Length -gt 0) {
+                return
+            }
+            throw "下载结果为空文件"
+        }
+        catch {
+            Write-Output "下载失败（第 $i 次）：$_"
+            if ($i -eq $Attempts) { throw }
+            Start-Sleep -Seconds (2 * $i)
+        }
+    }
+}
+
 function DownloadAMDGpuServices {
     # If you update the AGS SDK version, please also update the version in `crates/gpui/src/platform/windows/directx_renderer.rs`
     $url = "https://codeload.github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK/zip/refs/tags/v6.3.0"
     $zipPath = ".\AGS_SDK_v6.3.0.zip"
-    # Download the AGS SDK zip file
-    Invoke-WebRequest -Uri $url -OutFile $zipPath
+    $extractDir = ".\AGS_SDK-6.3.0"
+    # 已解压则跳过：既避免重复下载，也允许在断网时手动放置解压目录后续跑
+    if (Test-Path $extractDir) {
+        Write-Output "AGS SDK 已存在于 $extractDir，跳过下载"
+        return
+    }
+    Invoke-DownloadWithRetry -Url $url -OutFile $zipPath
     # Extract the AGS SDK zip file
     Expand-Archive -Path $zipPath -DestinationPath "." -Force
 }
@@ -250,8 +282,14 @@ function DownloadAMDGpuServices {
 function DownloadConpty {
     $url = "https://github.com/microsoft/terminal/releases/download/v1.23.13503.0/Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg"
     $zipPath = ".\Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg"
-    Invoke-WebRequest -Uri $url -OutFile $zipPath
-    Expand-Archive -Path $zipPath -DestinationPath ".\conpty" -Force
+    $extractDir = ".\conpty"
+    # 已解压则跳过：与 DownloadAMDGpuServices 同理，支持离线续跑
+    if (Test-Path $extractDir) {
+        Write-Output "ConPTY 已存在于 $extractDir，跳过下载"
+        return
+    }
+    Invoke-DownloadWithRetry -Url $url -OutFile $zipPath
+    Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
 }
 
 function CollectFiles {
