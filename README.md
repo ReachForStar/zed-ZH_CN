@@ -97,3 +97,18 @@ Zed 由 **Zed Industries, Inc.** 开发。
 如需经济支持该项目，可通过 GitHub Sponsors 赞助。
 赞助直接进入 Zed Industries，作为公司通用收入，不附带任何特权。
 
+---
+
+## 关键词 / Keywords
+
+本区块用于提升项目在 GitHub 与搜索引擎中的可检索性，所列关键词均与本项目真实属性对应。
+
+**中文**
+Zed 汉化、Zed 汉化版、Zed 中文、Zed 中文版、Zed 简体中文、Zed 中文设置、Zed 中文教程、Zed 改中文、Zed 语言设置、Zed 界面汉化、代码编辑器汉化、中文代码编辑器、中文 AI 编辑器、编辑器国际化、i18n 中文翻译、Zed 翻译补丁、高性能编辑器中文、协作编辑器汉化
+
+**English**
+Zed Chinese localization, Zed zh-CN, Zed Simplified Chinese, Zed Chinese translation, Zed language pack, Zed i18n, Zed localization patch, Zed editor Chinese, Chinese code editor, Chinese AI code editor, Rust editor internationalization, GPUI i18n, Zed UI translation, how to change Zed to Chinese
+
+**相关技术 / Related**
+Zed, Zed editor, Rust, GPUI, rust-i18n, i18n, internationalization, localization, 国际化, 本地化, 多语言, multi-language, code editor, 代码编辑器, AI editor, collaborative editing, 协作编辑
+
