@@ -15,11 +15,12 @@ Zed 是一款高性能、多人协作代码编辑器，由 [Atom](https://github
 
 汉化通过 `crates/zed_i18n` 实现，当前已翻译 **52 个模块**的界面文本，涵盖：
 
-- 编辑器核心 UI（命令面板、文件查找、诊断、状态栏等）
-- AI / Agent 面板（agent_ui、assistant 等）
+- 编辑器核心 UI（命令面板、文件查找、诊断、项目面板、搜索、大纲、终端等）
+- AI / Agent 面板（agent_ui、ai_onboarding 等）
 - 调试器界面（debugger_ui、debugger_tools）
 - Git 相关（git_ui、collab_ui）
-- 设置界面（settings_ui、keymap_editor）
+- 文档与媒体预览（markdown_preview、image_viewer、office_preview、csv_preview、svg_preview）
+- 设置与选择器面板（settings_ui、keymap_editor、主题/语言/编码选择器等）
 - 扩展管理、反馈、自动更新等
 
 ### 使用方式
