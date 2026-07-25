@@ -2897,16 +2897,16 @@ impl Pane {
                 .tooltip(move |_, cx| {
                     if toggleable {
                         Tooltip::with_meta(
-                            t!("workspace.pane.unlock_file"),
+                            t!("workspace.pane.unlock_tab"),
                             None,
-                            t!("workspace.pane.unlock_file_meta"),
+                            t!("workspace.pane.unlock_tab_meta"),
                             cx,
                         )
                     } else {
                         Tooltip::with_meta(
-                            t!("workspace.pane.locked_file"),
+                            t!("workspace.pane.locked_tab"),
                             None,
-                            t!("workspace.pane.locked_file_meta"),
+                            t!("workspace.pane.locked_tab_meta"),
                             cx,
                         )
                     }
@@ -3088,7 +3088,7 @@ impl Pane {
                                     Tooltip::with_meta(
                                         text,
                                         None,
-                                        t!("workspace.pane.read_only_file"),
+                                        t!("workspace.pane.read_only_tab"),
                                         cx,
                                     )
                                 })
