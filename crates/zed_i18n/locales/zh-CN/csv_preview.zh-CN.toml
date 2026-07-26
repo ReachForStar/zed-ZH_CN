@@ -15,6 +15,7 @@ filter_active = "该列已启用筛选。单击可管理"
 filter_none = "尚未应用筛选。单击可添加筛选"
 clear_all = "清除全部"
 hidden_by_other_filters = "已被其他筛选条件隐藏"
+search_unique_values = "搜索 %{count} 个不重复值…"
 
 [csv_preview.settings]
 alignment_top = "顶端"
