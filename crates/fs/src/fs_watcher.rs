@@ -2,10 +2,10 @@ use gpui::{BackgroundExecutor, Task};
 use notify::{Event, EventKind};
 use parking_lot::Mutex;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     ops::DerefMut,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{Arc, LazyLock, OnceLock},
     time::{Duration, Instant},
 };
@@ -792,6 +792,9 @@ impl WatcherState {
 trait WatchBackend: Send {
     fn watch(&mut self, path: &Path, mode: notify::RecursiveMode) -> notify::Result<()>;
     fn unwatch(&mut self, path: &Path) -> notify::Result<()>;
+    /// 列举 OS 层实际在监听的路径，用于健康检查比对孤儿注册。
+    /// 后端不支持时返回 Err，调用方跳过该模式。
+    fn watched_paths(&self) -> notify::Result<Vec<(PathBuf, notify::RecursiveMode)>>;
 }
 
 impl<T: notify::Watcher + Send> WatchBackend for T {
@@ -801,6 +804,10 @@ impl<T: notify::Watcher + Send> WatchBackend for T {
 
     fn unwatch(&mut self, path: &Path) -> notify::Result<()> {
         notify::Watcher::unwatch(self, path)
+    }
+
+    fn watched_paths(&self) -> notify::Result<Vec<(PathBuf, notify::RecursiveMode)>> {
+        notify::Watcher::watched_paths(self)
     }
 }
 
@@ -968,6 +975,105 @@ impl GlobalWatcher {
         }
     }
 
+    /// 检查 OS 层监听是否被后端静默移除，对孤儿注册重建监听并触发 rescan。
+    ///
+    /// 部分后端会在运行期自行撤销 watch 且不通知上层：例如 notify 的 Windows
+    /// 后端在 ReadDirectoryChangesW 报未知错误时会直接 unwatch。此时 Zed 的
+    /// 注册表仍认为监听有效，不会重新注册，上层从此收不到任何事件（表现为
+    /// 文件树与 git 面板冻结，重开项目才恢复）。这里定期以 OS 实际监听列表
+    /// 为准比对，发现缺失即重建 watch，并合成一条 rescan 事件走既有分发链，
+    /// 让所有 worktree 全量重扫、git 状态随之同步。
+    fn check_watch_health(&self) {
+        for mode in [WatcherMode::Native, WatcherMode::Poll] {
+            self.rewatch_orphaned_watches(mode);
+        }
+    }
+
+    fn rewatch_orphaned_watches(&self, mode: WatcherMode) {
+        let os_paths = {
+            let watcher = match mode {
+                WatcherMode::Native => self.native_watcher.lock(),
+                WatcherMode::Poll => self.poll_watcher.lock(),
+            };
+            let Some(backend) = watcher.as_ref() else {
+                return;
+            };
+            // 后端不支持列举时跳过该模式（当前各平台后端均已实现）
+            let Ok(paths) = backend.watched_paths() else {
+                return;
+            };
+            paths
+        };
+
+        // OS 路径同时以精确与折叠两种键入集，兼容大小写不敏感卷上
+        // 注册键与回报路径大小写不一致的情况（与分发逻辑一致）。
+        let mut os_keys = HashSet::with_capacity(os_paths.len() * 2);
+        for (path, _) in &os_paths {
+            let sanitized = SanitizedPath::new(path);
+            os_keys.insert(WatchKey::exact(&sanitized));
+            os_keys.insert(WatchKey::folded(&sanitized));
+        }
+
+        let orphans = {
+            let state = self.state.lock();
+            if state.watchers.is_empty() {
+                return;
+            }
+            let registrations = match mode {
+                WatcherMode::Native => &state.native_path_registrations,
+                WatcherMode::Poll => &state.poll_path_registrations,
+            };
+            registrations
+                .0
+                .iter()
+                .filter(|(key, path_state)| path_state.has_os_watcher && !os_keys.contains(key))
+                .filter_map(|(_, path_state)| {
+                    // 取任一存活注册的真实路径（保留原始大小写）用于重建监听
+                    let id = path_state.watcher_ids.first()?;
+                    let registration = state.watchers.get(id)?;
+                    Some(registration.path.clone())
+                })
+                .collect::<Vec<_>>()
+        };
+        if orphans.is_empty() {
+            return;
+        }
+
+        let mut rewatched = Vec::new();
+        for path in orphans {
+            match self.watch(path.as_path(), mode) {
+                Ok(()) => rewatched.push(path),
+                Err(error) if mode == WatcherMode::Native && is_max_files_watch_error(&error) => {
+                    // 进入冷却期，剩余孤儿留给下一轮
+                    self.start_native_watch_limit_cooldown(path.as_path());
+                    break;
+                }
+                Err(error) => {
+                    log::warn!(
+                        "failed to re-establish OS file watch for {path:?}: {error}; retrying on next health check"
+                    );
+                }
+            }
+        }
+        if rewatched.is_empty() {
+            return;
+        }
+
+        log::warn!(
+            "OS file watches for {mode:?} were silently dropped by the backend; re-established {} watch(es): {:?}; scheduling rescans",
+            rewatched.len(),
+            rewatched
+                .iter()
+                .map(|path| path.as_path().display().to_string())
+                .collect::<Vec<_>>()
+        );
+
+        // 合成 rescan 事件走既有分发链：该模式的全部注册都会收到，
+        // 上层 worktree 全量重扫，确保文件树与 git 状态恢复一致。
+        let event = notify::Event::new(EventKind::Other).set_flag(notify::event::Flag::Rescan);
+        self.dispatch(mode, Ok(event));
+    }
+
     fn start_native_watch_limit_cooldown(&self, path: &Path) {
         let mut state = self.state.lock();
         let now = Instant::now();
@@ -1105,6 +1211,16 @@ static NATIVE_WATCH_LIMIT_COOLDOWN: LazyLock<Duration> = LazyLock::new(|| {
     Duration::from_secs(cooldown_seconds)
 });
 
+/// 监听健康检查周期：定期比对 OS 实际监听列表，修复被后端静默撤销的 watch。
+static WATCH_HEALTH_CHECK_INTERVAL: LazyLock<Duration> = LazyLock::new(|| {
+    let secs: u64 = std::env::var("ZED_WATCH_HEALTH_CHECK_SECS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(30)
+        .clamp(5, 3600);
+    Duration::from_secs(secs)
+});
+
 pub fn poll_interval() -> Duration {
     *POLL_INTERVAL
 }
@@ -1122,6 +1238,13 @@ fn global_watcher() -> &'static GlobalWatcher {
                 }
             })
             .expect("failed to spawn fs watcher dispatch thread");
+        std::thread::Builder::new()
+            .name("fs-watcher-health".to_owned())
+            .spawn(|| loop {
+                std::thread::sleep(*WATCH_HEALTH_CHECK_INTERVAL);
+                global_watcher().check_watch_health();
+            })
+            .expect("failed to spawn fs watcher health thread");
         GlobalWatcher {
             state: Mutex::new(WatcherState {
                 watchers: Default::default(),
@@ -1188,6 +1311,87 @@ mod tests {
                 Err(notify::Error::generic("path was not watched"))
             }
         }
+
+        fn watched_paths(&self) -> notify::Result<Vec<(PathBuf, notify::RecursiveMode)>> {
+            Ok(self
+                .0
+                .lock()
+                .watched_paths
+                .iter()
+                .cloned()
+                .map(|path| (path, notify::RecursiveMode::Recursive))
+                .collect())
+        }
+    }
+
+    #[test]
+    fn health_check_rewatches_os_watches_silently_dropped_by_backend() {
+        let native = Arc::new(Mutex::new(FakeWatchBackend::default()));
+        let watcher = test_watcher_with_backends(Some(native.clone()), None);
+
+        let events = Arc::new(Mutex::new(Vec::<notify::Event>::new()));
+        let events_callback = events.clone();
+        watcher
+            .add(
+                Arc::from(Path::new("/root")),
+                WatcherMode::Native,
+                false,
+                move |event| events_callback.lock().push(event.clone()),
+            )
+            .unwrap()
+            .unwrap();
+        assert!(native.lock().watched_paths.contains(Path::new("/root")));
+
+        // 模拟后端静默撤销 OS watch（如 notify Windows 后端溢出后的 unwatch）：
+        // 仅移除 OS 层监听，不动 Zed 注册表
+        native.lock().watched_paths.clear();
+
+        watcher.check_watch_health();
+
+        assert!(
+            native.lock().watched_paths.contains(Path::new("/root")),
+            "health check should re-establish the dropped OS watch"
+        );
+        assert_eq!(
+            native.lock().watch_calls.len(),
+            2,
+            "expected initial watch plus one re-watch"
+        );
+        assert_eq!(
+            events.lock().iter().filter(|event| event.need_rescan()).count(),
+            1,
+            "health check should schedule exactly one rescan after repairing watches"
+        );
+    }
+
+    #[test]
+    fn health_check_is_noop_when_no_os_watch_is_orphaned() {
+        let native = Arc::new(Mutex::new(FakeWatchBackend::default()));
+        let watcher = test_watcher_with_backends(Some(native.clone()), None);
+
+        let events = Arc::new(Mutex::new(Vec::<notify::Event>::new()));
+        let events_callback = events.clone();
+        watcher
+            .add(
+                Arc::from(Path::new("/root")),
+                WatcherMode::Native,
+                false,
+                move |event| events_callback.lock().push(event.clone()),
+            )
+            .unwrap()
+            .unwrap();
+
+        watcher.check_watch_health();
+
+        assert_eq!(
+            native.lock().watch_calls.len(),
+            1,
+            "healthy watches must not be re-registered"
+        );
+        assert!(
+            events.lock().is_empty(),
+            "no rescan should be scheduled when nothing was repaired"
+        );
     }
 
     fn test_watcher(poll_watcher: Arc<Mutex<FakeWatchBackend>>) -> GlobalWatcher {
