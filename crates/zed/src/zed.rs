@@ -905,22 +905,18 @@ fn register_actions(
                 let project = workspace.project().clone();
                 // In a collab session the report buffer is visible to other
                 // participants, so attribute the data to this user's machine.
-                let reported_by = if project.read(cx).is_shared()
-                    || project.read(cx).is_via_collab()
-                {
-                    workspace
-                        .user_store()
-                        .read(cx)
-                        .current_user()
-                        .map(|user| user.username.to_string())
-                } else {
-                    None
-                };
-                let report_data = input_latency_ui::snapshot_input_latency_report(
-                    window,
-                    reported_by,
-                    cx,
-                );
+                let reported_by =
+                    if project.read(cx).is_shared() || project.read(cx).is_via_collab() {
+                        workspace
+                            .user_store()
+                            .read(cx)
+                            .current_user()
+                            .map(|user| user.username.to_string())
+                    } else {
+                        None
+                    };
+                let report_data =
+                    input_latency_ui::snapshot_input_latency_report(window, reported_by, cx);
                 cx.spawn_in(window, async move |workspace, cx| {
                     let report = cx
                         .background_spawn(async move {
@@ -934,10 +930,9 @@ fn register_actions(
                         buffer.set_text(report, cx);
                     });
                     workspace.update_in(cx, |workspace, window, cx| {
-                        let editor = cx
-                            .new(|cx| Editor::for_buffer(buffer, Some(project), window, cx));
-                        workspace
-                            .add_item_to_active_pane(Box::new(editor), None, true, window, cx);
+                        let editor =
+                            cx.new(|cx| Editor::for_buffer(buffer, Some(project), window, cx));
+                        workspace.add_item_to_active_pane(Box::new(editor), None, true, window, cx);
                     })
                 })
                 .detach_and_log_err(cx);
@@ -954,35 +949,22 @@ fn register_actions(
                 cx.spawn_in(window, async move |workspace, cx| {
                     let language = language.await.log_err();
                     let buffer = project
-                        .update(cx, |project, cx| {
-                            project.create_buffer(language, true, cx)
-                        })
+                        .update(cx, |project, cx| project.create_buffer(language, true, cx))
                         .await?;
                     buffer.update(cx, |buffer, cx| {
                         buffer.set_text(json, cx);
                     });
                     workspace.update_in(cx, |workspace, window, cx| {
                         let title = "Accessibility Tree".to_string();
-                        let buffer = cx.new(|cx| {
-                            MultiBuffer::singleton(buffer, cx).with_title(title.clone())
-                        });
+                        let buffer = cx
+                            .new(|cx| MultiBuffer::singleton(buffer, cx).with_title(title.clone()));
                         let editor = cx.new(|cx| {
-                            let mut editor = Editor::for_multibuffer(
-                                buffer,
-                                Some(project),
-                                window,
-                                cx,
-                            );
+                            let mut editor =
+                                Editor::for_multibuffer(buffer, Some(project), window, cx);
                             editor.set_breadcrumb_header(title);
                             editor
                         });
-                        workspace.add_item_to_active_pane(
-                            Box::new(editor),
-                            None,
-                            true,
-                            window,
-                            cx,
-                        );
+                        workspace.add_item_to_active_pane(Box::new(editor), None, true, window, cx);
                     })
                 })
                 .detach_and_log_err(cx);

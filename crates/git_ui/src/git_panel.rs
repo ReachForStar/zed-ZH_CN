@@ -2037,48 +2037,46 @@ impl GitPanel {
             let entry = list_entry.status_entry()?.to_owned();
             let skip_prompt = action.skip_prompt || entry.status.is_created();
 
-            let prompt = if skip_prompt {
-                Task::ready(Ok(0))
-            } else {
-                let (message, confirm_text) = if entry.status.is_deleted() {
-                    (
-                        t!(
-                            "git_ui.git_panel.restore_file_confirm",
-                            file = MarkdownInlineCode(
-                                entry
-                                    .repo_path
-                                    .file_name()
-                                    .unwrap_or(entry.repo_path.display(path_style).as_ref())
-                            )
-                        ),
-                        t!("git_ui.git_panel.restore_file"),
-                    )
+            let prompt =
+                if skip_prompt {
+                    Task::ready(Ok(0))
                 } else {
-                    (
-                        t!(
-                            "git_ui.git_panel.discard_changes_confirm",
-                            file = MarkdownInlineCode(
-                                entry
-                                    .repo_path
-                                    .file_name()
-                                    .unwrap_or(entry.repo_path.display(path_style).as_ref())
+                    let (message, confirm_text) =
+                        if entry.status.is_deleted() {
+                            (
+                                t!(
+                                    "git_ui.git_panel.restore_file_confirm",
+                                    file =
+                                        MarkdownInlineCode(entry.repo_path.file_name().unwrap_or(
+                                            entry.repo_path.display(path_style).as_ref()
+                                        ))
+                                ),
+                                t!("git_ui.git_panel.restore_file"),
                             )
-                        ),
-                        t!("git_ui.git_panel.discard_changes"),
-                    )
+                        } else {
+                            (
+                                t!(
+                                    "git_ui.git_panel.discard_changes_confirm",
+                                    file =
+                                        MarkdownInlineCode(entry.repo_path.file_name().unwrap_or(
+                                            entry.repo_path.display(path_style).as_ref()
+                                        ))
+                                ),
+                                t!("git_ui.git_panel.discard_changes"),
+                            )
+                        };
+                    let prompt = window.prompt(
+                        PromptLevel::Warning,
+                        &message,
+                        None,
+                        &[
+                            PromptButton::new(confirm_text),
+                            PromptButton::cancel(t!("git_ui.common.cancel")),
+                        ],
+                        cx,
+                    );
+                    cx.background_spawn(prompt)
                 };
-                let prompt = window.prompt(
-                    PromptLevel::Warning,
-                    &message,
-                    None,
-                    &[
-                        PromptButton::new(confirm_text),
-                        PromptButton::cancel(t!("git_ui.common.cancel")),
-                    ],
-                    cx,
-                );
-                cx.background_spawn(prompt)
-            };
 
             let this = cx.weak_entity();
             window

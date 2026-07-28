@@ -1540,8 +1540,8 @@ impl<'a> ElicitationCard<'a> {
                                     "agent_ui.elicitation.input_requested_by",
                                     requester = self.requester_name
                                 ))
-                                    .size(LabelSize::Custom(tool_name_font_size))
-                                    .truncate(),
+                                .size(LabelSize::Custom(tool_name_font_size))
+                                .truncate(),
                             ),
                     )
                     .child(

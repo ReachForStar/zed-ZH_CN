@@ -1240,9 +1240,11 @@ fn global_watcher() -> &'static GlobalWatcher {
             .expect("failed to spawn fs watcher dispatch thread");
         std::thread::Builder::new()
             .name("fs-watcher-health".to_owned())
-            .spawn(|| loop {
-                std::thread::sleep(*WATCH_HEALTH_CHECK_INTERVAL);
-                global_watcher().check_watch_health();
+            .spawn(|| {
+                loop {
+                    std::thread::sleep(*WATCH_HEALTH_CHECK_INTERVAL);
+                    global_watcher().check_watch_health();
+                }
             })
             .expect("failed to spawn fs watcher health thread");
         GlobalWatcher {
@@ -1358,7 +1360,11 @@ mod tests {
             "expected initial watch plus one re-watch"
         );
         assert_eq!(
-            events.lock().iter().filter(|event| event.need_rescan()).count(),
+            events
+                .lock()
+                .iter()
+                .filter(|event| event.need_rescan())
+                .count(),
             1,
             "health check should schedule exactly one rescan after repairing watches"
         );

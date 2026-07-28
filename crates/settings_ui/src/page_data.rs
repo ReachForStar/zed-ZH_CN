@@ -1284,7 +1284,8 @@ fn appearance_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.agent_buffer_font_family_title").into(),
-                description: t!("settings_ui.page_data.agent_buffer_font_family_description").into(),
+                description: t!("settings_ui.page_data.agent_buffer_font_family_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("agent_buffer_font_family"),
