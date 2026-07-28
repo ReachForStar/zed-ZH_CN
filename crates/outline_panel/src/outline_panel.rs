@@ -4973,6 +4973,10 @@ fn file_name(path: &Path) -> String {
 }
 
 impl Panel for OutlinePanel {
+    fn activation_focus_handle(&self, cx: &App) -> FocusHandle {
+        self.filter_editor.focus_handle(cx)
+    }
+
     fn persistent_name() -> &'static str {
         "Outline Panel"
     }
@@ -5073,8 +5077,8 @@ impl Panel for OutlinePanel {
 }
 
 impl Focusable for OutlinePanel {
-    fn focus_handle(&self, cx: &App) -> FocusHandle {
-        self.filter_editor.focus_handle(cx)
+    fn focus_handle(&self, _cx: &App) -> FocusHandle {
+        self.focus_handle.clone()
     }
 }
 
