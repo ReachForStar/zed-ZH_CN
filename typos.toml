@@ -4,6 +4,9 @@ ignore-hidden = false
 extend-exclude = [
     ".git/",
 
+    # Vendored third-party code is not subject to this repo's lints.
+    "third_party/",
+
     # Typewriter model names used for agent branch names aren't typos.
     "crates/agent_ui/src/branch_names.rs",
 
