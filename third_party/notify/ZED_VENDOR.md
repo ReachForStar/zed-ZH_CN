@@ -35,7 +35,8 @@
 - 根 `Cargo.toml` 的 `[patch.crates-io]` 已将 `notify` / `notify-types`
   指向本目录（path 依赖）。
 - 当上游 Zed 升级 notify rev 或 notify 发布新版时，需重新同步本目录
-  并重新应用上述两处补丁；建议同时向 zed-industries/notify 或
-  notify-rs/notify 提交 PR 推动上游修复，修复合入后即可移除 vendor。
+  并重新应用上述两处补丁；补丁已提交上游，合入后即可移除 vendor：
+  - https://github.com/zed-industries/notify/pull/10
+  - https://github.com/notify-rs/notify/pull/968
 - 本目录是独立的 cargo workspace（notify 自身的 workspace），
   不参与 Zed workspace 的成员列表。
