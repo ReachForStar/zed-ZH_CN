@@ -15,6 +15,7 @@ filter_active = "Column has active filters. Click to manage"
 filter_none = "No filters applied. Click to add filters"
 clear_all = "Clear all"
 hidden_by_other_filters = "Hidden by other filters"
+search_unique_values = "Search %{count} unique values…"
 
 [csv_preview.settings]
 alignment_top = "Top"
