@@ -1,13 +1,10 @@
-use gpui::{AnyElement, prelude::*};
-use smallvec::SmallVec;
+use gpui::{Anchor, AnyElement, ElementId, Entity, Point, SharedString, prelude::*};
 use std::{collections::BTreeSet, sync::Arc};
-use ui::prelude::*;
 use zed_i18n::t;
 
 use cloud_api_types::{ExtensionApiManifest, ExtensionMetadata, ExtensionProvides};
 use extension::{ExtensionManifest, SchemaVersion};
 use extension_host::{ExtensionOperation, ExtensionStore};
-use gpui::{Anchor, ElementId, Entity, Point, SharedString, prelude::*};
 use num_format::{Locale, ToFormattedString};
 use release_channel::ReleaseChannel;
 use ui::{Chip, ContextMenu, PopoverMenu, Tooltip, prelude::*};
@@ -58,10 +55,6 @@ impl ExtensionStatus {
             self,
             Self::Installing | Self::Upgrading | Self::Removing | Self::OverriddenByDevExtension
         )
-    }
-
-    pub fn is_installed(&self) -> bool {
-        matches!(self, Self::Installed(_) | Self::Upgrading | Self::Removing)
     }
 }
 
@@ -398,20 +391,6 @@ impl ExtensionCard {
                 [upgrade, configure, Some(uninstall)]
             }
         }
-    }
-
-    pub fn repository_icon(mut self, icon: IconName) -> Self {
-        self.details.repository_icon = icon;
-        self
-    }
-
-    pub fn context_menu(
-        mut self,
-        builder: impl Fn(Arc<str>, SharedString, &mut Window, &mut App) -> Option<Entity<ContextMenu>>
-        + 'static,
-    ) -> Self {
-        self.context_menu = Some(Box::new(builder));
-        self
     }
 }
 

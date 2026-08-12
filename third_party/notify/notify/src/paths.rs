@@ -10,6 +10,18 @@ pub(crate) struct WatchPath {
     pub(crate) requested: PathBuf,
 }
 
+// 以下若干 helper 仅 inotify（Linux/Android）与 kqueue（BSD/macOS-kqueue/iOS）后端使用；
+// Windows（ReadDirectoryChangesW）与默认 macOS（fsevent）后端用不到，按平台门控避免死代码告警。
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly",
+    target_os = "ios",
+    all(target_os = "macos", feature = "macos_kqueue")
+))]
 #[derive(Clone, Debug)]
 pub(crate) struct WatchMetadata {
     pub(crate) is_recursive: bool,
@@ -26,6 +38,16 @@ impl WatchPath {
         })
     }
 
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+        target_os = "ios",
+        all(target_os = "macos", feature = "macos_kqueue")
+    ))]
     pub(crate) fn from_parts(absolute: PathBuf, requested: PathBuf) -> Self {
         Self {
             absolute,
@@ -33,12 +55,32 @@ impl WatchPath {
         }
     }
 
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+        target_os = "ios",
+        all(target_os = "macos", feature = "macos_kqueue")
+    ))]
     pub(crate) fn child(&self, path: PathBuf) -> Self {
         let requested = reported_path(&self.absolute, &self.requested, &path);
         Self::from_parts(path, requested)
     }
 }
 
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly",
+    target_os = "ios",
+    all(target_os = "macos", feature = "macos_kqueue")
+))]
 impl WatchMetadata {
     pub(crate) fn new<'a, I>(
         path: &WatchPath,
@@ -110,6 +152,16 @@ pub(crate) fn reported_path(root_absolute: &Path, root_requested: &Path, path: &
     }
 }
 
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly",
+    target_os = "ios",
+    all(target_os = "macos", feature = "macos_kqueue")
+))]
 pub(crate) fn preserved_watch_mode(
     path: &Path,
     preserved_roots: &[(PathBuf, bool)],
@@ -122,6 +174,16 @@ pub(crate) fn preserved_watch_mode(
         .map(|(_, user_is_recursive)| *user_is_recursive)
 }
 
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly",
+    target_os = "ios",
+    all(target_os = "macos", feature = "macos_kqueue")
+))]
 pub(crate) fn preserved_watch_roots<'a, I>(
     path: &Path,
     remove_recursive: bool,
@@ -143,6 +205,16 @@ where
     }
 }
 
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly",
+    target_os = "ios",
+    all(target_os = "macos", feature = "macos_kqueue")
+))]
 pub(crate) fn is_preserved_watch_root(path: &Path, preserved_roots: &[(PathBuf, bool)]) -> bool {
     preserved_roots.iter().any(|(root, _)| path == root)
 }
@@ -152,6 +224,16 @@ pub(crate) fn is_preserved_watch_root(path: &Path, preserved_roots: &[(PathBuf, 
 /// Backends use this when replacing an explicit watch that also inherits recursive coverage from an
 /// ancestor. Returning the ancestor's reported path lets them rebuild the inherited subtree with the
 /// same path representation users expect from that ancestor watch.
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly",
+    target_os = "ios",
+    all(target_os = "macos", feature = "macos_kqueue")
+))]
 pub(crate) fn recursive_user_watch_ancestor<'a, I>(
     path: &Path,
     watches: I,

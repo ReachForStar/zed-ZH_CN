@@ -447,7 +447,12 @@ impl MarkdownElement {
         }
     }
 
-    fn render_html_image(&self, image: &HtmlImage, builder: &mut MarkdownElementBuilder, _cx: &App) {
+    fn render_html_image(
+        &self,
+        image: &HtmlImage,
+        builder: &mut MarkdownElementBuilder,
+        _cx: &App,
+    ) {
         let Some(source) = self
             .image_resolver
             .as_ref()

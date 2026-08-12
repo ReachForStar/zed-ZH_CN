@@ -23,7 +23,7 @@ use markdown::{
     MarkdownOptions, MarkdownStyle,
 };
 use project::search::SearchQuery;
-use project::{Project, ProjectPath, image_store};
+use project::{Project, ProjectPath};
 use settings::{SeedQuerySetting, Settings, update_settings_file};
 use theme::{SystemAppearance, Theme, ThemeRegistry};
 use theme_settings::ThemeSettings;
@@ -35,7 +35,6 @@ use util::{
     ResultExt,
     markdown::{source_position_from_fragment, split_local_url_fragment},
     paths::{PathStyle, PathWithPosition},
-    rel_path::RelPath,
 };
 use workspace::item::{Item, ItemBufferKind, ItemHandle, SaveOptions, SerializableItem};
 use workspace::notifications::{NotifyResultExt, NotifyTaskExt};
@@ -648,7 +647,7 @@ impl MarkdownPreviewView {
             None => {}
             Some(PreviewLinkTarget::Heading(slug)) => {
                 self.markdown.update(cx, |markdown, cx| {
-                    markdown.scroll_to_heading_when_parsed(slug, cx);
+                    markdown.scroll_to_heading(&slug, cx);
                 });
             }
             Some(PreviewLinkTarget::Position { row, column }) => {
@@ -981,7 +980,7 @@ impl MarkdownPreviewView {
             .show_root_block_markers()
             .image_resolver({
                 let base_directory = self.base_directory.clone();
-                move |dest_url, cx| {
+                move |dest_url| {
                     resolve_preview_image(
                         dest_url,
                         base_directory.as_deref(),
@@ -989,7 +988,6 @@ impl MarkdownPreviewView {
                         project.as_ref(),
                         source_project_path.as_ref(),
                         PathStyle::local(),
-                        cx,
                     )
                 }
             })
@@ -1384,7 +1382,6 @@ fn resolve_preview_image(
     project: Option<&Entity<Project>>,
     source_project_path: Option<&ProjectPath>,
     client_path_style: PathStyle,
-    cx: &App,
 ) -> Option<ImageSource> {
     if dest_url.starts_with("data:") {
         return None;
@@ -1403,34 +1400,9 @@ fn resolve_preview_image(
         .iter()
         .find_map(|prefix| decoded.strip_prefix(*prefix));
 
-    if let (Some(project), Some(source_project_path)) = (project, source_project_path) {
-        let project_path = resolve_project_path_for_preview_image(
-            &decoded,
-            workspace_relative_path,
-            source_project_path,
-            project,
-            cx,
-        );
-        if let Some(project_path) = project_path {
-            let is_remote = project
-                .read(cx)
-                .worktree_for_id(project_path.worktree_id, cx)
-                .is_some_and(|worktree| !worktree.read(cx).is_local());
-            if is_remote {
-                return Some(image_store::project_image_source(
-                    project.downgrade(),
-                    project_path,
-                ));
-            }
-
-            let path = project.read(cx).absolute_path(&project_path, cx)?;
-            return path
-                .exists()
-                .then(|| ImageSource::Resource(Resource::Path(Arc::from(path.as_path()))));
-        } else if project.read(cx).is_remote() {
-            return None;
-        }
-    }
+    // Project-based path resolution is not available without App context
+    // in the new image_resolver API. Local path resolution still works below.
+    let _ = (project, source_project_path);
 
     let path = if let (Some(stripped), Some(root)) = (workspace_relative_path, workspace_directory)
     {
@@ -1443,42 +1415,6 @@ fn resolve_preview_image(
 
     path.exists()
         .then(|| ImageSource::Resource(Resource::Path(Arc::from(path.as_path()))))
-}
-
-fn resolve_project_path_for_preview_image(
-    decoded_path: &str,
-    workspace_relative_path: Option<&str>,
-    source_project_path: &ProjectPath,
-    project: &Entity<Project>,
-    cx: &App,
-) -> Option<ProjectPath> {
-    let worktree = project
-        .read(cx)
-        .worktree_for_id(source_project_path.worktree_id, cx)?;
-    let path_style = worktree.read(cx).path_style();
-
-    if workspace_relative_path.is_none() && path_style.is_absolute(decoded_path) {
-        return project
-            .read(cx)
-            .project_path_for_absolute_path(Path::new(decoded_path), cx);
-    }
-
-    let source_directory = source_project_path.path.parent()?;
-    let path = if let Some(workspace_relative_path) = workspace_relative_path {
-        RelPath::new(Path::new(workspace_relative_path), path_style)
-            .ok()?
-            .into_owned()
-    } else {
-        let joined_path = path_style
-            .join_path(source_directory.as_std_path(), decoded_path)
-            .ok()?;
-        RelPath::new(&joined_path, path_style).ok()?.into_owned()
-    };
-
-    Some(ProjectPath {
-        worktree_id: source_project_path.worktree_id,
-        path: path.into(),
-    })
 }
 
 impl Focusable for MarkdownPreviewView {
