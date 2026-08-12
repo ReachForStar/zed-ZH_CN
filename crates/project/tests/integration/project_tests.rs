@@ -4554,6 +4554,94 @@ async fn test_workspace_diagnostics_pull_timeout_releases_waiters(cx: &mut gpui:
 }
 
 #[gpui::test]
+async fn test_workspace_diagnostics_refresh_is_answered_before_pulling(
+    cx: &mut gpui::TestAppContext,
+) {
+    init_test(cx);
+
+    let fs = FakeFs::new(cx.executor());
+    fs.insert_tree(path!("/dir"), json!({ "a.rs": "one two three" }))
+        .await;
+
+    let project = Project::test(fs, [path!("/dir").as_ref()], cx).await;
+    let language_registry = project.read_with(cx, |project, _| project.languages().clone());
+    language_registry.add(rust_lang());
+
+    let document_pulls_received = Arc::new(atomic::AtomicUsize::new(0));
+    let mut fake_servers = language_registry.register_fake_lsp(
+        "Rust",
+        FakeLspAdapter {
+            capabilities: lsp::ServerCapabilities {
+                diagnostic_provider: Some(lsp::DiagnosticServerCapabilities::Options(
+                    lsp::DiagnosticOptions {
+                        identifier: Some("test-refresh-response-first".to_string()),
+                        inter_file_dependencies: true,
+                        workspace_diagnostics: true,
+                        work_done_progress_options: Default::default(),
+                    },
+                )),
+                ..lsp::ServerCapabilities::default()
+            },
+            initializer: Some(Box::new({
+                let document_pulls_received = document_pulls_received.clone();
+                move |fake_server| {
+                    // Simulate a server that cannot answer any diagnostic pulls until its
+                    // own workspace/diagnostic/refresh request is answered, e.g. one that
+                    // bounds its request concurrency.
+                    fake_server
+                        .set_request_handler::<lsp::request::DocumentDiagnosticRequest, _, _>({
+                            let document_pulls_received = document_pulls_received.clone();
+                            move |_, _| {
+                                document_pulls_received.fetch_add(1, atomic::Ordering::Release);
+                                async move {
+                                    future::pending::<()>().await;
+                                    Err(anyhow::anyhow!("should never respond"))
+                                }
+                            }
+                        });
+                    fake_server
+                        .set_request_handler::<lsp::request::WorkspaceDiagnosticRequest, _, _>(
+                            move |_, _| async move {
+                                future::pending::<()>().await;
+                                Err(anyhow::anyhow!("should never respond"))
+                            },
+                        );
+                }
+            })),
+            ..FakeLspAdapter::default()
+        },
+    );
+
+    let (_buffer, _handle) = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer_with_lsp(path!("/dir/a.rs"), cx)
+        })
+        .await
+        .unwrap();
+
+    let fake_server = fake_servers.next().await.unwrap();
+    cx.executor().run_until_parked();
+
+    let refresh_response = cx.executor().spawn(async move {
+        fake_server
+            .request::<lsp::request::WorkspaceDiagnosticRefresh>((), DEFAULT_LSP_REQUEST_TIMEOUT)
+            .await
+    });
+    cx.executor().run_until_parked();
+
+    refresh_response
+        .now_or_never()
+        .expect("workspace/diagnostic/refresh must be answered without awaiting diagnostic pulls from the same server")
+        .into_response()
+        .expect("workspace/diagnostic/refresh should succeed");
+    assert_eq!(
+        document_pulls_received.load(atomic::Ordering::Acquire),
+        1,
+        "the refresh should still trigger a document diagnostics pull for the open buffer"
+    );
+}
+
+#[gpui::test]
 async fn test_edits_from_lsp2_with_past_version(cx: &mut gpui::TestAppContext) {
     init_test(cx);
 
@@ -7897,8 +7985,10 @@ async fn test_rename(cx: &mut gpui::TestAppContext) {
 
 // Regression test for https://github.com/zed-industries/zed/issues/59077:
 // a "rename symbol" whose workspace edit also renames the file used to swap the
-// two files' contents. The edited content must end up in the renamed file.
-#[gpui::test]
+// two files' contents. The edited content must end up in the renamed file, and
+// the open buffer must follow the rename regardless of the order the filesystem
+// watcher reports the change (hence the seed iterations).
+#[gpui::test(iterations = 30)]
 async fn test_rename_that_also_renames_file(cx: &mut gpui::TestAppContext) {
     init_test(cx);
 
@@ -9135,7 +9225,7 @@ async fn test_multiple_language_server_hovers(cx: &mut gpui::TestAppContext) {
         let new_server = language_servers[i].next().await.unwrap_or_else(|| {
             panic!(
                 "Failed to get language server #{i} with name {}",
-                &language_server_names[i]
+                language_server_names[i]
             )
         });
         let new_server_name = new_server.server.name();
@@ -9530,7 +9620,7 @@ async fn test_multiple_language_server_actions(cx: &mut gpui::TestAppContext) {
         let new_server = language_server_rxs[i].next().await.unwrap_or_else(|| {
             panic!(
                 "Failed to get language server #{i} with name {}",
-                &language_server_names[i]
+                language_server_names[i]
             )
         });
         let new_server_name = new_server.server.name();

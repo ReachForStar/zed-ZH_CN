@@ -13,7 +13,7 @@ use workspace::ModalView;
 use zed_i18n::t;
 use zeroize::Zeroize;
 
-pub(crate) struct AskPassModal {
+pub struct AskPassModal {
     operation: SharedString,
     prompt: SharedString,
     editor: Entity<Editor>,

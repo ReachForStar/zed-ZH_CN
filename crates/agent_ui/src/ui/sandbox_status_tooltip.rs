@@ -195,7 +195,7 @@ impl RenderOnce for SandboxStatusTooltip {
         };
 
         v_flex()
-            .w(rems_from_px(280.))
+            .w(rems_from_px(280_f32))
             .gap_1()
             .child(Label::new(t!("agent_ui.sandbox_status_tooltip.title")))
             .child(content)

@@ -163,7 +163,7 @@ impl Render for ChannelModal {
                     .child(
                         h_flex()
                             .w_full()
-                            .h(rems_from_px(22.))
+                            .h(rems_from_px(22_f32))
                             .justify_between()
                             .line_height(rems(1.25))
                             .child(
@@ -179,14 +179,10 @@ impl Render for ChannelModal {
                                 .on_click(cx.listener(Self::set_channel_visibility)),
                             )
                             .children(
-                                Some(
-                                    Button::new(
-                                        "copy-link",
-                                        t!("collab_ui.channel_modal.copy_link"),
-                                    )
-                                    .label_size(LabelSize::Small)
-                                    .on_click(cx.listener(
-                                        move |this, _, _, cx| {
+                                (visibility == ChannelVisibility::Public).then_some(
+                                    Button::new("copy-link", t!("collab_ui.channel_modal.copy_link"))
+                                        .label_size(LabelSize::Small)
+                                        .on_click(cx.listener(move |this, _, _, cx| {
                                             if let Some(channel) = this
                                                 .channel_store
                                                 .read(cx)
@@ -196,10 +192,8 @@ impl Render for ChannelModal {
                                                     ClipboardItem::new_string(channel.link(cx));
                                                 cx.write_to_clipboard(item);
                                             }
-                                        },
-                                    )),
-                                )
-                                .filter(|_| visibility == ChannelVisibility::Public),
+                                        })),
+                                ),
                             ),
                     )
                     .child(

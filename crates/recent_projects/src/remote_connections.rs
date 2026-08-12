@@ -247,6 +247,7 @@ pub async fn open_remote_project(
         (window, workspace)
     };
 
+    let mut remote_workspace = None;
     loop {
         let (cancel_tx, mut cancel_rx) = oneshot::channel();
         let delegate = window.update(cx, {
@@ -354,7 +355,7 @@ pub async fn open_remote_project(
         let (paths, paths_with_positions) =
             determine_paths_with_positions(&remote_connection, paths.clone()).await;
 
-        let opened_items = cx
+        let opened = cx
             .update(|cx| {
                 workspace::open_remote_project_with_new_connection(
                     window,
@@ -374,7 +375,7 @@ pub async fn open_remote_project(
             }
         });
 
-        match opened_items {
+        match opened {
             Err(e) => {
                 log::error!("Failed to open project: {e:#}");
                 let response = window
@@ -423,7 +424,8 @@ pub async fn open_remote_project(
                 });
             }
 
-            Ok(items) => {
+            Ok((workspace, items)) => {
+                remote_workspace = workspace;
                 navigate_to_positions(&window, items, &paths_with_positions, cx);
             }
         }
@@ -431,22 +433,15 @@ pub async fn open_remote_project(
         break;
     }
 
-    // Register the remote client with extensions. We use `multi_workspace.workspace()` here
-    // (not `initial_workspace`) because `open_remote_project_inner` activated the new remote
-    // workspace, so the active workspace is now the one with the remote project.
-    window
-        .update(cx, |multi_workspace: &mut MultiWorkspace, _, cx| {
-            let workspace = multi_workspace.workspace().clone();
-            workspace.update(cx, |workspace, cx| {
-                if let Some(client) = workspace.project().read(cx).remote_client() {
-                    if let Some(extension_store) = ExtensionStore::try_global(cx) {
-                        extension_store
-                            .update(cx, |store, cx| store.register_remote_client(client, cx));
-                    }
-                }
-            });
-        })
-        .ok();
+    if let Some(remote_workspace) = remote_workspace {
+        remote_workspace.update(cx, |workspace, cx| {
+            if let Some(client) = workspace.project().read(cx).remote_client()
+                && let Some(extension_store) = ExtensionStore::try_global(cx)
+            {
+                extension_store.update(cx, |store, cx| store.register_remote_client(client, cx));
+            }
+        });
+    }
     Ok(window)
 }
 
