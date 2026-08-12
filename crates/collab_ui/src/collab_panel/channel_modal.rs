@@ -180,9 +180,13 @@ impl Render for ChannelModal {
                             )
                             .children(
                                 (visibility == ChannelVisibility::Public).then_some(
-                                    Button::new("copy-link", t!("collab_ui.channel_modal.copy_link"))
-                                        .label_size(LabelSize::Small)
-                                        .on_click(cx.listener(move |this, _, _, cx| {
+                                    Button::new(
+                                        "copy-link",
+                                        t!("collab_ui.channel_modal.copy_link"),
+                                    )
+                                    .label_size(LabelSize::Small)
+                                    .on_click(cx.listener(
+                                        move |this, _, _, cx| {
                                             if let Some(channel) = this
                                                 .channel_store
                                                 .read(cx)
@@ -192,7 +196,8 @@ impl Render for ChannelModal {
                                                     ClipboardItem::new_string(channel.link(cx));
                                                 cx.write_to_clipboard(item);
                                             }
-                                        })),
+                                        },
+                                    )),
                                 ),
                             ),
                     )
