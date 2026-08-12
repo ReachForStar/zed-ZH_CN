@@ -13,6 +13,7 @@ use parking_lot::Mutex;
 use rand::prelude::*;
 use sea_orm::ConnectionTrait;
 use sqlx::migrate::MigrateDatabase;
+use url::Url;
 
 use self::migrations::run_database_migrations;
 
@@ -68,10 +69,7 @@ impl TestDb {
 
         let _guard = LOCK.lock();
         let mut rng = StdRng::from_os_rng();
-        let url = format!(
-            "postgres://postgres@localhost/zed-test-{}",
-            rng.random::<u128>()
-        );
+        let url = postgres_test_db_url(rng.random::<u128>());
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_io()
             .enable_time()
@@ -116,6 +114,19 @@ impl TestDb {
         let test_options = database.test_options.as_ref().unwrap();
         *test_options.query_failure_probability.lock() = probability;
     }
+}
+
+/// 从 `DATABASE_URL` 环境变量构造测试数据库连接 URL。
+///
+/// 复用其中的 host、端口、用户名与密码，仅把数据库名替换为独立的
+/// `zed-test-{随机}`，避免污染 `DATABASE_URL` 指向的现有数据库。
+/// 未设置 `DATABASE_URL` 时回退到本地默认值 `postgres://postgres@localhost`。
+fn postgres_test_db_url(suffix: u128) -> String {
+    let base_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://postgres@localhost".into());
+    let mut url = Url::parse(&base_url).expect("invalid DATABASE_URL");
+    url.set_path(&format!("zed-test-{}", suffix));
+    url.to_string()
 }
 
 #[macro_export]
