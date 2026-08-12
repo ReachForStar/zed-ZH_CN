@@ -13,9 +13,9 @@ use editor::{Editor, EditorElement, EditorStyle};
 use extension_host::{ExtensionManifest, ExtensionOperation, ExtensionStore};
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
 use gpui::{
-    Action, App, Context, DismissEvent, Entity, EventEmitter, Focusable,
-    InteractiveElement, KeyContext, ParentElement, Render, Styled, Task, TaskExt, TextStyle,
-    UniformListScrollHandle, WeakEntity, Window, actions, point, uniform_list,
+    Action, App, Context, DismissEvent, Entity, EventEmitter, Focusable, InteractiveElement,
+    KeyContext, ParentElement, Render, Styled, Task, TaskExt, TextStyle, UniformListScrollHandle,
+    WeakEntity, Window, actions, point, uniform_list,
 };
 
 use picker::{Picker, PickerDelegate};
@@ -26,9 +26,8 @@ use settings::{Settings, SettingsContent};
 use strum::IntoEnumIterator as _;
 use theme_settings::ThemeSettings;
 use ui::{
-    Banner, Divider, ListItem, ListItemSpacing, ScrollableHandle,
-    Switch, ToggleButtonGroup, ToggleButtonGroupSize, ToggleButtonGroupStyle, ToggleButtonSimple,
-    WithScrollbar, prelude::*,
+    Banner, Divider, ListItem, ListItemSpacing, ScrollableHandle, Switch, ToggleButtonGroup,
+    ToggleButtonGroupSize, ToggleButtonGroupStyle, ToggleButtonSimple, WithScrollbar, prelude::*,
 };
 use util::ResultExt;
 use vim_mode_setting::VimModeSetting;

@@ -115,6 +115,7 @@ uuid.workspace = true
 watch.workspace = true
 workspace.workspace = true
 git_ui_core.workspace = true
+git_ui.workspace = true
 zed_actions.workspace = true
 zed_i18n.workspace = true
 image.workspace = true

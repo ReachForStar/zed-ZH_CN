@@ -152,7 +152,7 @@ impl Render for CallStatsModal {
             })
             .unwrap_or_default();
 
-        let (quality_text, quality_color) = quality_label(stats.connection_quality);
+        let (quality_text, quality_color) = quality_label(stats.connection_quality.map(|q| q.0));
 
         v_flex()
             .key_context("CallStatsModal")
@@ -221,7 +221,7 @@ impl Render for CallStatsModal {
                         .child(self.render_metric_row(
                             &input_lag_title,
                             &input_lag_description,
-                            stats.input_lag.map(|d| d.as_secs_f64() * 1000.0),
+                            stats.input_lag.map(|d| d.0.as_secs_f64() * 1000.0),
                             |v| format!("{:.1}ms", v),
                             |v| input_lag_rating(v),
                         )),

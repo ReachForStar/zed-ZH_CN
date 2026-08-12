@@ -1,4 +1,3 @@
-use crate::askpass_modal::AskPassModal;
 use crate::commit_context_menu::{
     CommitContextMenuData, CommitContextMenuSource, commit_context_menu,
 };
@@ -44,6 +43,7 @@ use git::{
     StashAll, StashApply, StashPop, ToggleFillCommitEditor, TrashUntrackedFiles, UnstageAll,
     ViewFile, parse_git_remote_url,
 };
+use git_ui_core::askpass_modal::AskPassModal;
 use gpui::{
     AbsoluteLength, Action, Anchor, AnyElement, AsyncApp, AsyncWindowContext, ClickEvent,
     DismissEvent, Empty, Entity, EventEmitter, FocusHandle, Focusable, KeyContext, MouseButton,
@@ -1210,7 +1210,7 @@ impl GitPanel {
                     }
                     GitStoreEvent::RepositoryUpdated(
                         _,
-                        RepositoryEvent::GitDirectoryChanged,
+                        RepositoryEvent::GitWorktreeListChanged,
                         true,
                     )
                     | GitStoreEvent::GlobalConfigurationUpdated => {
@@ -1225,7 +1225,9 @@ impl GitPanel {
                             .ok();
                     }
                     GitStoreEvent::RepositoryUpdated(_, _, _) => {}
-                    GitStoreEvent::JobsUpdated | GitStoreEvent::ConflictsUpdated => {}
+                    GitStoreEvent::JobsUpdated
+                    | GitStoreEvent::ConflictsUpdated
+                    | GitStoreEvent::DiffBaseChanged(_) => {}
                 },
             )
             .detach();
@@ -2734,7 +2736,7 @@ impl GitPanel {
         cx.spawn({
             async move |this, cx| {
                 let stash_task = active_repository
-                    .update(cx, |repo, cx| repo.stash_all(cx))
+                    .update(cx, |repo, cx| repo.stash_all(None, cx))
                     .await;
                 this.update(cx, |this, cx| {
                     stash_task

@@ -12,14 +12,14 @@ use editor::{
         entry_diagnostic_aware_icon_name_and_color, entry_git_aware_label_color,
     },
 };
-use feature_flags::{FeatureFlagAppExt, ProjectPanelUndoRedoFeatureFlag};
+use feature_flags::FeatureFlagAppExt;
 use file_icons::FileIcons;
 use fs::TrashId;
 use futures::StreamExt as _;
 use git;
 use git::status::GitSummary;
 use git_ui;
-use git_ui::file_diff_view::FileDiffView;
+use git_ui_core::file_diff_view::FileDiffView;
 use gpui::{
     Action, AnyElement, App, AsyncWindowContext, Bounds, ClipboardEntry as GpuiClipboardEntry,
     ClipboardItem, Context, CursorStyle, DismissEvent, Div, DragMoveEvent, Entity, EventEmitter,
@@ -1122,7 +1122,11 @@ impl ProjectPanel {
             let is_remote = project.is_remote();
             let is_collab = project.is_via_collab();
             let is_local = project.is_local() || project.is_via_wsl_with_host_interop(cx);
-            let is_markdown = !is_dir && MarkdownPreviewView::is_markdown_path(&*entry.path);
+            let is_markdown = !is_dir
+                && MarkdownPreviewView::is_markdown_path(
+                    &*entry.path,
+                    self.project.read(cx).languages(),
+                );
 
             let settings = ProjectPanelSettings::get_global(cx);
             let visible_worktrees_count = project.visible_worktrees(cx).count();
@@ -1233,24 +1237,21 @@ impl ProjectPanel {
                                 t!("project_panel.context_menu.paste"),
                                 Box::new(Paste),
                             )
-                            .when(
-                                !is_collab && cx.has_flag::<ProjectPanelUndoRedoFeatureFlag>(),
-                                |menu| {
-                                    let can_undo = self.undo_manager.can_undo();
-                                    let can_redo = self.undo_manager.can_redo();
+                            .when(!is_collab && true, |menu| {
+                                let can_undo = self.undo_manager.can_undo();
+                                let can_redo = self.undo_manager.can_redo();
 
-                                    menu.action_disabled_when(
-                                        !can_undo,
-                                        t!("project_panel.context_menu.undo"),
-                                        Box::new(Undo),
-                                    )
-                                    .action_disabled_when(
-                                        !can_redo,
-                                        t!("project_panel.context_menu.redo"),
-                                        Box::new(Redo),
-                                    )
-                                },
-                            )
+                                menu.action_disabled_when(
+                                    !can_undo,
+                                    t!("project_panel.context_menu.undo"),
+                                    Box::new(Undo),
+                                )
+                                .action_disabled_when(
+                                    !can_redo,
+                                    t!("project_panel.context_menu.redo"),
+                                    Box::new(Redo),
+                                )
+                            })
                             .when(is_remote, |menu| {
                                 menu.separator().action(
                                     t!("project_panel.context_menu.download"),
@@ -1893,7 +1894,12 @@ impl ProjectPanel {
         let Some((worktree, entry)) = self.selected_entry(cx) else {
             return;
         };
-        if !entry.is_file() || !MarkdownPreviewView::is_markdown_path(&*entry.path) {
+        if !entry.is_file()
+            || !MarkdownPreviewView::is_markdown_path(
+                &*entry.path,
+                self.project.read(cx).languages(),
+            )
+        {
             return;
         }
         let project_path = ProjectPath {
@@ -4054,9 +4060,9 @@ impl ProjectPanel {
                         // File at root, open search with empty filter
                         self.workspace
                             .update(cx, |workspace, cx| {
-                                search::ProjectSearchView::new_search_in_directory(
+                                search::ProjectSearchView::new_search_with_filter(
                                     workspace,
-                                    RelPath::empty(),
+                                    String::new(),
                                     window,
                                     cx,
                                 );
@@ -4076,8 +4082,11 @@ impl ProjectPanel {
 
             self.workspace
                 .update(cx, |workspace, cx| {
-                    search::ProjectSearchView::new_search_in_directory(
-                        workspace, &dir_path, window, cx,
+                    search::ProjectSearchView::new_search_with_filter(
+                        workspace,
+                        String::new(),
+                        window,
+                        cx,
                     );
                 })
                 .ok();
@@ -7080,7 +7089,7 @@ impl Render for ProjectPanel {
         // version that understands these messages.
         let is_collab = project.is_via_collab();
         let is_local = project.is_local();
-        let supports_undo = cx.has_flag::<ProjectPanelUndoRedoFeatureFlag>();
+        let supports_undo = true;
 
         if has_worktree {
             let item_count = self
