@@ -12,7 +12,6 @@ use editor::{
         entry_diagnostic_aware_icon_name_and_color, entry_git_aware_label_color,
     },
 };
-use feature_flags::FeatureFlagAppExt;
 use file_icons::FileIcons;
 use fs::TrashId;
 use futures::StreamExt as _;
@@ -1152,7 +1151,7 @@ impl ProjectPanel {
             };
 
             let has_pasteable_content = self.has_pasteable_content(cx);
-            let context_menu = ContextMenu::build(window, cx, |menu, _, cx| {
+            let context_menu = ContextMenu::build(window, cx, |menu, _, _cx| {
                 menu.context(self.focus_handle.clone()).map(|menu| {
                     if is_read_only {
                         menu.when(is_markdown, |menu| {
@@ -4049,37 +4048,7 @@ impl ProjectPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if let Some((worktree, entry)) = self.selected_sub_entry(cx) {
-            let dir_path = if entry.is_dir() {
-                entry.path.clone()
-            } else {
-                // entry is a file, use its parent directory
-                match entry.path.parent() {
-                    Some(parent) => Arc::from(parent),
-                    None => {
-                        // File at root, open search with empty filter
-                        self.workspace
-                            .update(cx, |workspace, cx| {
-                                search::ProjectSearchView::new_search_with_filter(
-                                    workspace,
-                                    String::new(),
-                                    window,
-                                    cx,
-                                );
-                            })
-                            .ok();
-                        return;
-                    }
-                }
-            };
-
-            let include_root = self.project.read(cx).visible_worktrees(cx).count() > 1;
-            let dir_path = if include_root {
-                worktree.read(cx).root_name().join(&dir_path)
-            } else {
-                dir_path.to_rel_path_buf()
-            };
-
+        if self.selected_sub_entry(cx).is_some() {
             self.workspace
                 .update(cx, |workspace, cx| {
                     search::ProjectSearchView::new_search_with_filter(

@@ -2000,7 +2000,6 @@ mod tests {
     use crate::markdown_preview_view::ImageSource;
     use crate::markdown_preview_view::Resource;
     use crate::markdown_preview_view::resolve_preview_image;
-    use crate::markdown_preview_view::resolve_project_path_for_preview_image;
     use buffer_diff::BufferDiff;
     use editor::Editor;
     use fs::FakeFs;
@@ -2008,9 +2007,9 @@ mod tests {
         App, AppContext as _, Entity, Focusable as _, Modifiers, TestAppContext, WindowHandle, px,
     };
     use language::{Buffer, DiskState, Point};
-    use project::{Project, ProjectPath};
+    use project::Project;
     use serde_json::json;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
     use std::sync::Arc;
     use std::time::Duration;
     use util::path;
@@ -2025,7 +2024,7 @@ mod tests {
     use super::{MarkdownPreviewView, open_preview_url};
 
     #[gpui::test]
-    fn resolves_workspace_absolute_preview_image_path_and_rejects_missing(cx: &mut App) {
+    fn resolves_workspace_absolute_preview_image_path_and_rejects_missing(_cx: &mut App) {
         let tree = TempTree::new(json!({
             "docs": {},
             "test_image.png": "mock data"
@@ -2042,7 +2041,6 @@ mod tests {
                 None,
                 None,
                 PathStyle::local(),
-                cx,
             );
             assert_resolved_preview_image_path(resolved, image_file.as_path());
         }
@@ -2054,136 +2052,8 @@ mod tests {
             None,
             None,
             PathStyle::local(),
-            cx,
         );
         assert!(missing.is_none());
-    }
-
-    #[gpui::test]
-    async fn resolves_remote_preview_image_through_project(cx: &mut TestAppContext) {
-        init_test(cx);
-        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
-        let worktree = project.update(cx, |project, cx| {
-            project.add_test_remote_worktree("/remote/project", cx)
-        });
-        let source_project_path = ProjectPath {
-            worktree_id: worktree.read_with(cx, |worktree, _cx| worktree.id()),
-            path: rel_path("docs/readme.md").into(),
-        };
-
-        let resolved = cx.update(|cx| {
-            resolve_preview_image(
-                "images/example.png",
-                Some(Path::new("/remote/project/docs")),
-                Some(Path::new("/remote/project")),
-                Some(&project),
-                Some(&source_project_path),
-                PathStyle::local(),
-                cx,
-            )
-        });
-        assert!(matches!(resolved, Some(ImageSource::Custom(_))));
-
-        let outside_worktree = cx.update(|cx| {
-            resolve_preview_image(
-                "../../outside/example.png",
-                Some(Path::new("/remote/project/docs")),
-                Some(Path::new("/remote/project")),
-                Some(&project),
-                Some(&source_project_path),
-                PathStyle::local(),
-                cx,
-            )
-        });
-        assert!(outside_worktree.is_none());
-    }
-
-    #[gpui::test]
-    async fn resolves_remote_preview_image_with_different_client_path_style(
-        cx: &mut TestAppContext,
-    ) {
-        init_test(cx);
-        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
-        let worktree = project.update(cx, |project, cx| {
-            project.add_test_remote_worktree("/remote/project", cx)
-        });
-        let source_project_path = ProjectPath {
-            worktree_id: worktree.read_with(cx, |worktree, _cx| worktree.id()),
-            path: rel_path("docs/readme.md").into(),
-        };
-
-        let resolved = cx.update(|cx| {
-            resolve_preview_image(
-                "images/example.png",
-                Some(Path::new("/remote/project/docs")),
-                Some(Path::new("/remote/project")),
-                Some(&project),
-                Some(&source_project_path),
-                PathStyle::Windows,
-                cx,
-            )
-        });
-
-        assert!(matches!(resolved, Some(ImageSource::Custom(_))));
-        let project_path = cx.update(|cx| {
-            resolve_project_path_for_preview_image(
-                "images/example.png",
-                None,
-                &source_project_path,
-                &project,
-                cx,
-            )
-        });
-        assert_eq!(
-            project_path
-                .expect("image should resolve within the remote worktree")
-                .path,
-            rel_path("docs/images/example.png").into()
-        );
-    }
-
-    #[gpui::test]
-    async fn resolves_workspace_relative_remote_image_in_source_worktree(cx: &mut TestAppContext) {
-        init_test(cx);
-        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
-        let source_worktree = project.update(cx, |project, cx| {
-            project.add_test_remote_worktree("/remote/other", cx);
-            project.add_test_remote_worktree("/remote/project", cx)
-        });
-        let source_project_path = ProjectPath {
-            worktree_id: source_worktree.read_with(cx, |worktree, _cx| worktree.id()),
-            path: rel_path("docs/readme.md").into(),
-        };
-
-        let resolved = cx.update(|cx| {
-            resolve_preview_image(
-                "/images/root.png",
-                Some(Path::new("/remote/project/docs")),
-                Some(Path::new("/remote/other")),
-                Some(&project),
-                Some(&source_project_path),
-                PathStyle::Windows,
-                cx,
-            )
-        });
-        assert!(matches!(resolved, Some(ImageSource::Custom(_))));
-
-        let project_path = cx.update(|cx| {
-            resolve_project_path_for_preview_image(
-                "/images/root.png",
-                Some("images/root.png"),
-                &source_project_path,
-                &project,
-                cx,
-            )
-        });
-        assert_eq!(
-            project_path,
-            Some(ProjectPath {
-                worktree_id: source_project_path.worktree_id,
-                path: rel_path("images/root.png").into(),
-            })
-        );
     }
 
     #[gpui::test]
