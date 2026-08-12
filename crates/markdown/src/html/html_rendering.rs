@@ -447,11 +447,11 @@ impl MarkdownElement {
         }
     }
 
-    fn render_html_image(&self, image: &HtmlImage, builder: &mut MarkdownElementBuilder, cx: &App) {
+    fn render_html_image(&self, image: &HtmlImage, builder: &mut MarkdownElementBuilder, _cx: &App) {
         let Some(source) = self
             .image_resolver
             .as_ref()
-            .and_then(|resolve| resolve(image.dest_url.as_ref(), cx))
+            .and_then(|resolve| resolve(image.dest_url.as_ref()))
         else {
             return;
         };
