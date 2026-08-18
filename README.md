@@ -94,7 +94,7 @@ Zed 源代码主要采用 GPL-3.0-or-later 许可，标注部分采用 Apache-2.
 
 Zed 由 **Zed Industries, Inc.** 开发。如希望支持上游项目，可通过其 GitHub Sponsors 赞助，资金直接进入 Zed Industries，不附带任何特权。
 
-本汉化版由 **MindFlowLab** 独立维护，与 Zed Industries 无隶属关系。如果你认可这份本地化工作，欢迎扫码支持本仓库的持续维护：
+本汉化版由 **ReachForStar** 独立维护，与 Zed Industries 无隶属关系。如果你认可这份本地化工作，欢迎扫码支持本仓库的持续维护：
 
 | 微信支付 | 支付宝 |
 |:---:|:---:|
