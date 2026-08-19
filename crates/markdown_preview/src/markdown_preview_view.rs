@@ -647,7 +647,7 @@ impl MarkdownPreviewView {
             None => {}
             Some(PreviewLinkTarget::Heading(slug)) => {
                 self.markdown.update(cx, |markdown, cx| {
-                    markdown.scroll_to_heading(&slug, cx);
+                    markdown.scroll_to_heading_when_parsed(slug, cx);
                 });
             }
             Some(PreviewLinkTarget::Position { row, column }) => {

@@ -457,6 +457,7 @@ pub struct Markdown {
     pressed_link: Option<RenderedLink>,
     pressed_footnote_ref: Option<RenderedFootnoteRef>,
     autoscroll_request: Option<usize>,
+    pending_heading_scroll: Option<SharedString>,
     active_root_block: Option<usize>,
     parsed_markdown: ParsedMarkdown,
     images_by_source_offset: HashMap<usize, Arc<Image>>,
@@ -657,6 +658,7 @@ impl Markdown {
             pressed_link: None,
             pressed_footnote_ref: None,
             autoscroll_request: None,
+            pending_heading_scroll: None,
             active_root_block: None,
             should_reparse: false,
             images_by_source_offset: Default::default(),
@@ -915,7 +917,16 @@ impl Markdown {
             cx.notify();
             Some(source_index)
         } else {
+            self.pending_heading_scroll = Some(slug.into());
             None
+        }
+    }
+
+    pub fn scroll_to_heading_when_parsed(&mut self, slug: SharedString, cx: &mut Context<Self>) {
+        if self.pending_parse.is_some() || self.source.is_empty() {
+            self.pending_heading_scroll = Some(slug);
+        } else {
+            self.scroll_to_heading(&slug, cx);
         }
     }
 
@@ -1329,6 +1340,11 @@ impl Markdown {
                 this.pending_parse.take();
                 if this.should_reparse {
                     this.parse(cx);
+                } else if let Some(slug) = this.pending_heading_scroll.take()
+                    && let Some(source_index) =
+                        this.parsed_markdown.heading_slugs.get(&slug).copied()
+                {
+                    this.autoscroll_request = Some(source_index);
                 }
                 cx.notify();
                 cx.refresh_windows();
