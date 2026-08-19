@@ -5213,7 +5213,8 @@ fn window_and_layout_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: "Fullscreen Mode".into(),
-                description: "(macOS only) which fullscreen mode the toggle fullscreen action enters.".into(),
+                description:
+                    "(macOS only) which fullscreen mode the toggle fullscreen action enters.".into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("fullscreen_mode"),
