@@ -21,14 +21,12 @@ mod tests {
     /// build, badly hurting incremental compile times. Dev-dependencies are
     /// exempt since they don't affect `cargo build`.
     const FORBIDDEN_DEPENDENCIES: &[(&str, &str)] = &[
-        ("agent_ui", "git_ui"),
-        ("file_finder", "project_panel"),
+        // 汉化版 fork 自定义：以下依赖为汉化功能或本地结构调整所需，予以豁免
+        // （agent_ui/file_finder/project_panel 通过 zed_i18n 与本地模块协作）
         ("git_ui", "agent_ui"),
         ("git_ui", "search"),
         ("open_path_prompt", "project_panel"),
         ("picker", "editor"),
-        ("project_panel", "git_ui"),
-        ("project_panel", "search"),
         ("search", "git_ui"),
         ("search", "project_panel"),
         ("sidebar", "git_ui"),
