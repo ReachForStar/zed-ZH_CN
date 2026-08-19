@@ -458,6 +458,7 @@ pub struct Markdown {
     pressed_footnote_ref: Option<RenderedFootnoteRef>,
     autoscroll_request: Option<usize>,
     pending_heading_scroll: Option<SharedString>,
+    pending_autoscroll: Option<usize>,
     active_root_block: Option<usize>,
     parsed_markdown: ParsedMarkdown,
     images_by_source_offset: HashMap<usize, Arc<Image>>,
@@ -659,6 +660,7 @@ impl Markdown {
             pressed_footnote_ref: None,
             autoscroll_request: None,
             pending_heading_scroll: None,
+            pending_autoscroll: None,
             active_root_block: None,
             should_reparse: false,
             images_by_source_offset: Default::default(),
@@ -971,7 +973,11 @@ impl Markdown {
         source_index: usize,
         cx: &mut Context<Self>,
     ) {
-        self.autoscroll_request = Some(source_index);
+        if self.pending_parse.is_some() {
+            self.pending_autoscroll = Some(source_index);
+        } else {
+            self.autoscroll_request = Some(source_index);
+        }
         cx.refresh_windows();
     }
 
@@ -1344,6 +1350,9 @@ impl Markdown {
                     && let Some(source_index) =
                         this.parsed_markdown.heading_slugs.get(&slug).copied()
                 {
+                    this.pending_autoscroll = None;
+                    this.autoscroll_request = Some(source_index);
+                } else if let Some(source_index) = this.pending_autoscroll.take() {
                     this.autoscroll_request = Some(source_index);
                 }
                 cx.notify();
