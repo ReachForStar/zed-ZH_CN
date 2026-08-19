@@ -96,12 +96,13 @@ use util::paths::PathStyle;
 use util::{ResultExt, TryFutureExt, markdown::MarkdownInlineCode, maybe, rel_path::RelPath};
 use workspace::SERIALIZATION_THROTTLE_TIME;
 use workspace::{
-    Item, Workspace,
+    Item, ModalView, Workspace,
     dock::{DockPosition, Panel, PanelEvent},
     notifications::{DetachAndPromptErr, NotificationId, NotifyTaskExt},
 };
 use zed_actions::{
     DecreaseBufferFontSize, IncreaseBufferFontSize, ResetBufferFontSize, git_panel::ToggleFocus,
+    workspace::{CopyPath, CopyRelativePath},
 };
 use zed_i18n::t;
 
@@ -7427,7 +7428,7 @@ impl GitPanel {
                     .on_mouse_down(
                         MouseButton::Right,
                         cx.listener(move |this, event: &MouseDownEvent, window, cx| {
-                            this.deploy_panel_context_menu(event.position, window, cx)
+                            this.deploy_panel_context_menu(event.position, false, window, cx)
                         }),
                     )
                     .custom_scrollbars(
@@ -7580,6 +7581,12 @@ impl GitPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if matches!(self.entries.get(ix), Some(GitListEntry::Directory(_))) {
+            self.selected_entry = Some(ix);
+            self.deploy_panel_context_menu(position, true, window, cx);
+            return;
+        }
+
         let stage_intent = self.stage_intent_for_entry_index(ix);
         let Some(entry) = self.entries.get(ix).and_then(|e| e.status_entry()) else {
             return;
@@ -7652,6 +7659,7 @@ impl GitPanel {
     fn deploy_panel_context_menu(
         &mut self,
         position: Point<Pixels>,
+        include_copy_paths: bool,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {

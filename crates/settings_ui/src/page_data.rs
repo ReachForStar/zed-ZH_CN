@@ -2333,7 +2333,7 @@ fn editor_page() -> SettingsPage {
         ]
     }
 
-    fn gutter_section() -> [SettingsPageItem; 9] {
+    fn gutter_section() -> [SettingsPageItem; 10] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.gutter_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
@@ -2493,8 +2493,8 @@ fn editor_page() -> SettingsPage {
             }),
             SettingsPageItem::DynamicItem(DynamicItem {
                 discriminant: SettingItem {
-                    title: "Git Gutter Width",
-                    description: "Width of the git diff indicators in the gutter. Default scales with the buffer font size.",
+                    title: "Git Gutter Width".into(),
+                    description: "Width of the git diff indicators in the gutter. Default scales with the buffer font size.".into(),
                     field: Box::new(SettingField {
                         organization_override: None,
                         json_path: Some("gutter.git_gutter_width$"),
@@ -2548,8 +2548,8 @@ fn editor_page() -> SettingsPage {
                         settings::GitGutterWidthDiscriminants::Default => vec![],
                         settings::GitGutterWidthDiscriminants::Custom => vec![SettingItem {
                             files: USER,
-                            title: "Custom Width",
-                            description: "Width in pixels of the git diff indicators.",
+                            title: "Custom Width".into(),
+                            description: "Width in pixels of the git diff indicators.".into(),
                             field: Box::new(SettingField {
                                 organization_override: None,
                                 json_path: Some("gutter.git_gutter_width"),
@@ -4059,8 +4059,8 @@ fn search_and_files_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "File Scan Depth",
-                description: "Maximum directory depth to eagerly index outside of git repositories; contents of directories at this depth or deeper are indexed on demand. Repositories rooted shallower than this depth are always indexed fully. In projects that are not rooted at a git repository, repositories directly inside a root folder activate their git features immediately; deeper ones activate on first use. 0 means no limit and activates all git repositories immediately",
+                title: "File Scan Depth".into(),
+                description: "Maximum directory depth to eagerly index outside of git repositories; contents of directories at this depth or deeper are indexed on demand. Repositories rooted shallower than this depth are always indexed fully. In projects that are not rooted at a git repository, repositories directly inside a root folder activate their git features immediately; deeper ones activate on first use. 0 means no limit and activates all git repositories immediately".into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("file_scan_depth"),
@@ -5212,8 +5212,8 @@ fn window_and_layout_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Fullscreen Mode",
-                description: "(macOS only) which fullscreen mode the toggle fullscreen action enters.",
+                title: "Fullscreen Mode".into(),
+                description: "(macOS only) which fullscreen mode the toggle fullscreen action enters.".into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("fullscreen_mode"),

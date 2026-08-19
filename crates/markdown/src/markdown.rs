@@ -4636,6 +4636,106 @@ mod tests {
         }
     }
 
+    struct MarkdownTestView {
+        markdown: Entity<Markdown>,
+        style: MarkdownStyle,
+        code_span_link: Option<CodeSpanLinkCallback>,
+        rendered_text: Rc<RefCell<Option<RenderedText>>>,
+    }
+
+    impl Render for MarkdownTestView {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            let mut markdown_element =
+                MarkdownElement::new(self.markdown.clone(), self.style.clone());
+            if let Some(code_span_link) = self.code_span_link.clone() {
+                markdown_element =
+                    markdown_element.on_code_span_link(move |text, cx| code_span_link(text, cx));
+            }
+            CapturingMarkdownElement {
+                markdown_element: markdown_element.code_block_renderer(
+                    CodeBlockRenderer::Default {
+                        copy_button_visibility: CopyButtonVisibility::Hidden,
+                        wrap_button_visibility: WrapButtonVisibility::Hidden,
+                        border: false,
+                    },
+                ),
+                rendered_text: self.rendered_text.clone(),
+            }
+        }
+    }
+
+    struct CapturingMarkdownElement {
+        markdown_element: MarkdownElement,
+        rendered_text: Rc<RefCell<Option<RenderedText>>>,
+    }
+
+    impl IntoElement for CapturingMarkdownElement {
+        type Element = Self;
+
+        fn into_element(self) -> Self::Element {
+            self
+        }
+    }
+
+    impl Element for CapturingMarkdownElement {
+        type RequestLayoutState = RenderedMarkdown;
+        type PrepaintState = Hitbox;
+
+        fn id(&self) -> Option<ElementId> {
+            self.markdown_element.id()
+        }
+
+        fn source_location(&self) -> Option<&'static core::panic::Location<'static>> {
+            self.markdown_element.source_location()
+        }
+
+        fn request_layout(
+            &mut self,
+            id: Option<&GlobalElementId>,
+            inspector_id: Option<&gpui::InspectorElementId>,
+            window: &mut Window,
+            cx: &mut App,
+        ) -> (gpui::LayoutId, Self::RequestLayoutState) {
+            self.markdown_element
+                .request_layout(id, inspector_id, window, cx)
+        }
+
+        fn prepaint(
+            &mut self,
+            id: Option<&GlobalElementId>,
+            inspector_id: Option<&gpui::InspectorElementId>,
+            bounds: Bounds<Pixels>,
+            rendered_markdown: &mut Self::RequestLayoutState,
+            window: &mut Window,
+            cx: &mut App,
+        ) -> Self::PrepaintState {
+            self.markdown_element
+                .prepaint(id, inspector_id, bounds, rendered_markdown, window, cx)
+        }
+
+        fn paint(
+            &mut self,
+            id: Option<&GlobalElementId>,
+            inspector_id: Option<&gpui::InspectorElementId>,
+            bounds: Bounds<Pixels>,
+            rendered_markdown: &mut Self::RequestLayoutState,
+            hitbox: &mut Self::PrepaintState,
+            window: &mut Window,
+            cx: &mut App,
+        ) {
+            self.markdown_element.paint(
+                id,
+                inspector_id,
+                bounds,
+                rendered_markdown,
+                hitbox,
+                window,
+                cx,
+            );
+            *self.rendered_text.borrow_mut() = Some(rendered_markdown.text.clone());
+        }
+    }
+
     fn ensure_theme_initialized(cx: &mut TestAppContext) {
         cx.update(|cx| {
             if !cx.has_global::<settings::SettingsStore>() {
@@ -6582,6 +6682,59 @@ mod tests {
     }
 
     #[gpui::test]
+    fn test_heading_inline_katex_uses_heading_font_size(cx: &mut TestAppContext) {
+        struct TestWindow;
+
+        impl Render for TestWindow {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                div()
+            }
+        }
+
+        ensure_theme_initialized(cx);
+
+        let (_, cx) = cx.add_window_view(|_, _| TestWindow);
+        let markdown = cx.new(|cx| {
+            Markdown::new_with_options(
+                "# Heading $x$\n\nBody $x$".into(),
+                None,
+                None,
+                MarkdownOptions {
+                    render_embedded_diagrams: true,
+                    ..Default::default()
+                },
+                cx,
+            )
+        });
+        cx.run_until_parked();
+        let _ = draw_markdown(markdown.clone(), cx);
+
+        let mut x_font_sizes = markdown.read_with(cx, |markdown, _| {
+            markdown
+                .katex_state
+                .cache
+                .keys()
+                .filter(|contents| {
+                    contents.contents.as_ref() == "x"
+                        && contents.mode == crate::katex::KatexRenderMode::Inline
+                })
+                .map(|contents| contents.font_size)
+                .collect::<Vec<_>>()
+        });
+        x_font_sizes.sort_unstable();
+        x_font_sizes.dedup();
+
+        assert!(
+            x_font_sizes.len() == 2,
+            "expected exactly separate body and heading inline katex cache entries, got {x_font_sizes:?}"
+        );
+        assert!(
+            x_font_sizes.last() > x_font_sizes.first(),
+            "heading inline katex should use a larger font size than body inline katex, got {x_font_sizes:?}"
+        );
+    }
+
+    #[gpui::test]
     fn test_code_block_line_height_follows_buffer_line_height_setting(cx: &mut TestAppContext) {
         let font_size = 14.0;
         let (tight_prose, tight_code) = rendered_prose_and_code_line_heights(cx, font_size, 1.2);
@@ -6665,56 +6818,63 @@ mod tests {
             .expect("right cell should be present");
         let right_cell_range = right_cell_start..right_cell_start + right_cell.len();
 
-    #[gpui::test]
-    fn test_heading_inline_katex_uses_heading_font_size(cx: &mut TestAppContext) {
-        struct TestWindow;
-
-        impl Render for TestWindow {
-            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-                div()
-            }
-        }
-
-        ensure_theme_initialized(cx);
-
-        let (_, cx) = cx.add_window_view(|_, _| TestWindow);
-        let markdown = cx.new(|cx| {
-            Markdown::new_with_options(
-                "# Heading $x$\n\nBody $x$".into(),
-                None,
-                None,
-                MarkdownOptions {
-                    render_embedded_diagrams: true,
-                    ..Default::default()
+        let markdown = cx.new(|cx| Markdown::new(source.into(), None, None, cx));
+        let rendered_text = Rc::new(RefCell::new(None));
+        let (_, cx) = cx.add_window_view({
+            let rendered_text = rendered_text.clone();
+            move |_, _| MarkdownTestView {
+                markdown,
+                style: MarkdownStyle {
+                    table_columns_min_size: true,
+                    ..MarkdownStyle::default()
                 },
-                cx,
-            )
+                code_span_link: None,
+                rendered_text,
+            }
+        });
+        cx.simulate_resize(size(px(300.), px(200.)));
+        cx.run_until_parked();
+
+        let (event_position, right_cell_before_scroll) = {
+            let rendered_text = rendered_text.borrow();
+            let rendered_text = rendered_text
+                .as_ref()
+                .expect("markdown should be rendered before scrolling");
+            let event_position = rendered_text
+                .bounds_for_source_range(left_cell_range)
+                .into_iter()
+                .next()
+                .expect("left cell should have bounds")
+                .center();
+            let right_cell_bounds = rendered_text
+                .bounds_for_source_range(right_cell_range.clone())
+                .into_iter()
+                .next()
+                .expect("right cell should have bounds");
+            (event_position, right_cell_bounds)
+        };
+
+        cx.simulate_event(ScrollWheelEvent {
+            position: event_position,
+            delta: ScrollDelta::Pixels(point(px(-100.), px(0.))),
+            modifiers: Modifiers::default(),
+            touch_phase: TouchPhase::Moved,
         });
         cx.run_until_parked();
-        let _ = draw_markdown(markdown.clone(), cx);
 
-        let mut x_font_sizes = markdown.read_with(cx, |markdown, _| {
-            markdown
-                .katex_state
-                .cache
-                .keys()
-                .filter(|contents| {
-                    contents.contents.as_ref() == "x"
-                        && contents.mode == crate::katex::KatexRenderMode::Inline
-                })
-                .map(|contents| contents.font_size)
-                .collect::<Vec<_>>()
-        });
-        x_font_sizes.sort_unstable();
-        x_font_sizes.dedup();
+        let right_cell_after_scroll = rendered_text
+            .borrow()
+            .as_ref()
+            .expect("markdown should be rendered after scrolling")
+            .bounds_for_source_range(right_cell_range)
+            .into_iter()
+            .next()
+            .expect("right cell should have bounds after scrolling");
 
-        assert!(
-            x_font_sizes.len() == 2,
-            "expected exactly separate body and heading inline katex cache entries, got {x_font_sizes:?}"
-        );
-        assert!(
-            x_font_sizes.last() > x_font_sizes.first(),
-            "heading inline katex should use a larger font size than body inline katex, got {x_font_sizes:?}"
+        assert!(right_cell_after_scroll.left() < right_cell_before_scroll.left());
+        assert_eq!(
+            right_cell_after_scroll.top(),
+            right_cell_before_scroll.top()
         );
     }
 
