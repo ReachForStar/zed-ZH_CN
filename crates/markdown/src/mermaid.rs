@@ -970,6 +970,8 @@ mod tests {
     use gpui::{
         Context, Entity, IntoElement, Render, RenderImage, TestAppContext, Window, point, size,
     };
+    use std::cell::RefCell;
+    use std::rc::Rc;
     use std::sync::Arc;
     use std::time::Duration;
     use ui::prelude::*;
@@ -994,21 +996,40 @@ mod tests {
         markdown: Entity<Markdown>,
         cx: &mut gpui::VisualTestContext,
     ) -> crate::RenderedText {
-        cx.draw(
-            Default::default(),
-            size(px(600.0), px(600.0)),
-            |_window, _cx| {
-                MarkdownElement::new(markdown, MarkdownStyle::default()).code_block_renderer(
-                    CodeBlockRenderer::Default {
+        struct CaptureRenderedText {
+            markdown: Entity<Markdown>,
+            rendered_text: Rc<RefCell<Option<crate::RenderedText>>>,
+        }
+
+        impl Render for CaptureRenderedText {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                let element = MarkdownElement::new(self.markdown.clone(), MarkdownStyle::default())
+                    .code_block_renderer(CodeBlockRenderer::Default {
                         copy_button_visibility: CopyButtonVisibility::Hidden,
                         wrap_button_visibility: WrapButtonVisibility::Hidden,
                         border: false,
-                    },
-                )
-            },
-        )
-        .0
-        .text
+                    })
+                    .on_render({
+                        let rendered_text = self.rendered_text.clone();
+                        move |text| *rendered_text.borrow_mut() = Some(text)
+                    });
+                div().child(element)
+            }
+        }
+
+        let rendered_text = Rc::new(RefCell::new(None));
+        cx.draw(Default::default(), size(px(600.0), px(600.0)), {
+            let rendered_text = rendered_text.clone();
+            |_window, cx| {
+                cx.new(|_| CaptureRenderedText {
+                    markdown,
+                    rendered_text,
+                })
+                .into_any_element()
+            }
+        });
+        let rendered_text = rendered_text.borrow_mut().take();
+        rendered_text.expect("markdown element should have been laid out")
     }
 
     fn render_markdown_with_options(
@@ -1627,7 +1648,7 @@ mod tests {
                 None,
                 None,
                 MarkdownOptions {
-                    render_embedded_diagrams: true,
+                    render_mermaid_diagrams: true,
                     ..Default::default()
                 },
                 cx,
@@ -1679,7 +1700,7 @@ mod tests {
                 None,
                 None,
                 MarkdownOptions {
-                    render_embedded_diagrams: true,
+                    render_mermaid_diagrams: true,
                     ..Default::default()
                 },
                 cx,
@@ -1727,7 +1748,7 @@ mod tests {
         let rendered = render_markdown_with_options(
             "```mermaid\ngraph TD;\n```",
             MarkdownOptions {
-                render_embedded_diagrams: true,
+                render_mermaid_diagrams: true,
                 ..Default::default()
             },
             cx,
@@ -1762,7 +1783,7 @@ mod tests {
                 None,
                 None,
                 MarkdownOptions {
-                    render_embedded_diagrams: true,
+                    render_mermaid_diagrams: true,
                     ..Default::default()
                 },
                 cx,

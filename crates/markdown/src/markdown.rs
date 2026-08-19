@@ -489,6 +489,7 @@ pub struct Markdown {
 pub struct MarkdownOptions {
     pub parse_links_only: bool,
     pub parse_html: bool,
+    pub render_mermaid_diagrams: bool,
     pub render_embedded_diagrams: bool,
     pub parse_heading_slugs: bool,
     pub render_metadata_blocks: bool,
@@ -641,7 +642,7 @@ impl Markdown {
     ) -> Self {
         let focus_handle = cx.focus_handle();
 
-        let theme_subscription = if options.render_embedded_diagrams {
+        let theme_subscription = if options.render_mermaid_diagrams {
             Some(
                 cx.observe_global::<theme::GlobalTheme>(|this: &mut Self, cx| {
                     this.invalidate_embedded_diagrams_caches(cx);
@@ -721,7 +722,7 @@ impl Markdown {
 
     /// Used in the agent panel to force a re-render when the theme changes
     pub fn invalidate_embedded_diagrams_caches(&mut self, cx: &mut Context<Self>) {
-        if self.options.render_embedded_diagrams {
+        if self.options.render_mermaid_diagrams {
             let parsed_markdown = &self.parsed_markdown;
             if !self.parsed_markdown.mermaid_diagrams.is_empty() {
                 self.mermaid_state.clear(cx);
@@ -736,9 +737,12 @@ impl Markdown {
                     cx,
                 );
             }
+            cx.notify();
+        }
+        if self.options.render_embedded_diagrams {
             if !self.parsed_markdown.katex_diagrams.is_empty() {
                 self.katex_state.clear();
-                self.katex_state.update(parsed_markdown, cx);
+                self.katex_state.update(&self.parsed_markdown, cx);
             }
             cx.notify();
         }
@@ -1165,6 +1169,7 @@ impl Markdown {
         let source = self.source.clone();
         let should_parse_links_only = self.options.parse_links_only;
         let should_parse_html = self.options.parse_html;
+        let should_render_mermaid_diagrams = self.options.render_mermaid_diagrams;
         let should_render_embedded_diagrams = self.options.render_embedded_diagrams;
         let should_parse_heading_slugs = self.options.parse_heading_slugs;
         let should_parse_metadata_blocks = self.options.render_metadata_blocks;
@@ -1205,14 +1210,18 @@ impl Markdown {
             let metadata_blocks = parsed.metadata_blocks;
             let heading_slugs = parsed.heading_slugs;
             let footnote_definitions = parsed.footnote_definitions;
-            let (mermaid_diagrams, katex_diagrams) = if should_render_embedded_diagrams {
-                (
-                    extract_mermaid_diagrams(&source, &events),
-                    extract_katex_diagrams(&events),
-                )
-            } else {
-                (BTreeMap::default(), BTreeMap::default())
-            };
+            let (mermaid_diagrams, katex_diagrams) = (
+                if should_render_mermaid_diagrams {
+                    extract_mermaid_diagrams(&source, &events)
+                } else {
+                    BTreeMap::default()
+                },
+                if should_render_embedded_diagrams {
+                    extract_katex_diagrams(&events)
+                } else {
+                    BTreeMap::default()
+                },
+            );
             let mut images_by_source_offset = HashMap::default();
             let mut languages_by_name = TreeMap::default();
             let mut languages_by_path = TreeMap::default();
@@ -1294,7 +1303,7 @@ impl Markdown {
                 }) {
                     this.active_root_block = None;
                 }
-                if this.options.render_embedded_diagrams {
+                if this.options.render_mermaid_diagrams {
                     let parsed_markdown = this.parsed_markdown.clone();
                     this.mermaid_views
                         .retain(|offset, _| parsed_markdown.mermaid_diagrams.contains_key(offset));
@@ -1308,10 +1317,14 @@ impl Markdown {
                         },
                         cx,
                     );
-                    this.katex_state.update(&parsed_markdown, cx);
                 } else {
                     this.mermaid_state.clear(cx);
                     this.mermaid_views.clear();
+                }
+                if this.options.render_embedded_diagrams {
+                    let parsed_markdown = this.parsed_markdown.clone();
+                    this.katex_state.update(&parsed_markdown, cx);
+                } else {
                     this.katex_state.clear();
                 }
                 this.pending_parse.take();
@@ -1483,6 +1496,8 @@ pub struct MarkdownElement {
     image_resolver: Option<Box<dyn Fn(&str) -> Option<ImageSource>>>,
     show_root_block_markers: bool,
     autoscroll: AutoscrollBehavior,
+    /// 测试专用钩子：在 view 下渲染时观察布局后的文本
+    on_render: Option<Box<dyn Fn(RenderedText)>>,
 }
 
 impl MarkdownElement {
@@ -1504,6 +1519,7 @@ impl MarkdownElement {
             image_resolver: None,
             show_root_block_markers: false,
             autoscroll: AutoscrollBehavior::Propagate,
+            on_render: None,
         }
     }
 
@@ -1530,6 +1546,13 @@ impl MarkdownElement {
 
     pub fn code_block_renderer(mut self, variant: CodeBlockRenderer) -> Self {
         self.code_block_renderer = variant;
+        self
+    }
+
+    /// 测试专用：注册回调，每次布局时接收渲染后的文本
+    #[cfg(test)]
+    pub(crate) fn on_render(mut self, callback: impl Fn(RenderedText) + 'static) -> Self {
+        self.on_render = Some(Box::new(callback));
         self
     }
 
@@ -2340,6 +2363,7 @@ impl Element for MarkdownElement {
             parsed_markdown,
             images,
             active_root_block,
+            render_mermaid_diagrams,
             render_embedded_diagrams,
             mermaid_state,
             katex_state,
@@ -2349,6 +2373,7 @@ impl Element for MarkdownElement {
                 markdown.parsed_markdown.clone(),
                 markdown.images_by_source_offset.clone(),
                 markdown.active_root_block,
+                markdown.options.render_mermaid_diagrams,
                 markdown.options.render_embedded_diagrams,
                 markdown.mermaid_state.clone(),
                 markdown.katex_state.clone(),
@@ -2479,7 +2504,7 @@ impl Element for MarkdownElement {
                             );
                         }
                         MarkdownTag::CodeBlock { kind, .. } => {
-                            if render_embedded_diagrams
+                            if render_mermaid_diagrams
                                 && let Some(mermaid_diagram) =
                                     parsed_markdown.mermaid_diagrams.get(&range.start)
                             {
@@ -2742,7 +2767,14 @@ impl Element for MarkdownElement {
                                     .border(px(1.5))
                                     .border_color(cx.theme().colors().border)
                                     .rounded_sm()
-                                    .overflow_hidden(),
+                                    .restrict_scroll_to_axis()
+                                    .custom_scrollbars(
+                                        Scrollbars::new(ScrollAxes::Horizontal)
+                                            .id(("markdown-table-scrollbar", range.start))
+                                            .notify_content(),
+                                        window,
+                                        cx,
+                                    ),
                                 range,
                                 markdown_end,
                             );
@@ -3080,6 +3112,10 @@ impl Element for MarkdownElement {
                 .update(cx, |markdown, _| markdown.clear_code_block_scroll_handles());
         }
         let mut rendered_markdown = builder.build();
+        #[cfg(test)]
+        if let Some(on_render) = self.on_render.as_ref() {
+            on_render(rendered_markdown.text.clone());
+        }
         let child_layout_id = rendered_markdown.element.request_layout(window, cx);
         let layout_id = window.request_layout(gpui::Style::default(), [child_layout_id], cx);
         (layout_id, rendered_markdown)
@@ -6465,7 +6501,7 @@ mod tests {
 
         assert_eq!(
             rendered.text_for_range(0..source.len()),
-            "text 1 \n$$x$$\n text 2"
+            "text 1 \n\u{200b}\n text 2"
         );
     }
 
@@ -6486,7 +6522,7 @@ mod tests {
 
         assert_eq!(
             rendered.text_for_range(0..source.len()),
-            "text 1 \n$$x$$\n text 2 \n$$y$$\n text 3"
+            "text 1 \n\u{200b}\n text 2 \n\u{200b}\n text 3"
         );
     }
 
@@ -6503,7 +6539,12 @@ mod tests {
             cx,
         );
 
-        assert_eq!(rendered.text_for_range(0..source.len()), "text $x$ text");
+        assert_eq!(
+            rendered.text_for_range(0..source.len()),
+            "text 
+​
+ text"
+        );
     }
 
     #[gpui::test]
