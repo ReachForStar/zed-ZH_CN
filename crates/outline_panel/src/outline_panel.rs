@@ -6902,6 +6902,12 @@ outline: struct OutlineEntryExcerpt
             project_search::init(cx);
             buffer_search::init(cx);
             super::init(cx);
+
+            SettingsStore::update_global(cx, |store, cx| {
+                store.update_user_settings(cx, |settings| {
+                    settings.project.worktree.file_scan_depth = Some(0);
+                });
+            });
         });
     }
 
