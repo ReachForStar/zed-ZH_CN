@@ -723,7 +723,6 @@ impl Markdown {
     /// Used in the agent panel to force a re-render when the theme changes
     pub fn invalidate_embedded_diagrams_caches(&mut self, cx: &mut Context<Self>) {
         if self.options.render_mermaid_diagrams {
-            let parsed_markdown = &self.parsed_markdown;
             if !self.parsed_markdown.mermaid_diagrams.is_empty() {
                 self.mermaid_state.clear(cx);
                 let mermaid_views = &self.mermaid_views;
@@ -1497,6 +1496,7 @@ pub struct MarkdownElement {
     show_root_block_markers: bool,
     autoscroll: AutoscrollBehavior,
     /// 测试专用钩子：在 view 下渲染时观察布局后的文本
+    #[cfg(test)]
     on_render: Option<Box<dyn Fn(RenderedText)>>,
 }
 
@@ -1519,6 +1519,7 @@ impl MarkdownElement {
             image_resolver: None,
             show_root_block_markers: false,
             autoscroll: AutoscrollBehavior::Propagate,
+            #[cfg(test)]
             on_render: None,
         }
     }
@@ -6541,9 +6542,7 @@ mod tests {
 
         assert_eq!(
             rendered.text_for_range(0..source.len()),
-            "text 
-​
- text"
+            "text \n\u{200b}\n text"
         );
     }
 
