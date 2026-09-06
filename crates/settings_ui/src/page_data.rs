@@ -205,8 +205,8 @@ fn general_page(cx: &App) -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
 
-                title: "On New Window",
-                description: "What to show when opening a new window.",
+                title: t!("settings_ui.page_data.on_new_window_title").into(),
+                description: t!("settings_ui.page_data.on_new_window_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("on_new_window"),
@@ -322,8 +322,8 @@ fn general_page(cx: &App) -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
 
-                title: "Reveal If Open",
-                description: "when enabled, zed will prefer already-open buffers.",
+                title: t!("settings_ui.page_data.reveal_if_open_title").into(),
+                description: t!("settings_ui.page_data.reveal_if_open_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("reveal_if_open"),
@@ -1497,8 +1497,8 @@ fn appearance_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
 
-                title: "Cursor Animation",
-                description: "Whether the cursor smoothly animates when moving around the editor.",
+                title: t!("settings_ui.page_data.cursor_animation_title").into(),
+                description: t!("settings_ui.page_data.cursor_animation_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("cursor_animation.enabled"),
@@ -2564,8 +2564,8 @@ fn editor_page() -> SettingsPage {
             }),
             SettingsPageItem::DynamicItem(DynamicItem {
                 discriminant: SettingItem {
-                    title: "Git Gutter Width".into(),
-                    description: "Width of the git diff indicators in the gutter. Default scales with the buffer font size.".into(),
+                    title: t!("settings_ui.page_data.git_gutter_width_title").into(),
+                    description: t!("settings_ui.page_data.git_gutter_width_description").into(),
                     field: Box::new(SettingField {
                         organization_override: None,
                         json_path: Some("gutter.git_gutter_width$"),
@@ -2619,8 +2619,8 @@ fn editor_page() -> SettingsPage {
                         settings::GitGutterWidthDiscriminants::Default => vec![],
                         settings::GitGutterWidthDiscriminants::Custom => vec![SettingItem {
                             files: USER,
-                            title: "Custom Width".into(),
-                            description: "Width in pixels of the git diff indicators.".into(),
+                            title: t!("settings_ui.page_data.git_gutter_custom_width_title").into(),
+                            description: t!("settings_ui.page_data.git_gutter_custom_width_description").into(),
                             field: Box::new(SettingField {
                                 organization_override: None,
                                 json_path: Some("gutter.git_gutter_width"),
@@ -3980,8 +3980,8 @@ fn search_and_files_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
 
-                title: "Search on Type",
-                description: "Start searching as you type in project search, without pressing Enter.",
+                title: t!("settings_ui.page_data.search_on_type_title").into(),
+                description: t!("settings_ui.page_data.search_on_type_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("editor.search.search_on_type"),
@@ -4005,7 +4005,7 @@ fn search_and_files_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.seed_search_query_from_cursor_title").into(),
-                description: "When to populate a new search's query based on the text under the cursor.",
+                description: t!("settings_ui.page_data.seed_search_query_from_cursor_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("seed_search_query_from_cursor"),
@@ -4154,8 +4154,8 @@ fn search_and_files_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "File Scan Depth".into(),
-                description: "Maximum directory depth to eagerly index outside of git repositories; contents of directories at this depth or deeper are indexed on demand. Repositories rooted shallower than this depth are always indexed fully. In projects that are not rooted at a git repository, repositories directly inside a root folder activate their git features immediately; deeper ones activate on first use. 0 means no limit and activates all git repositories immediately".into(),
+                title: t!("settings_ui.page_data.file_scan_depth_title").into(),
+                description: t!("settings_ui.page_data.file_scan_depth_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("file_scan_depth"),
@@ -4353,8 +4353,8 @@ fn window_and_layout_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
 
-                title: "Pending Keystrokes Indicator",
-                description: "Show an indicator with a countdown while a multi-stroke key binding is pending. Its binding preview popover is disabled when the which-key menu is enabled.",
+                title: t!("settings_ui.page_data.pending_keystrokes_indicator_title").into(),
+                description: t!("settings_ui.page_data.pending_keystrokes_indicator_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("status_bar.pending_keystrokes_indicator"),
@@ -5313,10 +5313,10 @@ fn window_and_layout_page() -> SettingsPage {
     fn window_section() -> [SettingsPageItem; 6] {
         [
 
-            SettingsPageItem::SectionHeader("Window"),
+            SettingsPageItem::SectionHeader(t!("settings_ui.page_data.window_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Title Format",
-                description: "Window title template. Available variables are `${projectName}`, `${fileName}`, `${filePath}`, `${relativePath}`, `${fileStem}`, `${remoteName}`, `${remoteHost}`, `${appName}`, `${branch}`, and `${separator}`. `${separator}` is omitted when adjacent variables are empty, but literal text is preserved. The collaboration indicator, when present, is appended after the rendered template. If the template renders to nothing, the default template is used instead.",
+                title: t!("settings_ui.page_data.title_format_title").into(),
+                description: t!("settings_ui.page_data.title_format_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("window_title_format"),
@@ -5335,8 +5335,8 @@ fn window_and_layout_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Title Separator",
-                description: "String substituted for `${separator}` in the window title format. Include any surrounding whitespace in the value.",
+                title: t!("settings_ui.page_data.title_separator_title").into(),
+                description: t!("settings_ui.page_data.title_separator_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("window_title_separator"),
@@ -5371,7 +5371,7 @@ fn window_and_layout_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Fullscreen Mode".into(),
+                title: t!("settings_ui.page_data.fullscreen_mode_title").into(),
                 description:
                     "(macOS only) which fullscreen mode the toggle fullscreen action enters.".into(),
                 field: Box::new(SettingField {
@@ -5479,8 +5479,8 @@ fn window_and_layout_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Close Panel on Toggle",
-                description: "Whether invoking a panel's ToggleFocus action while it's already focused closes the panel, instead of just moving focus back to the editor.",
+                title: t!("settings_ui.page_data.close_panel_on_toggle_title").into(),
+                description: t!("settings_ui.page_data.close_panel_on_toggle_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("close_panel_on_toggle"),
@@ -5609,8 +5609,8 @@ fn panels_page() -> SettingsPage {
             }),
             SettingsPageItem::DynamicItem(DynamicItem {
                 discriminant: SettingItem {
-                    title: "Project Panel Title Tooltips Delay",
-                    description: "Delay in milliseconds before tooltips appear for project panel titles.",
+                    title: t!("settings_ui.page_data.project_panel_title_tooltips_delay_title").into(),
+                    description: t!("settings_ui.page_data.project_panel_title_tooltips_delay_description").into(),
                     field: Box::new(SettingField {
                         organization_override: None,
                         json_path: Some("project_panel.title_tooltip_delay$"),
@@ -5669,8 +5669,8 @@ fn panels_page() -> SettingsPage {
                         settings::ProjectPanelTitleTooltipDelayDiscriminants::Custom => {
                             vec![SettingItem {
                                 files: USER,
-                                title: "Custom Delay",
-                                description: "Delay in milliseconds of the project panel title tooltips.",
+                                title: t!("settings_ui.page_data.project_panel_title_tooltips_custom_delay_title").into(),
+                                description: t!("settings_ui.page_data.project_panel_title_tooltips_custom_delay_description").into(),
                                 field: Box::new(SettingField {
                                     organization_override: None,
                                     json_path: Some("project_panel.title_tooltip_delay"),
@@ -6642,8 +6642,8 @@ fn panels_page() -> SettingsPage {
                 metadata: None,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Hide Symbols in Multi-Buffers",
-                description: "Whether to hide symbols, excerpts and search matches in the outline panel when a multi-buffer view is active.",
+                title: t!("settings_ui.page_data.hide_symbols_in_multi_buffers_title").into(),
+                description: t!("settings_ui.page_data.hide_symbols_in_multi_buffers_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("outline_panel.multi_buffer_hide_symbols"),
@@ -10715,8 +10715,8 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
             ),
             SettingsPageItem::SettingItem(SettingItem {
 
-                title: "Language Detection",
-                description: "Whether to enable automatic language detection in unsaved buffers.",
+                title: t!("settings_ui.page_data.language_detection_title").into(),
+                description: t!("settings_ui.page_data.language_detection_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("language_detection"),
@@ -10885,8 +10885,8 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Open Markdown Files in Preview",
-                description: "Whether to automatically open Markdown files in the preview.",
+                title: t!("settings_ui.page_data.open_markdown_files_in_preview_title").into(),
+                description: t!("settings_ui.page_data.open_markdown_files_in_preview_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("markdown_preview.open_markdown_files_in_preview"),

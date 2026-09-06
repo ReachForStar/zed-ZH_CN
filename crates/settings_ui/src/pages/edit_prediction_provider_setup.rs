@@ -536,8 +536,8 @@ fn ollama_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Prediction Debounce",
-            description: "Delay in milliseconds before automatically requesting a prediction after typing stops. Set to 0 to request predictions immediately.",
+            title: t!("settings_ui.page_data.prediction_debounce_title").into(),
+            description: t!("settings_ui.page_data.prediction_debounce_description").into(),
             field: Box::new(SettingField {
                 organization_override: None,
                 pick: |settings| {
@@ -702,8 +702,8 @@ fn open_ai_compatible_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Prediction Debounce",
-            description: "Delay in milliseconds before automatically requesting a prediction after typing stops. Set to 0 to request predictions immediately.",
+            title: t!("settings_ui.page_data.prediction_debounce_title").into(),
+            description: t!("settings_ui.page_data.prediction_debounce_description").into(),
             field: Box::new(SettingField {
                 organization_override: None,
                 pick: |settings| {
@@ -837,8 +837,8 @@ fn codestral_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Prediction Debounce",
-            description: "Delay in milliseconds before automatically requesting a prediction after typing stops. Set to 0 to request predictions immediately.",
+            title: t!("settings_ui.page_data.prediction_debounce_title").into(),
+            description: t!("settings_ui.page_data.prediction_debounce_description").into(),
             field: Box::new(SettingField {
                 organization_override: None,
                 pick: |settings| {
@@ -872,8 +872,8 @@ fn codestral_settings() -> Box<[SettingsPageItem]> {
 
 fn mercury_settings() -> Box<[SettingsPageItem]> {
     Box::new([SettingsPageItem::SettingItem(SettingItem {
-        title: "Prediction Debounce",
-        description: "Delay in milliseconds before automatically requesting a prediction after typing stops. Set to 0 to request predictions immediately.",
+        title: t!("settings_ui.page_data.prediction_debounce_title").into(),
+        description: t!("settings_ui.page_data.prediction_debounce_description").into(),
         field: Box::new(SettingField {
             organization_override: None,
             pick: |settings| {
@@ -906,8 +906,8 @@ fn mercury_settings() -> Box<[SettingsPageItem]> {
 
 fn zed_settings() -> Box<[SettingsPageItem]> {
     Box::new([SettingsPageItem::SettingItem(SettingItem {
-        title: "Prediction Debounce",
-        description: "Delay in milliseconds before automatically requesting a prediction after typing stops. Set to 0 to request predictions immediately.",
+        title: t!("settings_ui.page_data.prediction_debounce_title").into(),
+        description: t!("settings_ui.page_data.prediction_debounce_description").into(),
         field: Box::new(SettingField {
             organization_override: None,
             pick: |settings| {
@@ -963,8 +963,8 @@ fn render_zed_provider(
 
 fn copilot_settings() -> Box<[SettingsPageItem]> {
     Box::new([SettingsPageItem::SettingItem(SettingItem {
-        title: "Prediction Debounce",
-        description: "Delay in milliseconds before automatically requesting a prediction after typing stops. Set to 0 to request predictions immediately.",
+        title: t!("settings_ui.page_data.prediction_debounce_title").into(),
+        description: t!("settings_ui.page_data.prediction_debounce_description").into(),
         field: Box::new(SettingField {
             organization_override: None,
             pick: |settings| {
