@@ -2775,11 +2775,15 @@ impl ConversationView {
                     message.push_str("\n");
                     message.push_str(stderr);
                 };
-                (t!("agent_ui.conversation_view.failed_to_launch").into(), message.into())
+                (
+                    t!("agent_ui.conversation_view.failed_to_launch").into(),
+                    message.into(),
+                )
             }
-            LoadError::Other(msg) => {
-                (t!("agent_ui.conversation_view.failed_to_launch").into(), msg.into())
-            }
+            LoadError::Other(msg) => (
+                t!("agent_ui.conversation_view.failed_to_launch").into(),
+                msg.into(),
+            ),
         };
 
         let action_slot = h_flex()

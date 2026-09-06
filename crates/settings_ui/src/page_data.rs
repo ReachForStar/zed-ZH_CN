@@ -204,7 +204,6 @@ fn general_page(cx: &App) -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.on_new_window_title").into(),
                 description: t!("settings_ui.page_data.on_new_window_description").into(),
                 field: Box::new(SettingField {
@@ -321,7 +320,6 @@ fn general_page(cx: &App) -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.reveal_if_open_title").into(),
                 description: t!("settings_ui.page_data.reveal_if_open_description").into(),
                 field: Box::new(SettingField {
@@ -1496,7 +1494,6 @@ fn appearance_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.cursor_animation_title").into(),
                 description: t!("settings_ui.page_data.cursor_animation_description").into(),
                 field: Box::new(SettingField {
@@ -1929,7 +1926,6 @@ fn editor_page() -> SettingsPage {
                 t!("settings_ui.page_data.which_key_menu_section").into(),
             ),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.which_key_enabled_title").into(),
                 description: t!("settings_ui.page_data.which_key_enabled_description").into(),
                 field: Box::new(SettingField {
@@ -2620,7 +2616,10 @@ fn editor_page() -> SettingsPage {
                         settings::GitGutterWidthDiscriminants::Custom => vec![SettingItem {
                             files: USER,
                             title: t!("settings_ui.page_data.git_gutter_custom_width_title").into(),
-                            description: t!("settings_ui.page_data.git_gutter_custom_width_description").into(),
+                            description: t!(
+                                "settings_ui.page_data.git_gutter_custom_width_description"
+                            )
+                            .into(),
                             field: Box::new(SettingField {
                                 organization_override: None,
                                 json_path: Some("gutter.git_gutter_width"),
@@ -3979,7 +3978,6 @@ fn search_and_files_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.search_on_type_title").into(),
                 description: t!("settings_ui.page_data.search_on_type_description").into(),
                 field: Box::new(SettingField {
@@ -4005,7 +4003,8 @@ fn search_and_files_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.seed_search_query_from_cursor_title").into(),
-                description: t!("settings_ui.page_data.seed_search_query_from_cursor_description").into(),
+                description: t!("settings_ui.page_data.seed_search_query_from_cursor_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("seed_search_query_from_cursor"),
@@ -4352,9 +4351,9 @@ fn window_and_layout_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.pending_keystrokes_indicator_title").into(),
-                description: t!("settings_ui.page_data.pending_keystrokes_indicator_description").into(),
+                description: t!("settings_ui.page_data.pending_keystrokes_indicator_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("status_bar.pending_keystrokes_indicator"),
@@ -5312,7 +5311,6 @@ fn window_and_layout_page() -> SettingsPage {
 
     fn window_section() -> [SettingsPageItem; 6] {
         [
-
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.window_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.title_format_title").into(),
@@ -6494,9 +6492,9 @@ fn panels_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.outline_panel_folder_icons_title").into(),
-                description: t!("settings_ui.page_data.outline_panel_folder_icons_description").into(),
+                description: t!("settings_ui.page_data.outline_panel_folder_icons_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("outline_panel.folder_indicator"),
@@ -6643,7 +6641,8 @@ fn panels_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.hide_symbols_in_multi_buffers_title").into(),
-                description: t!("settings_ui.page_data.hide_symbols_in_multi_buffers_description").into(),
+                description: t!("settings_ui.page_data.hide_symbols_in_multi_buffers_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("outline_panel.multi_buffer_hide_symbols"),
@@ -6850,7 +6849,6 @@ fn panels_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.git_panel_folder_icons_title").into(),
                 description: t!("settings_ui.page_data.git_panel_folder_icons_description").into(),
                 field: Box::new(SettingField {
@@ -10714,7 +10712,6 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
                 t!("settings_ui.page_data.miscellaneous_section").into(),
             ),
             SettingsPageItem::SettingItem(SettingItem {
-
                 title: t!("settings_ui.page_data.language_detection_title").into(),
                 description: t!("settings_ui.page_data.language_detection_description").into(),
                 field: Box::new(SettingField {
@@ -10729,8 +10726,12 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: t!("settings_ui.page_data.languages_language_word_diff_enabled_title").into(),
-                description: t!("settings_ui.page_data.languages_language_word_diff_enabled_description").into(),
+                title: t!("settings_ui.page_data.languages_language_word_diff_enabled_title")
+                    .into(),
+                description: t!(
+                    "settings_ui.page_data.languages_language_word_diff_enabled_description"
+                )
+                .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("languages.$(language).word_diff_enabled"),
@@ -10886,7 +10887,8 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
             }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.open_markdown_files_in_preview_title").into(),
-                description: t!("settings_ui.page_data.open_markdown_files_in_preview_description").into(),
+                description: t!("settings_ui.page_data.open_markdown_files_in_preview_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("markdown_preview.open_markdown_files_in_preview"),
@@ -11700,4 +11702,3 @@ mod tests {
         assert_eq!(settings.helix_mode, Some(false));
     }
 }
-

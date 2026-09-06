@@ -11165,15 +11165,13 @@ impl ThreadView {
                     cx,
                 )
             }
-            ThreadError::ProviderRejection { message } => {
-                self.render_error_callout(
-                    t!("agent_ui.thread_view.request_failed"),
-                    message.clone(),
-                    true,
-                    false,
-                    cx,
-                )
-            }
+            ThreadError::ProviderRejection { message } => self.render_error_callout(
+                t!("agent_ui.thread_view.request_failed"),
+                message.clone(),
+                true,
+                false,
+                cx,
+            ),
             ThreadError::MaxOutputTokens => self.render_error_callout(
                 t!("agent_ui.thread_view.output_limit_reached"),
                 t!("agent_ui.thread_view.output_limit_message").into(),
