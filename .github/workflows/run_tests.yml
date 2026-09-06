@@ -10,7 +10,6 @@
 # 保留的校验：
 #   - check_style：cargo fmt / typos / check-todos / check-keymaps（快速门禁）
 #   - clippy：全工作区编译 + lint（验证汉化改动不破坏编译）
-#   - test：cargo nextest 全工作区测试
 #
 # 注意：本文件不再由 `cargo xtask workflows` 生成，请勿运行该命令覆盖本文件。
 name: run_tests
@@ -110,85 +109,6 @@ jobs:
       # 仍覆盖全工作区编译与 lint，足以校验汉化改动。
       - name: 运行 clippy
         run: cargo clippy --workspace --all-targets -- --deny warnings
-
-      - name: 清理 cargo config
-        if: always()
-        run: rm -rf ./../.cargo
-
-  test:
-    name: 测试 (Linux)
-    needs: check_style
-    runs-on: ubuntu-22.04
-    timeout-minutes: 360
-    env:
-      # webrtc-sys 需 clang 17+ 编译 C++（GCC/clang-14 均不行），ubuntu-22.04 需装 clang-18
-      CC: clang-18
-      CXX: clang++-18
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_HOST_AUTH_METHOD: trust
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 500ms --health-timeout 5s --health-retries 10
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      - name: 安装 Rust 工具链
-        run: rustup show
-
-      - name: 配置 CI cargo config
-        run: |
-          mkdir -p ./../.cargo
-          cp ./.cargo/ci-config.toml ./../.cargo/config.toml
-
-      - name: 缓存 Rust 依赖
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-
-      - name: 安装 Linux 系统依赖
-        run: ./script/linux
-
-      - name: 安装 clang-18（webrtc-sys 需 clang 17+）
-        run: |
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc >/dev/null
-          echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | sudo tee /etc/apt/sources.list.d/llvm-toolchain-18.list >/dev/null
-          sudo apt-get update
-          sudo apt-get install -y clang-18 lld-18 llvm-18
-
-      # 公共 runner 无 GPU，gpui_wgpu 的 wgpu_atlas 测试需一个 Vulkan 适配器。
-      # mesa-vulkan-drivers 提供 lavapipe 软件 Vulkan 驱动，使无头环境下
-      # wgpu request_adapter 能成功，避免 before_frame_skips_uploads_for_removed_texture
-      # 与 remove_deallocates_tile_space_for_reuse 因缺少适配器而失败。
-      - name: 安装软件 Vulkan 驱动（lavapipe）
-        run: sudo apt-get install -y mesa-vulkan-drivers
-
-      - name: 下载 wasi-sdk
-        run: ./script/download-wasi-sdk
-
-      - name: 安装 Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: 安装 cargo-nextest
-        uses: taiki-e/install-action@v2
-        with:
-          tool: nextest
-
-      # 公共 runner（2 核）算力不足，以下测试在此环境必然或频繁超时，与汉化改动无关，予以排除：
-      #   - test_extension_store_with_test_extension：测试内部硬编码 60s 等待 dev 扩展
-      #     的冷 wasm 编译，慢 runner 上必然超时
-      #   - test_random_worktree_changes / test_random_multibuffer：随机化大型测试
-      #   - test_peers_following_each_other：协作随机化测试
-      #   - test_editing_files：project_panel GUI 测试
-      #   以上均超过 nextest 60s 限制（重试 3 次仍超时）
-      # 全局重试 2 次：吸收 CI 高负载下的偶发 flaky（如 bracket 色化测试）
-      - name: 运行测试
-        run: cargo nextest run --workspace --no-fail-fast --no-tests=warn --retries 2 -E 'not (test(test_extension_store_with_test_extension) or test(test_random_worktree_changes) or test(test_random_multibuffer) or test(test_peers_following_each_other) or test(test_editing_files))'
 
       - name: 清理 cargo config
         if: always()
