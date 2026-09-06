@@ -70,3 +70,6 @@ Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg
 tmp/innosetup-6.7.3.exe
 tmp/innosetup.exe
 .cache
+
+# 本地 ffmpeg 开发库（各平台构建产物，不入库）
+/ffmpeg-dev/
