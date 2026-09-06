@@ -121,3 +121,4 @@ check-filename = true
 [default.extend-words]
 scap = "scap"
 writeable = "writeable"
+dbe = "dbe"  # git 提交 hash 片段（如 bc71984dbe）的误报
