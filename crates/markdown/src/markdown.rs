@@ -1941,9 +1941,14 @@ impl MarkdownElement {
         let mut heading_style = self.style.heading.clone();
         let mut heading_text_style = heading_style.text_style().clone();
         heading.style().refine(&heading_style);
+        // 确保标题文本样式包含各级内置/自定义字号
+        heading_text_style.refine(&level_text_style);
         heading.style().text = level_text_style;
 
-        // 保留 h1-h3 底部边框（fork 既有样式）
+        builder.push_text_style(TextStyleRefinement {
+            text_align: Some(align),
+            ..heading_text_style
+        });
         if let Some(border_color) = self.style.heading_border_color
             && matches!(
                 level,
@@ -1955,16 +1960,6 @@ impl MarkdownElement {
             heading = heading.pb_1().border_b_1().border_color(border_color);
         }
 
-        if let Some(level_style) =
-            heading_level_style(level, self.style.heading_level_styles.as_ref())
-        {
-            heading_text_style.refine(level_style);
-        }
-
-        builder.push_text_style(TextStyleRefinement {
-            text_align: Some(align),
-            ..heading_text_style
-        });
         builder.push_div(heading, range, markdown_end);
     }
 
@@ -3429,21 +3424,6 @@ fn heading_text_style(
     }
 
     text_style
-}
-
-fn heading_level_style(
-    level: pulldown_cmark::HeadingLevel,
-    custom_styles: Option<&HeadingLevelStyles>,
-) -> Option<&TextStyleRefinement> {
-    let styles = custom_styles?;
-    match level {
-        pulldown_cmark::HeadingLevel::H1 => styles.h1.as_ref(),
-        pulldown_cmark::HeadingLevel::H2 => styles.h2.as_ref(),
-        pulldown_cmark::HeadingLevel::H3 => styles.h3.as_ref(),
-        pulldown_cmark::HeadingLevel::H4 => styles.h4.as_ref(),
-        pulldown_cmark::HeadingLevel::H5 => styles.h5.as_ref(),
-        pulldown_cmark::HeadingLevel::H6 => styles.h6.as_ref(),
-    }
 }
 
 fn render_wrap_code_block_button(
