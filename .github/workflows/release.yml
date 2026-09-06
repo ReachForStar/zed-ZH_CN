@@ -159,6 +159,9 @@ jobs:
     # macos-14 为 Apple Silicon（aarch64）runner，自带 Xcode 与命令行工具
     runs-on: macos-14
     timeout-minutes: 360
+    env:
+      # 公共 runner 磁盘有限：去掉 release debuginfo（dSYM），避免构建中途磁盘耗尽
+      CARGO_PROFILE_RELEASE_DEBUG: "0"
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -182,6 +185,23 @@ jobs:
             sudo xcode-select -s "/Applications/Xcode_${ver}.app/Contents/Developer"
           fi
           xcodebuild -version
+
+      # macOS 公共 runner 预装多版本 Xcode（各 10GB+）与 iOS 模拟器，
+      # Zed release 全量构建需大磁盘；先清理避免 No space left on device。
+      - name: 释放磁盘空间（仅保留当前 Xcode）
+        run: |
+          current="$(xcode-select -p | sed 's|/Contents/Developer$||')"
+          echo "保留 Xcode: $current"
+          for x in /Applications/Xcode*.app; do
+            if [ "$x" != "$current" ]; then
+              echo "删除: $x"
+              sudo rm -rf "$x"
+            fi
+          done
+          sudo rm -rf /Library/Developer/CoreSimulator/Volumes || true
+          sudo rm -rf ~/Library/Caches/Homebrew 2>/dev/null || true
+          sudo rm -rf /Users/runner/Library/Android /Users/runner/.gradle /Users/runner/.m2 2>/dev/null || true
+          df -h /
 
       - name: 安装 Rust 工具链
         run: rustup show
