@@ -3,22 +3,6 @@
 version = 4
 
 [[package]]
-name = "ab_glyph"
-version = "0.2.32"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01c0457472c38ea5bd1c3b5ada5e368271cb550be7a4ca4a0b4634e9913f6cc2"
-dependencies = [
- "ab_glyph_rasterizer",
- "owned_ttf_parser",
-]
-
-[[package]]
-name = "ab_glyph_rasterizer"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
-
-[[package]]
 name = "accesskit"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -212,7 +196,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -501,7 +484,6 @@ dependencies = [
  "futures 0.3.32",
  "fuzzy",
  "git",
- "git_ui",
  "git_ui_core",
  "gpui",
  "gpui_tokio",
@@ -568,7 +550,6 @@ dependencies = [
  "watch",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -619,7 +600,6 @@ dependencies = [
  "telemetry",
  "ui",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -668,21 +648,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc890384c8602f339876ded803c97ad529f3842aba97f6392b3dba0dd171769b"
 dependencies = [
  "equator",
-]
-
-[[package]]
-name = "alloc-no-stdlib"
-version = "2.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc7bb162ec39d46ab1ca8c77bf72e890535becd1751bb45f64c597edb4c8c6b3"
-
-[[package]]
-name = "alloc-stdlib"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e76a019e91224d279006ff972f1e984179a6e9feb050adba6ce8274aef23195"
-dependencies = [
- "alloc-no-stdlib",
 ]
 
 [[package]]
@@ -1323,16 +1288,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "atoi_simd"
-version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3cdb3708a128e559a30fb830e8a77a5022ee6902806925c216658652b452a44"
-dependencies = [
- "debug_unsafe",
- "rustversion",
-]
-
-[[package]]
 name = "atomic"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1476,7 +1431,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -2108,12 +2062,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349a06037c7bf932dd7e7d1f653678b2038b9ad46a74102f1fc7bd7872678cce"
 
 [[package]]
-name = "base62"
-version = "2.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd637ac531c60eb7fbc4684dc061c2d7d90d73d758181aa02eeff0464b9eee4b"
-
-[[package]]
 name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2450,27 +2398,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "brotli"
-version = "8.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cc91aac060a7a1e25823bdccbfb6af1875b88f17c6daac97894eed8207166b3"
-dependencies = [
- "alloc-no-stdlib",
- "alloc-stdlib",
- "brotli-decompressor",
-]
-
-[[package]]
-name = "brotli-decompressor"
-version = "5.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a32acac15fe1967bc3986b2a6347dffc965602354ea6f450ad07e8bfd253583"
-dependencies = [
- "alloc-no-stdlib",
- "alloc-stdlib",
-]
-
-[[package]]
 name = "brush-parser"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2579,9 +2506,9 @@ checksum = "175812e0be2bccb6abe50bb8d566126198344f707e304f45c648fd8f2cc0365e"
 
 [[package]]
 name = "bytemuck"
-version = "1.25.2"
+version = "1.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95832e849adfb21180ccb6826a99da14e5d266ae5c2e668e1602cf234f153797"
+checksum = "1fbdf580320f38b612e485521afda1ee26d10cc9884efaaa750d383e13e3c5f4"
 dependencies = [
  "bytemuck_derive",
 ]
@@ -2698,23 +2625,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ade8366b8bd5ba243f0a58f036cc0ca8a2f069cff1a2351ef1cac6b083e16fc0"
 
 [[package]]
-name = "calamine"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6975084f43060e56343ffba7f9731fa52a7dcf2e1cd8e2459fd4c6bf4a1bff59"
-dependencies = [
- "atoi_simd",
- "byteorder",
- "codepage",
- "encoding_rs",
- "fast-float2",
- "log",
- "quick-xml 0.41.0",
- "serde",
- "zip 8.6.0",
-]
-
-[[package]]
 name = "call"
 version = "0.1.0"
 dependencies = [
@@ -2738,7 +2648,6 @@ dependencies = [
  "telemetry",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -3027,7 +2936,6 @@ dependencies = [
  "settings",
  "text",
  "util",
- "zed_i18n",
 ]
 
 [[package]]
@@ -3397,15 +3305,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codepage"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48f68d061bc2828ae826206326e61251aca94c1e4a5305cf52d9138639c918b4"
-dependencies = [
- "encoding_rs",
-]
-
-[[package]]
 name = "codespan-reporting"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3526,7 +3425,6 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "unindent",
- "url",
  "util",
  "uuid",
  "workspace",
@@ -3569,7 +3467,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -3579,15 +3476,6 @@ dependencies = [
  "gpui_util",
  "indexmap 2.14.0",
  "rustc-hash 2.1.1",
-]
-
-[[package]]
-name = "color"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ec7c5eb7a16992b1904d76c517d170ab353b0e0b3d5a0c81a8a0cd1037893cf"
-dependencies = [
- "bytemuck",
 ]
 
 [[package]]
@@ -3650,7 +3538,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -4955,12 +4842,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "debug_unsafe"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7eed2c4702fa172d1ce21078faa7c5203e69f5394d48cc436d25928394a867a2"
-
-[[package]]
 name = "debugger_tools"
 version = "0.1.0"
 dependencies = [
@@ -4975,7 +4856,6 @@ dependencies = [
  "smol",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -5030,7 +4910,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
  "zlog",
 ]
 
@@ -5199,7 +5078,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
  "zlog",
 ]
 
@@ -5897,7 +5775,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -6379,12 +6256,7 @@ dependencies = [
  "semver",
  "serde",
  "settings",
-<<<<<<< HEAD
- "smallvec",
- "strum 0.27.2",
-=======
  "strum 0.28.0",
->>>>>>> upstream/main
  "telemetry",
  "theme_settings",
  "ui",
@@ -6392,7 +6264,6 @@ dependencies = [
  "vim_mode_setting",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -6403,22 +6274,7 @@ checksum = "c942e64b20ecd39933d5ff938ca4fdb6ef0d298cc3855b231179a5ef0b24948d"
 
 [[package]]
 name = "fancy-regex"
-<<<<<<< HEAD
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e24cb5a94bcae1e5408b0effca5cd7172ea3c5755049c5f3af4cd283a165298"
-dependencies = [
- "bit-set 0.8.0",
- "regex-automata",
- "regex-syntax",
-]
-
-[[package]]
-name = "fancy-regex"
-version = "0.16.2"
-=======
 version = "0.19.0"
->>>>>>> upstream/main
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "476de73bddf2ef8490aa4ee8f1cf40b430bf1d56c48c22080e5186952cd580e6"
 dependencies = [
@@ -6428,28 +6284,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "fast-float2"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8eb564c5c7423d25c886fb561d1e4ee69f72354d16918afa32c08811f6b6a55"
-
-[[package]]
 name = "fast-srgb8"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd2e7510819d6fbf51a5545c8f922716ecfb14df168a3242f7d33e0239efe6a1"
-
-[[package]]
-name = "fast_image_resize"
-version = "6.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9c50201dc184ba6553da1695aac20a042efffbe2d84542cee31917c86c3ab1e"
-dependencies = [
- "cfg-if",
- "document-features",
- "num-traits",
- "thiserror 2.0.17",
-]
 
 [[package]]
 name = "fastrand"
@@ -6500,18 +6338,9 @@ dependencies = [
 
 [[package]]
 name = "fearless_simd"
-<<<<<<< HEAD
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fb2907d1f08b2b316b9223ced5b0e89d87028ba8deae9764741dba8ff7f3903"
-dependencies = [
- "bytemuck",
-]
-=======
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b97b65636e5b9ef369943878ac74335ba1c55c1cb6adbf1e2c293c624248d693"
->>>>>>> upstream/main
 
 [[package]]
 name = "feature_flags"
@@ -6548,7 +6377,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -6583,12 +6411,6 @@ dependencies = [
  "picker_preview",
  "pretty_assertions",
  "project",
-<<<<<<< HEAD
- "project_panel",
- "remote_connection",
- "serde",
-=======
->>>>>>> upstream/main
  "serde_json",
  "settings",
  "theme",
@@ -6597,7 +6419,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
  "zlog",
 ]
 
@@ -6652,7 +6473,6 @@ checksum = "b375d6465b98090a5f25b1c7703f3859783755aa9a80433b36e0379a3ec2f369"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
- "zlib-rs",
 ]
 
 [[package]]
@@ -7381,7 +7201,6 @@ dependencies = [
  "pretty_assertions",
  "project",
  "prompt_store",
- "proto",
  "rand 0.9.4",
  "release_channel",
  "remote_connection",
@@ -7408,8 +7227,6 @@ dependencies = [
  "watch",
  "workspace",
  "zed_actions",
- "zed_i18n",
- "zeroize",
  "zlog",
  "ztracing",
 ]
@@ -7452,7 +7269,6 @@ dependencies = [
  "watch",
  "workspace",
  "zed_actions",
- "zed_i18n",
  "zeroize",
  "zlog",
  "ztracing",
@@ -7533,17 +7349,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "globwalk"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93e3af942408868f6934a7b85134a3230832b9977cf66125df2f9edcfce4ddcc"
-dependencies = [
- "bitflags 1.3.2",
- "ignore",
- "walkdir",
-]
-
-[[package]]
 name = "gloo-timers"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7595,7 +7400,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -8888,13 +8692,12 @@ dependencies = [
  "exr",
  "gif",
  "image-webp",
- "moxcms 0.8.1",
+ "moxcms",
  "num-traits",
  "png 0.18.0",
  "qoi",
  "ravif",
  "rayon",
- "rgb",
  "tiff",
  "zune-core",
  "zune-jpeg",
@@ -8930,7 +8733,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -9072,7 +8874,6 @@ dependencies = [
  "util_macros",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -9605,7 +9406,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -9931,7 +9731,6 @@ dependencies = [
  "project",
  "ui",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -9952,7 +9751,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -10209,7 +10007,6 @@ dependencies = [
  "project",
  "ui",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -10783,15 +10580,7 @@ dependencies = [
  "markup5ever_rcdom",
  "mermaid_render",
  "node_runtime",
-<<<<<<< HEAD
- "pulldown-cmark 0.13.0",
- "ratex-layout",
- "ratex-parser",
- "ratex-svg",
- "ratex-types",
-=======
  "pulldown-cmark 0.13.4",
->>>>>>> upstream/main
  "settings",
  "smallvec",
  "stacksafe",
@@ -10825,7 +10614,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -11329,16 +11117,6 @@ dependencies = [
 
 [[package]]
 name = "moxcms"
-version = "0.7.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac9557c559cd6fc9867e122e20d2cbefc9ca29d80d027a8e39310920ed2f0a97"
-dependencies = [
- "num-traits",
- "pxfm",
-]
-
-[[package]]
-name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb85c154ba489f01b25c0d36ae69a87e4a1c73a72631fc6c0eb6dde34a73e44b"
@@ -11608,7 +11386,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -11633,6 +11410,7 @@ dependencies = [
 [[package]]
 name = "notify"
 version = "9.0.0-rc.4"
+source = "git+https://github.com/zed-industries/notify?rev=0890bbb8ca40a4b5d1f67031698dd7918b37d991#0890bbb8ca40a4b5d1f67031698dd7918b37d991"
 dependencies = [
  "bitflags 2.13.1",
  "inotify 0.11.0",
@@ -11676,6 +11454,7 @@ dependencies = [
 [[package]]
 name = "notify-types"
 version = "2.1.0"
+source = "git+https://github.com/zed-industries/notify?rev=0890bbb8ca40a4b5d1f67031698dd7918b37d991#0890bbb8ca40a4b5d1f67031698dd7918b37d991"
 dependencies = [
  "bitflags 2.13.1",
 ]
@@ -12304,33 +12083,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "office_preview"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "calamine",
- "db",
- "feature_flags",
- "file_icons",
- "gpui",
- "image",
- "language",
- "log",
- "markdown",
- "pdf-render",
- "project",
- "quick-xml 0.38.3",
- "settings",
- "smallvec",
- "ui",
- "util",
- "workspace",
- "worktree",
- "zed_i18n",
- "zip 8.6.0",
-]
-
-[[package]]
 name = "ollama"
 version = "0.1.0"
 dependencies = [
@@ -12372,7 +12124,6 @@ dependencies = [
  "vim_mode_setting",
  "workspace",
  "zed_actions",
- "zed_i18n",
  "zlog",
 ]
 
@@ -12478,7 +12229,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -12609,15 +12359,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "ordered-channel"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95be4d57809897b5a7539fc15a7dfe0e84141bc3dfaa2e9b1b27caa90acf61ab"
-dependencies = [
- "crossbeam-channel",
-]
-
-[[package]]
 name = "ordered-float"
 version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12692,7 +12433,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -12728,7 +12468,6 @@ dependencies = [
  "workspace",
  "worktree",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -12736,15 +12475,6 @@ name = "outref"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a80800c0488c3a21695ea981a54918fbb37abf04f4d0720c453632255e2ff0e"
-
-[[package]]
-name = "owned_ttf_parser"
-version = "0.25.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36820e9051aca1014ddc75770aab4d68bc1e9e632f0f5627c4086bc216fb583b"
-dependencies = [
- "ttf-parser",
-]
 
 [[package]]
 name = "p256"
@@ -12969,94 +12699,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0008e816fcdaf229cdd540e9b6ca2dc4a10d65c31624abb546c6420a02846e61"
 
 [[package]]
-name = "pdf-font"
-version = "1.0.0-beta.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37b163a2f13938690663581964304ec6b8421a10cf529f4514bcbb67566d428b"
-dependencies = [
- "brotli",
- "log",
- "phf 0.13.1",
-]
-
-[[package]]
-name = "pdf-interpret"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b32ec1d972495d0efb9373ae8bb5816af624cbb6cecc7ec119b7e0aed5fd9d2"
-dependencies = [
- "bitflags 2.13.1",
- "kurbo 0.13.1",
- "log",
- "moxcms 0.7.11",
- "pdf-font",
- "pdf-syntax",
- "phf 0.13.1",
- "rustc-hash 2.1.1",
- "siphasher 1.0.1",
- "skrifa 0.40.0",
- "smallvec",
- "ttf-parser",
- "yoke",
-]
-
-[[package]]
-name = "pdf-render"
-version = "1.0.0-beta.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc679b8d231d459923bb0077d3ecfc38c966762227881b85b1a6c807bf759f62"
-dependencies = [
- "bytemuck",
- "fast_image_resize",
- "image",
- "kurbo 0.13.1",
- "pdf-interpret",
- "vello_cpu",
-]
-
-[[package]]
-name = "pdf-syntax"
-version = "0.5.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f20bfeec0f40f42811aee58b4c903be012400e00a73ec3d5d547488283f42a5"
-dependencies = [
- "flate2",
- "log",
- "pdfluent-ccitt",
- "pdfluent-jbig2",
- "pdfluent-jpeg2000",
- "rustc-hash 2.1.1",
- "smallvec",
- "zune-jpeg",
-]
-
-[[package]]
-name = "pdfluent-ccitt"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "307aa269500e87bfc6c5ca4fb011a88e5675c87c5139a9aa9d850dd038fdb985"
-
-[[package]]
-name = "pdfluent-jbig2"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bf15bfa7202f54a5b3970bb65fa8cdbeef900811fbf97addc71738b8f650ab9"
-dependencies = [
- "pdfluent-ccitt",
-]
-
-[[package]]
-name = "pdfluent-jpeg2000"
-version = "0.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbbd9515282b1ecce7f53345d3805ed4a54e5f4ff479032f23f9514ca3412a69"
-dependencies = [
- "fearless_simd",
- "image",
- "moxcms 0.7.11",
-]
-
-[[package]]
 name = "peg"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13100,19 +12742,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
 dependencies = [
  "base64ct",
-]
-
-[[package]]
-name = "peniko"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "839c8299360d2e998bdb106dc0a6cd71dcc5f4df51df1b620361bf50e283cca6"
-dependencies = [
- "bytemuck",
- "color",
- "kurbo 0.13.1",
- "linebender_resource_handle",
- "smallvec",
 ]
 
 [[package]]
@@ -13861,7 +13490,6 @@ dependencies = [
  "windows 0.62.2",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -14338,7 +13966,6 @@ dependencies = [
  "collections",
  "criterion",
  "editor",
- "feature_flags",
  "file_icons",
  "fs",
  "futures 0.3.32",
@@ -14357,7 +13984,6 @@ dependencies = [
  "project",
  "rayon",
  "schemars 1.0.4",
- "search",
  "serde",
  "serde_json",
  "settings",
@@ -14371,7 +13997,6 @@ dependencies = [
  "workspace",
  "worktree",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -14397,7 +14022,6 @@ dependencies = [
  "theme_settings",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -14776,10 +14400,6 @@ version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1"
 dependencies = [
-<<<<<<< HEAD
- "encoding_rs",
-=======
->>>>>>> upstream/main
  "memchr",
 ]
 
@@ -15042,114 +14662,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "973443cf09a9c8656b574a866ab68dfa19f0867d0340648c7d2f6a71b8a8ea68"
 
 [[package]]
-name = "ratex-font"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4488ca88b7c08ba266b30431718330b19b5714a7af5f7eb2ddaab1d801daae2b"
-dependencies = [
- "phf 0.11.3",
- "ratex-types",
-]
-
-[[package]]
-name = "ratex-font-loader"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3f8a48f6ef2d37d409f5125555d52134f302d0cf75a6856febbe4b859d30096"
-dependencies = [
- "ab_glyph",
- "ratex-font",
- "ratex-katex-fonts",
- "ratex-types",
- "ratex-unicode-font",
-]
-
-[[package]]
-name = "ratex-katex-fonts"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f62871291478ef51447006b97cbf5543747f4b6a70d0afbc8e11f8f3c4928bd"
-dependencies = [
- "rust-embed",
-]
-
-[[package]]
-name = "ratex-layout"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "357b26fa792ed80b127a5cec401b6ee99a9d3bf8de51df832f52045ecf761b49"
-dependencies = [
- "ratex-font",
- "ratex-parser",
- "ratex-types",
- "serde_json",
-]
-
-[[package]]
-name = "ratex-lexer"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73da647195c345fe25d1815b67ae365950f0b80640a555f07f65c6b4d79dc509"
-dependencies = [
- "ratex-types",
- "serde",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "ratex-parser"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b632e1438b4a273dd856036765405a4bbc223b6bfc67234285888580545b9fd2"
-dependencies = [
- "fancy-regex 0.14.0",
- "ratex-font",
- "ratex-lexer",
- "ratex-types",
- "regex",
- "regex-lite",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "unicode-normalization",
-]
-
-[[package]]
-name = "ratex-svg"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e0ce3d7caea997265666e4813fc8b710958de54f484489c1437a62a6e3ee19f"
-dependencies = [
- "ab_glyph",
- "base64 0.22.1",
- "ratex-font",
- "ratex-font-loader",
- "ratex-katex-fonts",
- "ratex-types",
- "ratex-unicode-font",
-]
-
-[[package]]
-name = "ratex-types"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30f353419bafeab3d0cd9cfbd3d991293df28a3ea1923e717dfb9ff1bcb28f4a"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "ratex-unicode-font"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8144de0e20108ed19827203b38df77037779a5a68aa293fba858d25b240e170d"
-dependencies = [
- "fontdb",
- "system-fonts",
- "ttf-parser",
-]
-
-[[package]]
 name = "rav1e"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15308,7 +14820,6 @@ dependencies = [
  "workspace",
  "worktree",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -15641,7 +15152,6 @@ dependencies = [
  "uuid",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -16033,60 +15543,6 @@ dependencies = [
  "globset",
  "sha2",
  "walkdir",
-]
-
-[[package]]
-name = "rust-i18n"
-version = "3.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fda2551fdfaf6cc5ee283adc15e157047b92ae6535cf80f6d4962d05717dc332"
-dependencies = [
- "globwalk",
- "once_cell",
- "regex",
- "rust-i18n-macro",
- "rust-i18n-support",
- "smallvec",
-]
-
-[[package]]
-name = "rust-i18n-macro"
-version = "3.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22baf7d7f56656d23ebe24f6bb57a5d40d2bce2a5f1c503e692b5b2fa450f965"
-dependencies = [
- "glob",
- "once_cell",
- "proc-macro2",
- "quote",
- "rust-i18n-support",
- "serde",
- "serde_json",
- "serde_yaml",
- "syn 2.0.117",
-]
-
-[[package]]
-name = "rust-i18n-support"
-version = "3.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "940ed4f52bba4c0152056d771e563b7133ad9607d4384af016a134b58d758f19"
-dependencies = [
- "arc-swap",
- "base62",
- "globwalk",
- "itertools 0.11.0",
- "lazy_static",
- "normpath",
- "once_cell",
- "proc-macro2",
- "regex",
- "serde",
- "serde_json",
- "serde_yaml",
- "siphasher 1.0.1",
- "toml 0.8.23",
- "triomphe",
 ]
 
 [[package]]
@@ -16658,7 +16114,6 @@ dependencies = [
  "util_macros",
  "workspace",
  "zed_actions",
- "zed_i18n",
  "ztracing",
 ]
 
@@ -17074,7 +16529,6 @@ dependencies = [
  "ui",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -17140,7 +16594,6 @@ dependencies = [
  "workspace",
  "zed_actions",
  "zed_credentials_provider",
- "zed_i18n",
 ]
 
 [[package]]
@@ -17293,7 +16746,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -17563,7 +17015,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -18157,7 +17608,6 @@ dependencies = [
  "ui",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -18499,36 +17949,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-name = "system-fonts"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46ba78ea149d4bb0626dacad10aa789eedc83395889890a0e6e7ec69a4577442"
-dependencies = [
- "fontdb",
- "sys-locale",
- "web-sys",
-]
-
-[[package]]
-name = "system-interface"
-version = "0.27.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc4592f674ce18521c2a81483873a49596655b179f71c5e05d10c1fe66c78745"
-dependencies = [
- "bitflags 2.13.1",
- "cap-fs-ext",
- "cap-std",
- "fd-lock",
- "io-lifetimes",
- "rustix 0.38.44",
- "windows-sys 0.59.0",
- "winx",
-]
-
-[[package]]
-=======
->>>>>>> upstream/main
 name = "system_specs"
 version = "0.1.0"
 dependencies = [
@@ -18563,7 +17983,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
  "zlog",
 ]
 
@@ -18584,7 +18003,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -18683,7 +18101,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -18829,7 +18246,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -18926,7 +18342,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -19177,7 +18592,6 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
- "zed_i18n",
 ]
 
 [[package]]
@@ -19445,7 +18859,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_i18n",
 ]
 
 [[package]]
@@ -19898,7 +19311,6 @@ version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd69c5aa8f924c7519d6372789a74eac5b94fb0f8fcf0d4a97eb0bfc3e785f39"
 dependencies = [
- "arc-swap",
  "serde",
  "stable_deref_trait",
 ]
@@ -19976,12 +19388,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "typed-path"
-version = "0.12.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e"
-
-[[package]]
 name = "typeid"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -20043,11 +19449,6 @@ dependencies = [
  "theme_settings",
  "ui_macros",
  "web-time",
-<<<<<<< HEAD
- "windows 0.61.3",
- "zed_i18n",
-=======
->>>>>>> upstream/main
 ]
 
 [[package]]
@@ -20057,7 +19458,6 @@ dependencies = [
  "component",
  "gpui",
  "ui",
- "zed_i18n",
 ]
 
 [[package]]
@@ -20423,37 +19823,6 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
-
-[[package]]
-name = "vello_common"
-version = "0.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bd1a4c633ce09e7d713df1a6e036644a125e15e0c169cfb5180ddf5836ca04b"
-dependencies = [
- "bytemuck",
- "fearless_simd",
- "hashbrown 0.16.1",
- "log",
- "peniko",
- "png 0.17.16",
- "skrifa 0.40.0",
- "smallvec",
-]
-
-[[package]]
-name = "vello_cpu"
-version = "0.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0162bfe48aabf6a9fdcd401b628c7d9f260c2cbabb343c70a65feba6f7849edc"
-dependencies = [
- "bytemuck",
- "crossbeam-channel",
- "hashbrown 0.16.1",
- "ordered-channel",
- "rayon",
- "thread_local",
- "vello_common",
-]
 
 [[package]]
 name = "version-compare"
@@ -21415,7 +20784,7 @@ dependencies = [
  "reqwest 0.12.24",
  "scratch",
  "semver",
- "zip 0.6.6",
+ "zip",
 ]
 
 [[package]]
@@ -21625,11 +20994,7 @@ dependencies = [
  "util",
  "vim_mode_setting",
  "workspace",
-<<<<<<< HEAD
- "zed_i18n",
-=======
  "zed_actions",
->>>>>>> upstream/main
 ]
 
 [[package]]
@@ -22908,7 +22273,6 @@ dependencies = [
  "util",
  "uuid",
  "zed_actions",
- "zed_i18n",
  "zlog",
 ]
 
@@ -23354,11 +22718,7 @@ dependencies = [
 
 [[package]]
 name = "zed"
-<<<<<<< HEAD
-version = "1.15.1"
-=======
 version = "1.20.0"
->>>>>>> upstream/main
 dependencies = [
  "acp_thread",
  "acp_tools",
@@ -23453,7 +22813,6 @@ dependencies = [
  "miniprofiler_ui",
  "node_runtime",
  "notifications",
- "office_preview",
  "onboarding",
  "outline",
  "outline_panel",
@@ -23529,7 +22888,6 @@ dependencies = [
  "zed_actions",
  "zed_credentials_provider",
  "zed_env_vars",
- "zed_i18n",
  "zlog",
  "zlog_settings",
  "ztracing",
@@ -23718,13 +23076,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "zed_i18n"
-version = "0.1.0"
-dependencies = [
- "rust-i18n",
-]
-
-[[package]]
 name = "zed_proto"
 version = "0.3.3"
 dependencies = [
@@ -23896,26 +23247,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "zip"
-version = "8.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d04a6b5381502aa6087c94c669499eb1602eb9c5e8198e534de571f7154809b"
-dependencies = [
- "crc32fast",
- "flate2",
- "indexmap 2.14.0",
- "memchr",
- "typed-path",
- "zopfli",
-]
-
-[[package]]
-name = "zlib-rs"
-version = "0.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40990edd51aae2c2b6907af74ffb635029d5788228222c4bb811e9351c0caad3"
-
-[[package]]
 name = "zlog"
 version = "0.1.0"
 dependencies = [
@@ -23941,18 +23272,6 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
-
-[[package]]
-name = "zopfli"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f05cd8797d63865425ff89b5c4a48804f35ba0ce8d125800027ad6017d2b5249"
-dependencies = [
- "bumpalo",
- "crc32fast",
- "log",
- "simd-adler32",
-]
 
 [[package]]
 name = "zstd"

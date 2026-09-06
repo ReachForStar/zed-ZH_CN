@@ -1046,6 +1046,11 @@ impl Render for ProjectSearchView {
             let model = self.entity.read(cx);
 
             let heading_text = match model.search_state {
+                SearchState::Running { .. }
+                    if model.search_state.no_results_so_far() =>
+                {
+                    t!("search.project_search.heading_no_results")
+                }
                 SearchState::Running {
                     activity: SearchActivity::WaitingForScan,
                     ..
@@ -1054,11 +1059,6 @@ impl Render for ProjectSearchView {
                     activity: SearchActivity::Searching,
                     ..
                 } => t!("search.project_search.heading_searching"),
-                SearchState::Running { .. }
-                    if model.search_state.no_results_so_far() =>
-                {
-                    t!("search.project_search.heading_no_results")
-                }
                 SearchState::Completed(SearchCompletion::NoResults) => {
                     t!("search.project_search.heading_no_results")
                 }

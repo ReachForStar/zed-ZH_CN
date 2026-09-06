@@ -5851,7 +5851,6 @@ impl ProjectPanel {
         let is_sticky = details.sticky.is_some();
         let sticky_index = details.sticky.as_ref().map(|this| this.sticky_index);
         let settings = ProjectPanelSettings::get_global(cx);
-        let entry_icon_size = IconSize::Custom(rems_from_px(settings.icon_size));
         let show_editor = details.is_editing && !details.is_processing;
 
         let selection = SelectedEntry {

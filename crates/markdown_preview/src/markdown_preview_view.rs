@@ -2147,7 +2147,7 @@ mod tests {
         App, AppContext as _, Entity, Focusable as _, Modifiers, TestAppContext, WindowHandle, px,
     };
     use language::{Buffer, DiskState, Point};
-    use project::Project;
+    use project::{Project, ProjectPath};
     use serde_json::json;
     use std::path::PathBuf;
     use std::sync::Arc;

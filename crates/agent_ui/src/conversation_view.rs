@@ -2754,7 +2754,7 @@ impl ConversationView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
-        let (title, message) = match e {
+        let (title, message): (SharedString, SharedString) = match e {
             LoadError::Unsupported {
                 command: path,
                 current_version,
@@ -2763,7 +2763,7 @@ impl ConversationView {
                 return self.render_unsupported(path, current_version, minimum_version, window, cx);
             }
             LoadError::FailedToInstall(msg) => (
-                t!("agent_ui.conversation_view.failed_to_install"),
+                t!("agent_ui.conversation_view.failed_to_install").into(),
                 msg.into(),
             ),
             LoadError::Exited { status, stderr } => {
@@ -2775,9 +2775,11 @@ impl ConversationView {
                     message.push_str("\n");
                     message.push_str(stderr);
                 };
-                (t!("agent_ui.conversation_view.failed_to_launch"), message.into())
+                (t!("agent_ui.conversation_view.failed_to_launch").into(), message.into())
             }
-            LoadError::Other(msg) => (t!("agent_ui.conversation_view.failed_to_launch"), msg.into()),
+            LoadError::Other(msg) => {
+                (t!("agent_ui.conversation_view.failed_to_launch").into(), msg.into())
+            }
         };
 
         let action_slot = h_flex()

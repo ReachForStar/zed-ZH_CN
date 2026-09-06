@@ -371,11 +371,11 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 ),
                 MenuItem::action(
                     t!("app_menus.go.go_to_declaration"),
-                    editor::actions::GoToDeclaration,
+                    editor::actions::GoToDeclaration::default(),
                 ),
                 MenuItem::action(
                     t!("app_menus.go.go_to_type_definition"),
-                    editor::actions::GoToTypeDefinition,
+                    editor::actions::GoToTypeDefinition::default(),
                 ),
                 MenuItem::action(
                     t!("app_menus.go.find_all_references"),
