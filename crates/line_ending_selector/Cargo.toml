@@ -19,6 +19,5 @@ language.workspace = true
 picker.workspace = true
 project.workspace = true
 ui.workspace = true
-util.workspace = true
 workspace.workspace = true
 zed_i18n.workspace = true

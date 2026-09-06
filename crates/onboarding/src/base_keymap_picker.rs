@@ -208,7 +208,7 @@ impl PickerDelegate for BaseKeymapSelectorDelegate {
             .update(cx, |_, cx| {
                 cx.emit(DismissEvent);
             })
-            .log_err();
+            .ok();
     }
 
     fn render_match(

@@ -8,7 +8,6 @@ use picker::{Picker, PickerDelegate};
 use project::Project;
 use std::sync::Arc;
 use ui::{ListItem, ListItemSpacing, prelude::*};
-use util::ResultExt;
 use workspace::ModalView;
 use zed_i18n::t;
 
@@ -147,7 +146,7 @@ impl PickerDelegate for LineEndingSelectorDelegate {
     fn dismissed(&mut self, _: &mut Window, cx: &mut Context<Picker<Self>>) {
         self.line_ending_selector
             .update(cx, |_, cx| cx.emit(DismissEvent))
-            .log_err();
+            .ok();
     }
 
     fn selected_index(&self) -> usize {

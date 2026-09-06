@@ -1,6 +1,8 @@
 use collab_ui::collab_panel;
 use gpui::{App, Menu, MenuItem, OsAction};
+use project::DisableAiSettings;
 use release_channel::ReleaseChannel;
+use settings::Settings;
 use terminal_view::terminal_panel;
 use zed_actions::{Quit, assistant, debug_panel, dev, git_panel, project_panel};
 use zed_i18n::t;
@@ -65,26 +67,23 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             ],
         }),
         MenuItem::separator(),
-        MenuItem::action(
-            t!("app_menus.view.project_panel"),
-            project_panel::ToggleFocus,
-        ),
-        MenuItem::action(
-            t!("app_menus.view.outline_panel"),
-            outline_panel::ToggleFocus,
-        ),
+        MenuItem::action(t!("app_menus.view.project_panel"), project_panel::ToggleFocus),
+        MenuItem::action(t!("app_menus.view.outline_panel"), outline_panel::ToggleFocus),
         MenuItem::action(t!("app_menus.view.collab_panel"), collab_panel::ToggleFocus),
         MenuItem::action(t!("app_menus.view.terminal_panel"), terminal_panel::Toggle),
-        MenuItem::action(
-            t!("app_menus.view.debugger_panel"),
-            debug_panel::ToggleFocus,
-        ),
-        MenuItem::action(t!("app_menus.view.agent_panel"), assistant::ToggleFocus),
+        MenuItem::action(t!("app_menus.view.debugger_panel"), debug_panel::ToggleFocus),
+    ];
+
+    if !DisableAiSettings::get_global(cx).disable_ai {
+        view_items.push(MenuItem::action(t!("app_menus.view.agent_panel"), assistant::ToggleFocus));
+    }
+
+    view_items.extend([
         MenuItem::action(t!("app_menus.view.git_panel"), git_panel::ToggleFocus),
         MenuItem::separator(),
         MenuItem::action(t!("app_menus.view.diagnostics"), diagnostics::Deploy),
         MenuItem::separator(),
-    ];
+    ]);
 
     if ReleaseChannel::try_global(cx) == Some(ReleaseChannel::Dev) {
         view_items.push(MenuItem::action(
@@ -382,6 +381,8 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                     t!("app_menus.go.find_all_references"),
                     editor::actions::FindAllReferences::default(),
                 ),
+                MenuItem::action("Show Incoming Calls", call_hierarchy::ShowIncomingCalls),
+                MenuItem::action("Show Outgoing Calls", call_hierarchy::ShowOutgoingCalls),
                 MenuItem::separator(),
                 MenuItem::action(
                     t!("app_menus.go.next_problem"),

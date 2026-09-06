@@ -48,3 +48,6 @@ zed_i18n.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
+
+[package.metadata.cargo-shear]
+ignored = ["component"]
