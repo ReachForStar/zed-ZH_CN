@@ -164,6 +164,21 @@ Release Notes:
 - Fetch crash reports: `script/sentry-fetch <issue-id>`
 - Generate investigation prompt from crash: `script/crash-to-prompt <issue-id>`
 
+# Fork 维护（CI / Workflow）
+
+本仓库是 Zed 汉化 fork，GitHub Actions workflow 与上游 zed-industries/zed 不同，
+同步上游分支后必须保持以下约束（勿从上游拷回其它 workflow）：
+
+- `.github/workflows/` 下只允许两个文件：`release.yml` 与 `run_tests.yml`。
+  上游的 community_pr_cleanup / maintainer_edits_nudge / triage_queue_board 等一律不引入。
+- `run_tests.yml` 只含两个 job：代码风格检查（fmt/typos/check-todos/check-keymaps）
+  与 Clippy (Linux)；不包含全量测试 job（公共 runner 跑不动，约 70 分钟且 flaky）。
+- `release.yml` 的 macOS job 注意：runner 镜像里 `Xcode_x.y.0.app` 是缺 metal 等
+  工具链的不完整副本，选择 Xcode 时需归一化到不带 `.0` 的完整版；公共 runner
+  磁盘有限，构建需设 `CARGO_PROFILE_RELEASE_DEBUG=0` 并清理多余 Xcode。
+- 发版流程：改 `crates/zed/Cargo.toml` version → 推 main → 打 `v{version}` 标签推送
+  触发 release workflow → softprops 自动建 Release（说明自动生成）。
+
 # Rules Hygiene
 
 These `.rules` files are read by every agent session. Keep them high-signal.
