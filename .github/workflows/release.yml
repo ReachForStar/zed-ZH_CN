@@ -172,22 +172,32 @@ jobs:
       # Xcode 15.4 自带 libc++ 18 存在 pointer_traits SFINAE 回归：
       # webrtc-sys 的 cxx 桥接头在 C++20 下无条件 static_assert
       # std::ranges::contiguous_range<rust::Slice>，15.4 下硬错误编译失败
-      # （cxx 1.0.187 亦如此）。选取除 15.4 外最高可用版本
-      # （16.x/26.x 及 15.3 以下均可正常编译）。
+      # （cxx 1.0.187 亦如此）。选取除 15.4 外最高可用版本。
+      # 注意：镜像中 Xcode_x.y.0.app 是与 x.y.app 并存的不完整副本（缺 metal 等
+      # 工具链），选版本时若存在同级的 x.y.app 则优先使用不带 .0 的完整版。
       - name: 选择 Xcode（跳过不兼容的 15.4）
         run: |
           ls -d /Applications/Xcode*.app
           ver=$(ls -d /Applications/Xcode_*.app 2>/dev/null \
             | sed -E 's|.*/Xcode_([0-9.]+)\.app|\1|' \
-            | grep -vx '15.4' \
+            | grep -vE '^15\.4' \
             | sort -t . -k 1,1n -k 2,2n -k 3,3n | tail -1)
+          # 选中形如 x.y.0 时优先切到同版本 x.y 的完整目录
+          case "$ver" in
+            *.*.0)
+              short="${ver%.0}"
+              if [ -d "/Applications/Xcode_${short}.app" ]; then ver="$short"; fi
+              ;;
+          esac
+          echo "选用 Xcode: $ver"
           if [ -n "$ver" ]; then
             sudo xcode-select -s "/Applications/Xcode_${ver}.app/Contents/Developer"
           fi
           xcodebuild -version
 
-      # macOS 公共 runner 预装多版本 Xcode（各 10GB+）与 iOS 模拟器，
-      # Zed release 全量构建需大磁盘；先清理避免 No space left on device。
+      # 公共 runner 磁盘有限：仅保留当前选中的完整 Xcode（选择步骤已归一化到
+      # 不带 .0 的完整版），删除其余占位副本与模拟器释放空间。删除逻辑以
+      # xcode-select 输出为准，保留的工具链含 metal，不会破坏后续编译。
       - name: 释放磁盘空间（仅保留当前 Xcode）
         run: |
           current="$(xcode-select -p | sed 's|/Contents/Developer$||')"
@@ -199,6 +209,7 @@ jobs:
             fi
           done
           sudo rm -rf /Library/Developer/CoreSimulator/Volumes || true
+          sudo rm -rf /Library/Developer/CoreSimulator/Profiles/Runtimes || true
           sudo rm -rf ~/Library/Caches/Homebrew 2>/dev/null || true
           sudo rm -rf /Users/runner/Library/Android /Users/runner/.gradle /Users/runner/.m2 2>/dev/null || true
           df -h /
