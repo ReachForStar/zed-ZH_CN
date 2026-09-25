@@ -1228,6 +1228,13 @@ open_markdown_files_in_preview_title = "在预览中打开 Markdown 文件"
 open_markdown_files_in_preview_description = "是否在预览中自动打开 Markdown 文件。"
 prediction_debounce_title = "预测防抖"
 prediction_debounce_description = "停止输入后，自动请求预测前的延迟（毫秒）。设为 0 则立即请求预测。"
+command_palette_section = "命令面板"
+command_palette_use_command_history_title = "使用命令历史"
+command_palette_use_command_history_description = "是否使用命令历史排名对命令面板中的命令进行排序。"
+threads_sidebar_default_width_title = "对话侧边栏默认宽度"
+threads_sidebar_default_width_description = "对话侧边栏的默认宽度。更改此设置也会更新手动调整过的侧边栏宽度。双击分隔条可重置为此宽度。"
+threads_sidebar_auto_open_title = "对话侧边栏自动打开"
+threads_sidebar_auto_open_description = "在已有窗口中打开文件夹时是否自动打开对话侧边栏。"
 
 [settings_ui.sandbox_settings]
 allow_all_domains = "允许所有域名"

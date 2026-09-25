@@ -5,6 +5,14 @@ use zed_i18n::t;
 
 use crate::TabularDataPreviewPane;
 
+impl TabularDataPreviewPane {
+    fn is_ready_to_render_content(&self) -> bool {
+        !self.is_parsing
+            && self.parse_error.is_none()
+            && (self.engine.contents.number_of_cols > 0 || !self.engine.contents.rows.is_empty())
+    }
+}
+
 impl Render for TabularDataPreviewPane {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme();
@@ -25,26 +33,36 @@ impl Render for TabularDataPreviewPane {
             .child(self.render_settings_panel(window, cx))
             .child({
                 let is_parsing = self.is_parsing;
-                if is_parsing || self.engine.contents.number_of_cols == 0 {
-                    div()
-                        .flex()
-                        .items_center()
-                        .justify_center()
-                        .h_32()
-                        .text_ui(cx)
-                        .font_buffer(cx)
-                        .text_color(cx.theme().colors().text_muted)
-                        .when(is_parsing, |div| {
-                            div.child(
-                                h_flex()
-                                    .gap_2()
-                                    .child(SpinnerLabel::new())
-                                    .child(t!("csv_preview.empty_state.loading")),
-                            )
-                        })
-                        .when(!is_parsing, |div| {
-                            div.child(t!("csv_preview.empty_state.no_content"))
-                        })
+                if !self.is_ready_to_render_content() {
+                    v_flex()
+                        .size_full()
+                        .child(
+                            div()
+                                .flex()
+                                .flex_1()
+                                .items_center()
+                                .justify_center()
+                                .text_ui(cx)
+                                .font_buffer(cx)
+                                .text_color(cx.theme().colors().text_muted)
+                                .when(is_parsing, |div| {
+                                    div.child(
+                                        h_flex()
+                                            .gap_2()
+                                            .child(SpinnerLabel::new())
+                                            .child(t!("csv_preview.empty_state.loading")),
+                                    )
+                                })
+                                .when(!is_parsing, |div| {
+                                    if let Some(error) = &self.parse_error {
+                                        div.p_4()
+                                            .text_color(cx.theme().status().error)
+                                            .child(error.clone())
+                                    } else {
+                                        div.child(t!("csv_preview.empty_state.no_content"))
+                                    }
+                                }),
+                        )
                         .into_any_element()
                 } else {
                     self.create_table(&self.column_widths.widths, cx)

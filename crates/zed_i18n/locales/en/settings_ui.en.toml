@@ -1228,6 +1228,13 @@ open_markdown_files_in_preview_title = "Open Markdown Files in Preview"
 open_markdown_files_in_preview_description = "Whether to automatically open Markdown files in the preview."
 prediction_debounce_title = "Prediction Debounce"
 prediction_debounce_description = "Delay in milliseconds before automatically requesting a prediction after typing stops. Set to 0 to request predictions immediately."
+command_palette_section = "Command Palette"
+command_palette_use_command_history_title = "Use Command History"
+command_palette_use_command_history_description = "Whether to use command history ranking for sorting in the command palette."
+threads_sidebar_default_width_title = "Threads Sidebar Default Width"
+threads_sidebar_default_width_description = "Default width of the Threads Sidebar. Changing this setting also updates a manually resized sidebar. Double-click the divider to reset to this width."
+threads_sidebar_auto_open_title = "Threads Sidebar Auto Open"
+threads_sidebar_auto_open_description = "Whether opening a folder in an existing window automatically opens the Threads Sidebar."
 
 [settings_ui.sandbox_settings]
 allow_all_domains = "Allow All Domains"

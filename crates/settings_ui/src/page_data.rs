@@ -283,7 +283,7 @@ fn general_page(cx: &App) -> SettingsPage {
                 field: Box::new(
                     SettingField {
                         organization_override: None,
-                        json_path: Some("worktree.private_files"),
+                        json_path: Some("private_files"),
                         pick: |settings_content| {
                             settings_content.project.worktree.private_files.as_ref()
                         },
@@ -4024,6 +4024,40 @@ fn search_and_files_page() -> SettingsPage {
         ]
     }
 
+    fn command_palette_section() -> [SettingsPageItem; 2] {
+        [
+            SettingsPageItem::SectionHeader(
+                t!("settings_ui.page_data.command_palette_section").into(),
+            ),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.command_palette_use_command_history_title").into(),
+                description: t!(
+                    "settings_ui.page_data.command_palette_use_command_history_description"
+                )
+                .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("command_palette.use_command_history"),
+                    pick: |settings_content| {
+                        settings_content
+                            .command_palette
+                            .as_ref()?
+                            .use_command_history
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .command_palette
+                            .get_or_insert_default()
+                            .use_command_history = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+        ]
+    }
+
     fn file_finder_section() -> [SettingsPageItem; 4] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.file_finder_section").into()),
@@ -4221,7 +4255,12 @@ fn search_and_files_page() -> SettingsPage {
 
     SettingsPage {
         title: t!("settings_ui.page_data.search_files_page_title").into(),
-        items: concat_sections![search_section(), file_finder_section(), file_scan_section()],
+        items: concat_sections![
+            search_section(),
+            command_palette_section(),
+            file_finder_section(),
+            file_scan_section(),
+        ],
     }
 }
 
@@ -6333,7 +6372,7 @@ fn panels_page() -> SettingsPage {
                 field: Box::new(
                     SettingField {
                         organization_override: None,
-                        json_path: Some("worktree.hidden_files"),
+                        json_path: Some("hidden_files"),
                         pick: |settings_content| {
                             settings_content.project.worktree.hidden_files.as_ref()
                         },
@@ -8917,7 +8956,7 @@ fn collaboration_page() -> SettingsPage {
 }
 
 fn ai_page(cx: &App) -> SettingsPage {
-    fn general_section() -> [SettingsPageItem; 6] {
+    fn general_section() -> [SettingsPageItem; 8] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.general_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
@@ -8939,10 +8978,73 @@ fn ai_page(cx: &App) -> SettingsPage {
                 description: t!("settings_ui.page_data.agent_sidebar_side_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
-                    json_path: Some("agent.sidebar_side"),
-                    pick: |settings_content| settings_content.agent.as_ref()?.sidebar_side.as_ref(),
+                    json_path: Some("agent.threads_sidebar.position"),
+                    pick: |settings_content| {
+                        settings_content
+                            .agent
+                            .as_ref()?
+                            .threads_sidebar
+                            .as_ref()?
+                            .position
+                            .as_ref()
+                    },
                     write: |settings_content, value, _| {
-                        settings_content.agent.get_or_insert_default().sidebar_side = value;
+                        settings_content
+                            .agent
+                            .get_or_insert_default()
+                            .set_threads_sidebar_position(value);
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.threads_sidebar_default_width_title").into(),
+                description: t!("settings_ui.page_data.threads_sidebar_default_width_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("agent.threads_sidebar.default_width"),
+                    pick: |settings_content| {
+                        settings_content
+                            .agent
+                            .as_ref()?
+                            .threads_sidebar
+                            .as_ref()?
+                            .default_width
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .agent
+                            .get_or_insert_default()
+                            .set_threads_sidebar_default_width(value);
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.threads_sidebar_auto_open_title").into(),
+                description: t!("settings_ui.page_data.threads_sidebar_auto_open_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("agent.threads_sidebar.auto_open"),
+                    pick: |settings_content| {
+                        settings_content
+                            .agent
+                            .as_ref()?
+                            .threads_sidebar
+                            .as_ref()?
+                            .auto_open
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .agent
+                            .get_or_insert_default()
+                            .set_threads_sidebar_auto_open(value);
                     },
                 }),
                 metadata: None,
@@ -9166,6 +9268,26 @@ fn ai_page(cx: &App) -> SettingsPage {
                             .agent
                             .get_or_insert_default()
                             .play_sound_when_agent_done = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.agent_prevent_idle_sleep_title").into(),
+                description: t!("settings_ui.page_data.agent_prevent_idle_sleep_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("agent.prevent_idle_sleep"),
+                    pick: |settings_content| {
+                        settings_content.agent.as_ref()?.prevent_idle_sleep.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .agent
+                            .get_or_insert_default()
+                            .prevent_idle_sleep = value;
                     },
                 }),
                 metadata: None,

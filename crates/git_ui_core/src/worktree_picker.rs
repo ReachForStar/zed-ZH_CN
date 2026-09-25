@@ -415,7 +415,10 @@ impl Render for DeleteWorktreeTooltip {
             Tooltip::with_meta_in(
                 t!("git_ui.worktree_picker.delete_worktree"),
                 Some(&DeleteWorktree),
-                t!("git_ui.common.hold_alt_to_force_delete"),
+                t!(
+                    "git_ui.common.hold_alt_to_force_delete",
+                    key = ui::alt_key_name!()
+                ),
                 &self.focus_handle,
                 cx,
             )

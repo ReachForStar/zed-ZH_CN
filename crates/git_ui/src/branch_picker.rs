@@ -889,7 +889,10 @@ impl Render for DeleteBranchTooltip {
             Tooltip::with_meta_in(
                 t!("git_ui.branch_picker.delete_branch"),
                 Some(&branch_picker::DeleteBranch),
-                t!("git_ui.common.hold_alt_to_force_delete"),
+                t!(
+                    "git_ui.common.hold_alt_to_force_delete",
+                    key = ui::alt_key_name!()
+                ),
                 &self.focus_handle,
                 cx,
             )

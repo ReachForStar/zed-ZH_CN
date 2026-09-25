@@ -283,8 +283,9 @@ function DownloadAMDGpuServices {
 }
 
 function DownloadConpty {
-    $url = "https://github.com/microsoft/terminal/releases/download/v1.23.13503.0/Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg"
-    $zipPath = ".\Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg"
+    # TODO: Switch back to the stable channel once Microsoft finally decides to publish v1.26
+    $url = "https://github.com/microsoft/terminal/releases/download/v1.25.1912.0/Microsoft.Windows.Console.ConPTY.1.25.260710002-preview.nupkg"
+    $zipPath = ".\Microsoft.Windows.Console.ConPTY.1.25.260710002-preview.nupkg"
     $extractDir = ".\conpty"
     # 以关键文件存在作为解压完成标志：目录存在但文件不全（如解压中断）时重新解压
     if ((Test-Path "$extractDir\runtimes\win-x64\native\conpty.dll") -and (Test-Path "$extractDir\build\native\runtimes\arm64\OpenConsole.exe")) {
