@@ -3870,9 +3870,7 @@ impl Sidebar {
             }
         }
 
-        let Some(configured_model) =
-            LanguageModelRegistry::read_global(cx).thread_summary_model(cx)
-        else {
+        let Some(model) = LanguageModelRegistry::read_global(cx).thread_summary_model(cx) else {
             if let Some(workspace) = self.active_workspace(cx) {
                 Self::show_no_thread_summary_model_toast(workspace, cx);
             }
@@ -3883,7 +3881,6 @@ impl Sidebar {
             return;
         }
 
-        let model = configured_model.model;
         let temperature = AgentSettings::temperature_for_model(&model, cx);
 
         let thread_store = ThreadStore::global(cx);
