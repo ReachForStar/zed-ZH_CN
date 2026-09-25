@@ -93,6 +93,12 @@ pub trait AgentConnection {
 
     fn telemetry_id(&self) -> SharedString;
 
+    /// Whether this connection drives Zed's native agent, which compacts its
+    /// context inside its own turn loop (external agents don't).
+    fn is_native(&self) -> bool {
+        false
+    }
+
     fn agent_version(&self) -> Option<SharedString> {
         None
     }

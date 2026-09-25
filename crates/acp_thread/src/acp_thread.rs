@@ -2468,6 +2468,9 @@ pub struct AcpThread {
     running_turn: Option<RunningTurn>,
     connection: Rc<dyn AgentConnection>,
     token_usage: Option<TokenUsage>,
+    /// Disarmed on each auto-compaction trigger and re-armed once usage drops
+    /// below the threshold, so a failed shrink can't loop compaction prompts.
+    auto_compact_armed: bool,
     cost: Option<SessionCost>,
     prompt_capabilities: acp::PromptCapabilities,
     available_commands: Vec<acp::AvailableCommand>,
@@ -2782,6 +2785,7 @@ impl AcpThread {
             connection,
             session_id,
             token_usage: None,
+            auto_compact_armed: true,
             cost: None,
             prompt_capabilities,
             available_commands: Vec::new(),
@@ -3140,6 +3144,7 @@ impl AcpThread {
                     });
                 }
                 cx.emit(AcpThreadEvent::TokenUsageUpdated);
+                self.maybe_trigger_auto_compact(cx);
             }
             _ => {}
         }
@@ -3659,6 +3664,86 @@ impl AcpThread {
         }
         self.token_usage = usage;
         cx.emit(AcpThreadEvent::TokenUsageUpdated);
+    }
+
+    /// Whether reported usage reached the threshold, with the native agent's
+    /// percentage / tokens-used / tokens-remaining semantics.
+    fn auto_compact_threshold_reached(
+        &self,
+        threshold: agent_settings::AutoCompactThreshold,
+    ) -> bool {
+        let Some(usage) = self.token_usage.as_ref() else {
+            return false;
+        };
+        // Without a known context-window size we can only honor the absolute
+        // "tokens used" threshold.
+        if usage.max_tokens == 0 {
+            return match threshold {
+                agent_settings::AutoCompactThreshold::TokensUsed(tokens) => {
+                    usage.used_tokens >= tokens
+                }
+                _ => false,
+            };
+        }
+        match threshold {
+            agent_settings::AutoCompactThreshold::Percentage(fraction) => {
+                usage.used_tokens as f64 >= usage.max_tokens as f64 * fraction
+            }
+            agent_settings::AutoCompactThreshold::TokensUsed(tokens) => usage.used_tokens >= tokens,
+            agent_settings::AutoCompactThreshold::TokensRemaining(tokens) => {
+                usage.max_tokens.saturating_sub(usage.used_tokens) <= tokens
+            }
+        }
+    }
+
+    /// External agents can't be compacted from the client — ACP has no
+    /// client-initiated compaction request — so `agent.auto_compact` is honored
+    /// by invoking the agent's own `/compact` (or `/compress`) command once
+    /// usage crosses the threshold. The native agent self-compacts in its turn
+    /// loop, so it's excluded.
+    fn maybe_trigger_auto_compact(&mut self, cx: &mut Context<Self>) {
+        if self.connection.is_native() || self.running_turn.is_some() {
+            return;
+        }
+        let auto_compact = AgentSettings::get_global(cx).auto_compact;
+        if !auto_compact.enabled {
+            return;
+        }
+
+        if !self.auto_compact_threshold_reached(auto_compact.threshold) {
+            // Below the threshold: allow the next crossing to compact again.
+            self.auto_compact_armed = true;
+            return;
+        }
+        // Only fire once per threshold crossing so an agent whose compaction
+        // doesn't shrink the context enough can't be prompted in a loop.
+        if !self.auto_compact_armed {
+            return;
+        }
+
+        let Some(command) = self.available_commands.iter().find(|command| {
+            command.name.eq_ignore_ascii_case("compact")
+                || command.name.eq_ignore_ascii_case("compress")
+        }) else {
+            return;
+        };
+        self.auto_compact_armed = false;
+        let command_block =
+            acp::ContentBlock::Text(acp::TextContent::new(format!("/{}", command.name)));
+        log::info!(
+            "Auto-compacting external agent context via /{}",
+            command.name
+        );
+        cx.spawn(async move |this, cx| {
+            let response = this
+                .update(cx, |this, cx| this.send_command(vec![command_block], cx))?
+                .await;
+            if let Err(error) = response {
+                log::error!("Auto compaction turn failed: {error:#}");
+            }
+            anyhow::Ok(())
+        })
+        .detach();
     }
 
     pub fn update_retry_status(&mut self, status: RetryStatus, cx: &mut Context<Self>) {
@@ -4443,6 +4528,9 @@ impl AcpThread {
                             cx.emit(AcpThreadEvent::StatusChanged);
                         }
                         cx.emit(AcpThreadEvent::Stopped(r.stop_reason));
+                        if is_same_turn && !canceled {
+                            this.maybe_trigger_auto_compact(cx);
+                        }
                         Ok(Some(r))
                     }
                     Err(e) => {
@@ -11015,6 +11103,7 @@ mod tests {
     struct FakeAgentConnection {
         auth_methods: Vec<acp::AuthMethod>,
         supports_truncate: bool,
+        native: bool,
         sessions: Arc<parking_lot::Mutex<HashMap<acp::SessionId, WeakEntity<AcpThread>>>>,
         set_title_calls: Rc<RefCell<Vec<SharedString>>>,
         on_user_message: Option<
@@ -11034,6 +11123,7 @@ mod tests {
             Self {
                 auth_methods: Vec::new(),
                 supports_truncate: true,
+                native: false,
                 on_user_message: None,
                 sessions: Arc::default(),
                 set_title_calls: Default::default(),
@@ -11042,6 +11132,11 @@ mod tests {
 
         fn without_truncate_support(mut self) -> Self {
             self.supports_truncate = false;
+            self
+        }
+
+        fn as_native(mut self) -> Self {
+            self.native = true;
             self
         }
 
@@ -11068,6 +11163,10 @@ mod tests {
     impl AgentConnection for FakeAgentConnection {
         fn agent_id(&self) -> AgentId {
             AgentId::new("fake")
+        }
+
+        fn is_native(&self) -> bool {
+            self.native
         }
 
         fn telemetry_id(&self) -> SharedString {
@@ -12408,6 +12507,143 @@ mod tests {
             assert!((cost.amount - 0.42).abs() < f64::EPSILON);
             assert_eq!(cost.currency.as_ref(), "USD");
         });
+    }
+
+    #[gpui::test]
+    async fn test_auto_compact_triggers_agent_compact_command(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let prompts = Rc::new(RefCell::new(Vec::new()));
+        let connection = Rc::new(FakeAgentConnection::new().on_user_message({
+            let prompts = prompts.clone();
+            move |request, _thread, _cx| {
+                prompts.borrow_mut().push(request.prompt.clone());
+                async move { Ok(acp::PromptResponse::new(acp::StopReason::EndTurn)) }.boxed_local()
+            }
+        }));
+        let thread = cx
+            .update(|cx| {
+                connection.new_session(project, PathList::new(&[Path::new(path!("/test"))]), cx)
+            })
+            .await
+            .unwrap();
+
+        // Usage above the 90% threshold but the agent hasn't advertised a
+        // compact command: there is nothing to invoke.
+        thread.update(cx, |thread, cx| {
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::UsageUpdate(acp::UsageUpdate::new(9_500, 10_000)),
+                    cx,
+                )
+                .unwrap();
+        });
+        cx.run_until_parked();
+        assert!(prompts.borrow().is_empty());
+
+        thread.update(cx, |thread, cx| {
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::AvailableCommandsUpdate(acp::AvailableCommandsUpdate::new(
+                        vec![acp::AvailableCommand::new("compact", "Compact the context")],
+                    )),
+                    cx,
+                )
+                .unwrap();
+        });
+
+        // The next usage report above the threshold invokes the agent's own
+        // compaction command as a turn.
+        thread.update(cx, |thread, cx| {
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::UsageUpdate(acp::UsageUpdate::new(9_600, 10_000)),
+                    cx,
+                )
+                .unwrap();
+        });
+        cx.run_until_parked();
+        assert_eq!(prompts.borrow().len(), 1);
+        match &prompts.borrow()[0][0] {
+            acp::ContentBlock::Text(text) => assert_eq!(text.text, "/compact"),
+            block => panic!("expected a text block, got {block:?}"),
+        }
+
+        // Staying above the threshold does not fire again until usage drops
+        // below it first, so an agent whose compaction didn't shrink the
+        // context enough is not prompted in a loop.
+        thread.update(cx, |thread, cx| {
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::UsageUpdate(acp::UsageUpdate::new(9_700, 10_000)),
+                    cx,
+                )
+                .unwrap();
+        });
+        cx.run_until_parked();
+        assert_eq!(prompts.borrow().len(), 1);
+
+        thread.update(cx, |thread, cx| {
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::UsageUpdate(acp::UsageUpdate::new(1_000, 10_000)),
+                    cx,
+                )
+                .unwrap();
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::UsageUpdate(acp::UsageUpdate::new(9_800, 10_000)),
+                    cx,
+                )
+                .unwrap();
+        });
+        cx.run_until_parked();
+        assert_eq!(prompts.borrow().len(), 2);
+    }
+
+    #[gpui::test]
+    async fn test_auto_compact_skips_native_agent(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let prompts = Rc::new(RefCell::new(Vec::new()));
+        let connection = Rc::new(FakeAgentConnection::new().as_native().on_user_message({
+            let prompts = prompts.clone();
+            move |request, _thread, _cx| {
+                prompts.borrow_mut().push(request.prompt.clone());
+                async move { Ok(acp::PromptResponse::new(acp::StopReason::EndTurn)) }.boxed_local()
+            }
+        }));
+        let thread = cx
+            .update(|cx| {
+                connection.new_session(project, PathList::new(&[Path::new(path!("/test"))]), cx)
+            })
+            .await
+            .unwrap();
+
+        // The native agent compacts inside its own turn loop; the client must
+        // not send it a compact command even when usage is above the threshold.
+        thread.update(cx, |thread, cx| {
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::AvailableCommandsUpdate(acp::AvailableCommandsUpdate::new(
+                        vec![acp::AvailableCommand::new("compact", "Compact the context")],
+                    )),
+                    cx,
+                )
+                .unwrap();
+            thread
+                .handle_session_update(
+                    acp::SessionUpdate::UsageUpdate(acp::UsageUpdate::new(9_500, 10_000)),
+                    cx,
+                )
+                .unwrap();
+        });
+        cx.run_until_parked();
+        assert!(prompts.borrow().is_empty());
     }
 
     #[gpui::test]

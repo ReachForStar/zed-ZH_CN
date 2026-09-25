@@ -274,6 +274,10 @@ mod tests {
         fn unwatch(&mut self, path: &Path) -> notify::Result<()> {
             Err(notify::Error::generic("unwatch failed").add_path(path.to_owned()))
         }
+
+        fn watched_paths(&self) -> notify::Result<Vec<(PathBuf, notify::RecursiveMode)>> {
+            Ok(Vec::new())
+        }
     }
 
     fn watcher(kind: OsWatcherKind, cx: &TestAppContext) -> Arc<OsWatcher> {

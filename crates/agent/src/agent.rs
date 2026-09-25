@@ -2775,6 +2775,10 @@ impl acp_thread::AgentConnection for NativeAgentConnection {
         "zed".into()
     }
 
+    fn is_native(&self) -> bool {
+        true
+    }
+
     fn new_session(
         self: Rc<Self>,
         project: Entity<Project>,

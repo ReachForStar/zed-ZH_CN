@@ -1796,6 +1796,18 @@ impl fs_watcher::WatchBackend for FakeWatchBackend {
             .retain(|registered_path| *registered_path != path);
         Ok(())
     }
+
+    fn watched_paths(&self) -> notify::Result<Vec<(PathBuf, notify::RecursiveMode)>> {
+        Ok(self
+            .state
+            .lock()
+            .watches
+            .registered_paths
+            .iter()
+            .cloned()
+            .map(|path| (path, notify::RecursiveMode::Recursive))
+            .collect())
+    }
 }
 
 #[cfg(feature = "test-support")]
