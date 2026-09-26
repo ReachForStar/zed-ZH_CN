@@ -24,3 +24,4 @@ updated: 2026-09-26
 - [msvc_spectre_libs 构建失败：缺 Spectre 缓解库](queries/msvc-spectre-libs-build-failure.md) — pet 硬编码 error feature + cc 选最新工具集缺 spectre 库，装 14.51 Spectre 组件解决
 - [ACP 面板自动压缩上下文不生效](queries/acp-auto-compact-external-agents.md) — 外部 ACP 智能体无 client→agent 压缩请求，auto_compact 被静默忽略；AcpThread 客户端触发智能体 /compact 命令修复
 - [run_tests Clippy 失败链](queries/run-tests-clippy-failure-chain.md) — typos 路径→dead_code→redundant_clone 三层串行根因；本地用 `cargo clippy -p <crate> --all-targets -- --deny warnings` 复现 CI 语义
+- [git bash 调用 pwsh 脚本的两类失败](queries/git-bash-pwsh-invocation-pitfalls.md) — `chcp` 包装与裸反斜杠路径分别报退出码 1/64；改用正斜杠引号路径直调 pwsh，脚本内设 OutputEncoding 解决 Write-Host 的 GBK 输出
