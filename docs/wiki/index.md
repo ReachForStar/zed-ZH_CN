@@ -13,6 +13,7 @@ updated: 2026-09-26
 ## 概念 concepts
 
 - [汉化 fork 同步 upstream 的合并模式与特性保留清单](concepts/fork-upstream-sync.md) — fetch 走 HTTPS、diff 判读陷阱、i18n×上游重构冲突解法、特性保留清单
+- [fork 发布 release 的流程与版本号策略](concepts/fork-release-publishing.md) — v* 标签触发 release.yml、版本号取上游已发布 release、Cargo.toml/Cargo.lock 同步改法
 
 ## 源总结 sources
 
