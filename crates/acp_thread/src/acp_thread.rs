@@ -12519,7 +12519,7 @@ mod tests {
         let connection = Rc::new(FakeAgentConnection::new().on_user_message({
             let prompts = prompts.clone();
             move |request, _thread, _cx| {
-                prompts.borrow_mut().push(request.prompt.clone());
+                prompts.borrow_mut().push(request.prompt);
                 async move { Ok(acp::PromptResponse::new(acp::StopReason::EndTurn)) }.boxed_local()
             }
         }));
@@ -12613,7 +12613,7 @@ mod tests {
         let connection = Rc::new(FakeAgentConnection::new().as_native().on_user_message({
             let prompts = prompts.clone();
             move |request, _thread, _cx| {
-                prompts.borrow_mut().push(request.prompt.clone());
+                prompts.borrow_mut().push(request.prompt);
                 async move { Ok(acp::PromptResponse::new(acp::StopReason::EndTurn)) }.boxed_local()
             }
         }));
