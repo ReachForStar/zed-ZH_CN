@@ -14,3 +14,5 @@
 ## [2026-09-26] feat | 发布 v1.21.0：版本号对齐上游最新发布（改 Cargo.toml/Cargo.lock），修复 run_tests typos 配置路径（上游移入 .config/）；沉淀 fork-release-publishing 概念页
 
 ## [2026-09-26] query | run_tests 验证：代码风格检查（typos）通过，确认 .config/typos.toml 路径修复生效；workspace.ps1 的 cargo metadata --format-version 警告按用户决定留到下个版本处理
+
+## [2026-09-26] fix | 恢复 extensions_ui 上游代际（版本选择器调用链、右键菜单、repository_icon/context_menu builder）并套回 t! 汉化；修复 Clippy dead_code 失败；extension_suggestions 2 个测试在 Windows 本地失败为既有问题（HEAD 复测相同）

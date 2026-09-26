@@ -22,6 +22,11 @@ status: active
 - **推送**：SSH :22 被墙，标签与 main 一律走 HTTPS（经 git-proxy）：`git push https://github.com/ReachForStar/zed-ZH_CN.git main v1.21.0`；推后 `git update-ref refs/remotes/fork/main <sha>` 同步跟踪引用。
 - **轻量标签**：沿用既有惯例，直接在 main 提交上打轻量附注外标签（`git tag vX.Y.Z`，不单独建 release 分支）。
 
+## 验证与遗留
+
+- 2026-09-26 发布 v1.21.0：标签推送触发 release（三平台构建）与 run_tests；run_tests 的**代码风格检查 job 通过**，确认 typos 配置路径修复生效（此前该 job 均在拼写检查一步 1 分钟内失败，见 [fork-upstream-sync](fork-upstream-sync.md)）。
+- 遗留：`script/lib/workspace.ps1` 的 `cargo metadata --no-deps --offline` 未带 `--format-version=1`，新版 cargo 每次构建告警；无害、经用户决定**留到下个版本再改**。
+
 ## 关联页面
 
 - [汉化 fork 同步 upstream 的合并模式与特性保留清单](fork-upstream-sync.md) — 合并时版本号行的处理。
