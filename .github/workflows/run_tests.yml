@@ -58,7 +58,7 @@ jobs:
         # 固定到与上游一致的版本，避免 @master 新版词典引入误报
         uses: crate-ci/typos@2d0ce569feab1f8752f1dde43cc2f2aa53236e06
         with:
-          config: ./typos.toml
+          config: .config/typos.toml
 
       - name: 检查 TODO
         run: ./script/check-todos
