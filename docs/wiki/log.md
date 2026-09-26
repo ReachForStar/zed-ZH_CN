@@ -12,3 +12,5 @@
 ## [2026-09-26] fix | 修复 ACP 面板外部智能体自动压缩上下文不生效（客户端触发 /compact，滞回防循环，原生排除）；补 merge 遗留 watched_paths（fs.rs、fs_watcher/diagnostics.rs）
 
 ## [2026-09-26] feat | 发布 v1.21.0：版本号对齐上游最新发布（改 Cargo.toml/Cargo.lock），修复 run_tests typos 配置路径（上游移入 .config/）；沉淀 fork-release-publishing 概念页
+
+## [2026-09-26] query | run_tests 验证：代码风格检查（typos）通过，确认 .config/typos.toml 路径修复生效；workspace.ps1 的 cargo metadata --format-version 警告按用户决定留到下个版本处理
