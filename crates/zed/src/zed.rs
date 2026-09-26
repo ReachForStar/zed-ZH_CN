@@ -1961,7 +1961,7 @@ fn notify_settings_errors(result: settings::SettingsParseResult, is_user: bool, 
                         MessageNotification::new(
                             t!(
                                 "zed.notification.migrate_settings_failed",
-                                error = format!("{err}")
+                                error = err.to_string()
                             ),
                             cx,
                         )
