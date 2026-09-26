@@ -25,6 +25,7 @@ status: active
 ## 验证与遗留
 
 - 2026-09-26 发布 v1.21.0：标签推送触发 release（三平台构建）与 run_tests；run_tests 的**代码风格检查 job 通过**，确认 typos 配置路径修复生效（此前该 job 均在拼写检查一步 1 分钟内失败，见 [fork-upstream-sync](fork-upstream-sync.md)）。
+- 标签指向的提交随后在 Clippy 阶段连续暴露三层失败（typos 已修 → extensions_ui dead_code → acp_thread redundant_clone），全绿后需删除旧标签、在修复提交上重打 v1.21.0 再触发正式构建；细节见 [run_tests Clippy 失败链](../queries/run-tests-clippy-failure-chain.md)。
 - 遗留：`script/lib/workspace.ps1` 的 `cargo metadata --no-deps --offline` 未带 `--format-version=1`，新版 cargo 每次构建告警；无害、经用户决定**留到下个版本再改**。
 
 ## 关联页面
