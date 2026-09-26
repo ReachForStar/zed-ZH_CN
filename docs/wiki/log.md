@@ -20,3 +20,5 @@
 ## [2026-09-26] query | 沉淀 run_tests Clippy 三层失败链（typos 路径/dead_code/redundant_clone）与本地复现 CI clippy 语义方法；acp_thread 冗余 clone 已修复推送
 
 ## [2026-09-26] query | 沉淀 git bash 调用 pwsh 的两类失败（chcp 包装退出码 1、裸反斜杠路径退出码 64）与 Write-Host 管道输出 GBK 的编码修法；同步修正 git-proxy skill 的调用方式
+
+## [2026-09-26] fix | 修复 zed.rs useless_format（String 字段重复 format!），全量本地 clippy 通过；run_tests 36212676836 全绿；query 页扩为四层失败链并补 webrtc 下载代理坑
