@@ -29,3 +29,5 @@
 
 
 ## [2026-09-28] query | 补记 webrtc-sys 构建脚本行为：download_webrtc 每次删除 OUT_DIR 旧解压后整包重下，无本地缓存；LK_CUSTOM_WEBRTC 指向含 include/lib/webrtc.ninja 的目录可跳过下载；os error 10060 与 tls handshake eof 同为代理上游断开，用 curl -x 访 google 探针区分代理死亡与仅 github 阻断
+
+## [2026-09-28] query | 修正 git-proxy 页与脚本现状不符——grep 实测 scripts/git-proxy.ps1 无 OutputEncoding 设置行，改记 iconv 补救为现行方案；SKILL.md 已补探针/瞬断/非 git 进程边界说明

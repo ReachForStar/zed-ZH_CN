@@ -3,7 +3,7 @@ title: git bash 调用 pwsh 脚本的两类失败：chcp 包装与反斜杠路�
 type: query
 tags: [windows, git-bash, pwsh, powershell, 编码, git-proxy]
 created: 2026-09-26
-updated: 2026-09-26
+updated: 2026-09-28
 status: active
 ---
 
@@ -52,8 +52,11 @@ GBK 字节不一致，不能用它判断编码问题。
 
 ## 涉及模块
 
-- 用户 skill `git-proxy`（`~/.qoder-cn/skills/git-proxy/`）：SKILL.md 的调用方式已改为直接 pwsh 调用，
-  `scripts/git-proxy.ps1` 入口加了编码设置。
+- 用户 skill `git-proxy`（`~/.qoder-cn/skills/git-proxy/`）：SKILL.md 调用方式已改为直调 pwsh（正斜杠引号路径），
+  并补 HTTP 转发探针、切节点瞬断重试判定与"git 代理配置不影响 cargo/gh 等非 git 进程"的边界说明（2026-09-28）。
+  注意：`scripts/git-proxy.ps1` 入口实际**没有**编码设置行（本页 2026-09-26 曾误记为已加，2026-09-28 全目录
+  grep `OutputEncoding` 无匹配后更正），管道下中文仍为 GBK 字节，SKILL.md 按实测记载补救写法
+  `| iconv -f GBK -t UTF-8`；关键信息（代理地址、开关状态）是 ASCII，不受乱码影响。
 - 本仓库代码未受影响；踩坑发生在 push 阶段（`Recv failure: Connection was reset` 之后的代理开关），
   发布流程见 [fork 发布 release 的流程与版本号策略](../concepts/fork-release-publishing.md)。
 
