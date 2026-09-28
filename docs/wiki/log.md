@@ -22,3 +22,5 @@
 ## [2026-09-26] query | 沉淀 git bash 调用 pwsh 的两类失败（chcp 包装退出码 1、裸反斜杠路径退出码 64）与 Write-Host 管道输出 GBK 的编码修法；同步修正 git-proxy skill 的调用方式
 
 ## [2026-09-26] fix | 修复 zed.rs useless_format（String 字段重复 format!），全量本地 clippy 通过；run_tests 36212676836 全绿；query 页扩为四层失败链并补 webrtc 下载代理坑
+
+## [2026-09-28] query | 沉淀内存占用异常排查页：审计确认 undo 历史（text.rs History.operations 只增不删）、Project buffer 驻留、终端 PTY 事件无界通道、ACP 线程消息压缩前驻留为长期增长点；LSP 日志/终端回滚有界排除；fork 的 notify vendor + fs_watcher 健康检查无泄漏但叠加放大为重扫风暴；给出 ETW 堆追踪实测路径，50G 构成待实测

@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-09-26
+updated: 2026-09-28
 ---
 
 # Wiki 索引
@@ -25,3 +25,4 @@ updated: 2026-09-26
 - [ACP 面板自动压缩上下文不生效](queries/acp-auto-compact-external-agents.md) — 外部 ACP 智能体无 client→agent 压缩请求，auto_compact 被静默忽略；AcpThread 客户端触发智能体 /compact 命令修复
 - [run_tests Clippy 失败链](queries/run-tests-clippy-failure-chain.md) — typos 路径→dead_code→redundant_clone→useless_format 四层串行根因；本地全量 clippy 复现与 webrtc 下载代理坑
 - [git bash 调用 pwsh 脚本的两类失败](queries/git-bash-pwsh-invocation-pitfalls.md) — `chcp` 包装与裸反斜杠路径分别报退出码 1/64；改用正斜杠引号路径直调 pwsh，脚本内设 OutputEncoding 解决 Write-Host 的 GBK 输出
+- [内存占用异常排查](queries/zed-memory-usage-audit.md) — 长时间使用单进程占 50G 的驻留结构审计：undo 历史无界、buffer 无卸载、PTY 通道无界；ETW 堆追踪待实测
