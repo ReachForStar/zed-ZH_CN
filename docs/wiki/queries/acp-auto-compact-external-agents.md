@@ -3,7 +3,7 @@ title: ACP 面板自动压缩上下文不生效：外部智能体缺客户端触
 type: query
 tags: [acp, agent, auto-compact, 上下文压缩]
 created: 2026-09-26
-updated: 2026-09-26
+updated: 2026-09-28
 status: active
 ---
 
@@ -55,6 +55,34 @@ ai-acp 面板（基于 `AcpThread` 的智能体面板）中，`agent.auto_compac
 - `acp_thread`（AcpThread、AgentConnection trait）
 - `agent`（NativeAgentConnection 覆写 is_native）
 - 设置来源：`agent_settings::AutoCompactSettings`（assets/settings/default.json `agent.auto_compact`）
+
+## 后续修复：压缩完成后释放被压缩条目（2026-09-28）
+
+自动压缩只收缩模型上下文，**Zed 端 transcript 仍无限驻留**：`push_context_compaction`
+只插入/替换摘要条目，从不删除被压缩的旧消息与工具输出（单条可达 MB 级），
+长会话内存持续增长（64G 机器实测可到 50G 卡死）。
+
+修复（`crates/acp_thread/src/acp_thread.rs`）：
+
+- `drop_compacted_entries`：压缩状态变为 `Completed` 时（`upsert_context_compaction_update`
+  两处调用点），丢弃上一次完成压缩之后的全部条目，摘要条目保留；失败/取消的压缩
+  条目只是会话记录标记，不是分段边界。
+- 终端清理复用 rewind 范式：仅当终端不被保留条目引用时才 kill 并从 `terminals`
+  移除，防止跨条目复用的长驻终端被杀。
+- 事件顺序：先 `EntryUpdated` 再 `EntriesRemoved(range)`，UI（conversation_view）
+  已有该事件的删除处理。
+
+测试：
+
+- `test_context_compaction_completion_drops_compacted_entries`：失败压缩保留条目、
+  完成压缩丢弃区间（0..4）、二次压缩只丢自己的段（1..2）、`EntriesRemoved` 事件；
+- `test_context_compaction_updates_preserve_timeline_and_emit_events` 改为两个压缩均
+  `Cancelled` 收尾（原 Completed 语义与丢弃行为冲突），保留时间线位置与事件断言；
+- acp_thread 全量 167 测试通过、agent_ui compact 测试通过、CI 语义 clippy 通过。
+
+局限：若外部智能体只公布 compact 命令但**不发送** ACP `CompactionUpdate`，
+Zed 端无从得知压缩完成、条目不会释放；此类智能体需在 compact 命令回合结束时
+由 Zed 侧自行丢弃（未实现，待观察实际智能体行为）。
 
 ## 附带修复
 

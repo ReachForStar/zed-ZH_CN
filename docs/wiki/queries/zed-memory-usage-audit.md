@@ -4,7 +4,7 @@ type: query
 tags: [内存, 泄漏, undo, watcher, ETW]
 created: 2026-09-28
 updated: 2026-09-28
-status: draft
+status: active
 ---
 
 # 内存占用异常排查：长时间使用后单进程可占 50G
@@ -24,11 +24,10 @@ Windows 上 Zed（fork 构建）长时间使用后内存持续增长，64G 机�
 2. **buffer 无 LRU 卸载**：`Project` 持有 `buffers: Vec<Entity<Buffer>>`
    （crates/project/src/project.rs:276），打开过的文件（文本 + 语法树 + 诊断 +
    高亮缓存）整个会话驻留。
-3. **Agent/ACP 线程消息**：上下文压缩发生前，所有消息与工具输出（终端输出、
-   文件内容，单条可达 MB 级）全部驻留内存。auto-compact 由 token 用量触发
-   （crates/acp_thread/src/acp_thread.rs:2471），外部智能体需客户端触发
-   `/compact`，见
-   [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)。
+3. **Agent/ACP 线程消息**：压缩发生前，所有消息与工具输出（终端输出、
+   文件内容，单条可达 MB 级）全部驻留内存。**用户确认此为主因**（ACP 长会话
+   后机器卡死）。2026-09-28 已修复：压缩状态变为 Completed 时丢弃被压缩条目，
+   见 [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)。
 4. **终端 PTY 事件通道无界**：`crates/terminal/src/terminal.rs` 的
    `events_rx: UnboundedReceiver<PtyEvent>`（terminal.rs:979/1018/1216，均
    `unbounded()`）。回滚显示有 100_000 行上限
@@ -65,10 +64,12 @@ Windows 上 Zed（fork 构建）长时间使用后内存持续增长，64G 机�
 
 ## 待确认
 
-- 50G 的具体构成未实测：需 ETW 堆快照才能定位主分配栈（undo 历史？agent
-  消息？PTY 通道？）。
-- 使用习惯决定主因路径：是否高频使用 ACP/智能体、是否长时间挂终端、
-  是否在超大仓库里持续构建。
+- ACP 消息驻留（主因）已修复；undo 历史无界、buffer 无卸载、PTY 通道无界
+  仍为长会话增长点，是否需要进一步处理待定。
+- 外部智能体若不发送 ACP `CompactionUpdate`（只公布 compact 命令），
+  Zed 端仍无从释放条目，见 ACP 压缩页「后续修复」的局限说明。
+- 50G 的剩余构成可用 ETW 堆快照（命令面板 `Record ETW Trace With Heap Tracing`，
+  需管理员）实测确认。
 
 ## 涉及模块
 

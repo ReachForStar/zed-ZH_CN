@@ -3537,22 +3537,30 @@ impl AcpThread {
         cx: &mut Context<Self>,
     ) {
         let id = ContextCompactionId(update.compaction_id.0.clone());
+        let completed = matches!(update.status, acp::CompactionStatus::Completed);
         let language_registry = self.project.read(cx).languages().clone();
 
-        if let Some((entry_index, compaction)) =
-            self.entries
-                .iter_mut()
-                .enumerate()
-                .rev()
-                .find_map(|(entry_index, entry)| match entry {
-                    AgentThreadEntry::ContextCompaction(compaction) if compaction.id == id => {
-                        Some((entry_index, compaction))
-                    }
-                    _ => None,
-                })
-        {
+        let existing_ix = self
+            .entries
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(entry_index, entry)| match entry {
+                AgentThreadEntry::ContextCompaction(compaction) if compaction.id == id => {
+                    Some(entry_index)
+                }
+                _ => None,
+            });
+        if let Some(entry_index) = existing_ix {
+            let AgentThreadEntry::ContextCompaction(compaction) = &mut self.entries[entry_index]
+            else {
+                unreachable!("entry at {entry_index} is a context compaction");
+            };
             compaction.apply_update(update, &language_registry, cx);
             cx.emit(AcpThreadEvent::EntryUpdated(entry_index));
+            if completed {
+                self.drop_compacted_entries(entry_index, cx);
+            }
             return;
         }
 
@@ -3564,6 +3572,58 @@ impl AcpThread {
         };
         compaction.apply_update(update, &language_registry, cx);
         self.push_entry(AgentThreadEntry::ContextCompaction(compaction), cx);
+        if completed {
+            let entry_index = self.entries.len() - 1;
+            self.drop_compacted_entries(entry_index, cx);
+        }
+    }
+
+    /// 压缩完成后释放被摘要覆盖的条目，防止长会话的工具输出与 diff 无限
+    /// 驻留内存；摘要条目本身保留，作为模型保留内容的记录。
+    fn drop_compacted_entries(&mut self, compaction_ix: usize, cx: &mut Context<Self>) {
+        // 每次完成的压缩覆盖上一次完成压缩之后的全部条目；失败或取消的压缩
+        // 条目只是会话记录标记（会被新摘要取代），不是分段边界。
+        let start = self.entries[..compaction_ix]
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(ix, entry)| match entry {
+                AgentThreadEntry::ContextCompaction(compaction)
+                    if compaction.status == ContextCompactionStatus::Completed =>
+                {
+                    Some(ix + 1)
+                }
+                _ => None,
+            })
+            .unwrap_or(0);
+        if start >= compaction_ix {
+            return;
+        }
+
+        self.flush_streaming_text(cx);
+
+        // 丢弃区间内的终端若仍被保留条目引用（跨多条工具调用复用的长驻
+        // 终端），必须留下；只终止剩余会话不再使用的终端。
+        let kept_terminal_ids: HashSet<acp::TerminalId> = self.entries[compaction_ix..]
+            .iter()
+            .flat_map(|entry| entry.terminals())
+            .filter_map(|terminal| terminal.read(cx).id().clone().into())
+            .collect();
+        let terminals_to_remove: Vec<acp::TerminalId> = self.entries[start..compaction_ix]
+            .iter()
+            .flat_map(|entry| entry.terminals())
+            .filter_map(|terminal| terminal.read(cx).id().clone().into())
+            .filter(|id| !kept_terminal_ids.contains(id))
+            .collect();
+        for terminal_id in terminals_to_remove {
+            if let Some(terminal) = self.terminals.remove(&terminal_id) {
+                terminal.update(cx, |terminal, cx| terminal.kill(cx));
+            }
+        }
+
+        let range = start..compaction_ix;
+        self.entries.drain(range.clone());
+        cx.emit(AcpThreadEvent::EntriesRemoved(range));
     }
 
     fn append_context_compaction_summary(
@@ -8077,10 +8137,6 @@ mod tests {
                     "second",
                     acp::CompactionStatus::InProgress,
                 )),
-                acp::SessionUpdate::CompactionUpdate(acp::CompactionUpdate::new(
-                    "second",
-                    acp::CompactionStatus::Completed,
-                )),
                 acp::SessionUpdate::CompactionSummaryChunk(acp::CompactionSummaryChunk::new(
                     "first",
                     acp::ContentBlock::Text(acp::TextContent::new("partial summary")),
@@ -8092,23 +8148,28 @@ mod tests {
             }
             assert!(thread.is_compacting());
         });
-        assert_eq!(*events.borrow(), [None, None, None, Some(2), Some(0)]);
+        assert_eq!(*events.borrow(), [None, None, None, Some(0)]);
 
         thread.update(cx, |thread, cx| {
-            thread
-                .handle_session_update(
-                    acp::SessionUpdate::CompactionUpdate(acp::CompactionUpdate::new(
-                        "first",
-                        acp::CompactionStatus::Cancelled,
-                    )),
-                    cx,
-                )
-                .expect("failed to cancel compaction");
+            for update in [
+                acp::SessionUpdate::CompactionUpdate(acp::CompactionUpdate::new(
+                    "first",
+                    acp::CompactionStatus::Cancelled,
+                )),
+                acp::SessionUpdate::CompactionUpdate(acp::CompactionUpdate::new(
+                    "second",
+                    acp::CompactionStatus::Cancelled,
+                )),
+            ] {
+                thread
+                    .handle_session_update(update, cx)
+                    .expect("failed to cancel compaction");
+            }
             assert!(!thread.is_compacting());
         });
         assert_eq!(
             *events.borrow(),
-            [None, None, None, Some(2), Some(0), Some(0)]
+            [None, None, None, Some(0), Some(0), Some(2)]
         );
         thread.read_with(cx, |thread, cx| {
             let [
@@ -8122,13 +8183,107 @@ mod tests {
             assert_eq!(first.id.0.as_ref(), "first");
             assert_eq!(first.status, ContextCompactionStatus::Canceled);
             assert_eq!(second.id.0.as_ref(), "second");
-            assert_eq!(second.status, ContextCompactionStatus::Completed);
+            assert_eq!(second.status, ContextCompactionStatus::Canceled);
             assert!(
                 thread
                     .to_markdown(cx)
                     .starts_with("## Context Compaction (Canceled)\n\npartial summary\n\n")
             );
         });
+    }
+
+    #[gpui::test]
+    async fn test_context_compaction_completion_drops_compacted_entries(
+        cx: &mut TestAppContext,
+    ) {
+        init_test(cx);
+        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+        let connection = Rc::new(FakeAgentConnection::new());
+        let thread = cx
+            .update(|cx| {
+                connection.new_session(project, PathList::new(&[Path::new(path!("/test"))]), cx)
+            })
+            .await
+            .expect("failed to create ACP thread");
+        let removed_ranges = Rc::new(RefCell::new(Vec::new()));
+        let _subscription = cx.update(|cx| {
+            let removed_ranges = removed_ranges.clone();
+            cx.subscribe(&thread, move |_, event, _| match event {
+                AcpThreadEvent::EntriesRemoved(range) => {
+                    removed_ranges.borrow_mut().push(range.clone())
+                }
+                _ => {}
+            })
+        });
+
+        thread.update(cx, |thread, cx| {
+            for update in [
+                acp::SessionUpdate::ToolCall(acp::ToolCall::new("tool-1", "Old tool call")),
+                acp::SessionUpdate::ToolCall(acp::ToolCall::new("tool-2", "Another old tool call")),
+                // 失败的压缩保留其条目。
+                acp::SessionUpdate::CompactionUpdate(
+                    acp::CompactionUpdate::new("failed", acp::CompactionStatus::Failed)
+                        .error("model unavailable"),
+                ),
+                acp::SessionUpdate::ToolCall(acp::ToolCall::new("tool-3", "Post-failure tool call")),
+                acp::SessionUpdate::CompactionUpdate(acp::CompactionUpdate::new(
+                    "first",
+                    acp::CompactionStatus::InProgress,
+                )),
+                acp::SessionUpdate::CompactionUpdate(
+                    acp::CompactionUpdate::new("first", acp::CompactionStatus::Completed)
+                        .summary(vec![acp::ContentBlock::Text(acp::TextContent::new(
+                            "retained context",
+                        ))]),
+                ),
+            ] {
+                thread
+                    .handle_session_update(update, cx)
+                    .expect("failed to apply session update");
+            }
+            // 只剩摘要条目，被覆盖的内容全部释放。
+            let [AgentThreadEntry::ContextCompaction(first)] = thread.entries.as_slice() else {
+                panic!("completed compaction must drop the entries it summarizes");
+            };
+            assert_eq!(first.id.0.as_ref(), "first");
+            assert_eq!(first.status, ContextCompactionStatus::Completed);
+            assert!(thread.to_markdown(cx).starts_with(
+                "## Context Compaction (Completed)\n\nretained context\n\n"
+            ));
+        });
+        assert_eq!(*removed_ranges.borrow(), [0..4]);
+
+        // 压缩之后新增的条目属于当前会话，只有下一次完成的压缩才会释放。
+        thread.update(cx, |thread, cx| {
+            for update in [
+                acp::SessionUpdate::ToolCall(acp::ToolCall::new("tool-4", "Post-compaction tool")),
+                acp::SessionUpdate::CompactionUpdate(acp::CompactionUpdate::new(
+                    "second",
+                    acp::CompactionStatus::InProgress,
+                )),
+                acp::SessionUpdate::CompactionUpdate(
+                    acp::CompactionUpdate::new("second", acp::CompactionStatus::Completed)
+                        .summary(vec![acp::ContentBlock::Text(acp::TextContent::new(
+                            "second summary",
+                        ))]),
+                ),
+            ] {
+                thread
+                    .handle_session_update(update, cx)
+                    .expect("failed to apply session update");
+            }
+            let [
+                AgentThreadEntry::ContextCompaction(first),
+                AgentThreadEntry::ContextCompaction(second),
+            ] = thread.entries.as_slice()
+            else {
+                panic!("previous summary must be kept; only the new segment is dropped");
+            };
+            assert_eq!(first.id.0.as_ref(), "first");
+            assert_eq!(second.id.0.as_ref(), "second");
+            assert_eq!(second.status, ContextCompactionStatus::Completed);
+        });
+        assert_eq!(*removed_ranges.borrow(), [0..4, 1..2]);
     }
 
     #[gpui::test]
