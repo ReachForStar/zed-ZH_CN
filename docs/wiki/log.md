@@ -26,3 +26,6 @@
 ## [2026-09-28] query | 沉淀内存占用异常排查页：审计确认 undo 历史（text.rs History.operations 只增不删）、Project buffer 驻留、终端 PTY 事件无界通道、ACP 线程消息压缩前驻留为长期增长点；LSP 日志/终端回滚有界排除；fork 的 notify vendor + fs_watcher 健康检查无泄漏但叠加放大为重扫风暴；给出 ETW 堆追踪实测路径，50G 构成待实测
 
 ## [2026-09-28] fix | 修复 ACP 长会话内存驻留：压缩状态 Completed 时丢弃被压缩条目（drop_compacted_entries，复用 rewind 的终端清理范式，仅杀不被保留条目引用的终端）；失败/取消压缩条目不是分段边界；acp_thread 全量 167 测试、agent_ui compact 测试、CI 语义 clippy 全过；局限：外部智能体不发送 CompactionUpdate 时 Zed 侧无从释放，待观察
+
+
+## [2026-09-28] query | 补记 webrtc-sys 构建脚本行为：download_webrtc 每次删除 OUT_DIR 旧解压后整包重下，无本地缓存；LK_CUSTOM_WEBRTC 指向含 include/lib/webrtc.ninja 的目录可跳过下载；os error 10060 与 tls handshake eof 同为代理上游断开，用 curl -x 访 google 探针区分代理死亡与仅 github 阻断

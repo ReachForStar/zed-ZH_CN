@@ -3,7 +3,7 @@ title: run_tests Clippy 失败链：四层根因与本地复现方法
 type: query
 tags: [ci, clippy, run_tests, fork, workflow]
 created: 2026-09-26
-updated: 2026-09-26
+updated: 2026-09-28
 sources: []
 status: active
 ---
@@ -35,6 +35,7 @@ cargo clippy -p <crate> --all-targets -- --deny warnings
 两个本地环境坑（2026-09-26 实测）：
 
 - **webrtc-sys build script 要下 GitHub release**：`livekit_client` 链编译时 build.rs 用 reqwest 直连下载 `webrtc-win-x64-release.zip`，本机直连不通会报 `connection closed before message completed` / `tls handshake eof`；给 cargo 注入 `HTTPS_PROXY=http://127.0.0.1:7890`（git 全局代理不影响 cargo）即可通过。`--workspace` 覆盖全部成员（`default-members=["crates/zed"]` 只影响裸 `cargo build` 的默认目标），一轮全量本地通过即可放心推送。
+- **该下载无本地缓存（2026-09-28 读 build.rs 确认）**：`download_webrtc()` 每次先 `remove_dir_all(OUT_DIR/<tag>/<triple>)` 再整包重下重解压，所以每轮从零构建都要走一次网络；`LK_CUSTOM_WEBRTC=<已解压目录>` 可让 build.rs 完全跳过下载（该目录需含 `include/`、`lib/`、`webrtc.ninja`）。报错 `os error 10060`（tcp connect）与 `tls handshake eof` 都指向同一件事——代理客户端在监听但上游节点已断，用 `curl -x http://127.0.0.1:7890 -I https://www.google.com` 探针区分「代理死了」还是「只有 github 不通」。
 
 ## 复发预防
 
