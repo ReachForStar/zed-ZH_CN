@@ -6,12 +6,12 @@ use ui::{
 use zed_i18n::t;
 
 use crate::{
-    TabularDataPreviewPane,
+    TableView,
     settings::{FilterSortOrder, VerticalAlignment},
 };
 
 ///// Settings related /////
-impl TabularDataPreviewPane {
+impl TableView {
     /// Render settings panel above the table
     pub(crate) fn render_settings_panel(
         &self,
@@ -175,9 +175,7 @@ impl TabularDataPreviewPane {
 }
 
 #[cfg(feature = "dev-tools")]
-fn create_dev_only_popover_menu(
-    cx: &mut Context<'_, TabularDataPreviewPane>,
-) -> ui::PopoverMenu<ContextMenu> {
+fn create_dev_only_popover_menu(cx: &mut Context<'_, TableView>) -> ui::PopoverMenu<ContextMenu> {
     use crate::settings::RowRenderMechanism;
     use ui::{IconButton, IconName, IconPosition, IconSize, PopoverMenu};
 

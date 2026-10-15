@@ -9,9 +9,6 @@ impl PlanDefinitions {
     pub fn free_plan(&self) -> impl IntoElement {
         List::new()
             .child(ListBulletItem::new(t!(
-                "ai_onboarding.plan_definitions.free_edit_predictions"
-            )))
-            .child(ListBulletItem::new(t!(
                 "ai_onboarding.plan_definitions.free_unlimited_prompts_api_keys"
             )))
             .child(ListBulletItem::new(t!(

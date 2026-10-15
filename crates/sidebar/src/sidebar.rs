@@ -3,7 +3,7 @@ mod thread_switcher;
 use acp_thread::ThreadStatus;
 use action_log::DiffStats;
 use agent::{ThreadStore, ZED_AGENT_ID};
-use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp;
 use agent_settings::{AgentSettings, THREADS_LIST_MAX_WIDTH, THREADS_LIST_MIN_WIDTH};
 use agent_ui::terminal_thread_metadata_store::{
     TerminalThreadMetadata, TerminalThreadMetadataStore, terminal_title_prefix,
@@ -635,20 +635,24 @@ fn workspace_menu_worktree_labels(
     let root_paths = workspace.read(cx).root_paths(cx);
     let show_folder_name = root_paths.len() > 1;
     let project = workspace.read(cx).project().clone();
-    let repository_snapshots: Vec<_> = project
-        .read(cx)
-        .repositories(cx)
-        .values()
-        .map(|repo| repo.read(cx).snapshot())
-        .collect();
+    let (path_style, repository_snapshots) = {
+        let project = project.read(cx);
+        let path_style = project.path_style(cx);
+        let repository_snapshots = project
+            .repositories(cx)
+            .values()
+            .map(|repo| repo.read(cx).snapshot())
+            .collect::<Vec<_>>();
+        (path_style, repository_snapshots)
+    };
 
     root_paths
         .into_iter()
         .map(|root_path| {
             let root_path = root_path.as_ref();
-            let folder_name = root_path
-                .file_name()
-                .map(|name| SharedString::from(name.to_string_lossy().to_string()))
+            let folder_name = path_style
+                .file_name(root_path)
+                .map(|name| SharedString::from(name.to_string_lossy().into_owned()))
                 .unwrap_or_default();
             let repository_snapshot = repository_snapshots
                 .iter()
@@ -664,7 +668,11 @@ fn workspace_menu_worktree_labels(
                         .main_worktree_abs_path()
                         .or(identity_fallback)
                         .and_then(|name_anchor_path| {
-                            project::linked_worktree_short_name(name_anchor_path, root_path)
+                            project::linked_worktree_short_name(
+                                name_anchor_path,
+                                root_path,
+                                snapshot.path_style,
+                            )
                         })
                         .unwrap_or_else(|| folder_name.clone())
                 } else {
@@ -2341,10 +2349,18 @@ impl Sidebar {
         let key_for_toggle = key.clone();
         let key_for_focus = key.clone();
 
+        let color = cx.theme().colors();
+        let sidebar_base_bg = if is_sticky {
+            color.panel_background_for_overlay()
+        } else {
+            color.panel_background
+        };
+
         // The fade gradient renders as a visible patch on transparent windows,
         // so truncate the label instead.
-        let opaque_window =
-            cx.theme().window_background_appearance() == WindowBackgroundAppearance::Opaque;
+        let opaque_window = cx.theme().window_background_appearance()
+            == WindowBackgroundAppearance::Opaque
+            && sidebar_base_bg.a >= 1.0;
 
         let label = if highlight_positions.is_empty() {
             Label::new(label.clone())
@@ -2358,21 +2374,14 @@ impl Sidebar {
                 .into_any_element()
         };
 
-        let color = cx.theme().colors();
-        let sidebar_base_bg = color
-            .title_bar_background
-            .blend(color.panel_background.opacity(0.25));
-
         let base_bg = color.background.blend(sidebar_base_bg);
 
-        let hover_base = color
-            .element_active
-            .blend(color.element_background.opacity(0.2));
-        let hover_solid = base_bg.blend(hover_base);
+        let hover_solid = base_bg.blend(color.ghost_element_hover);
+        let active_solid = base_bg.blend(color.ghost_element_active);
 
         let group_name_for_gradient = group_name.clone();
         let gradient_overlay = move || {
-            GradientFade::new(base_bg, hover_solid, hover_solid)
+            GradientFade::new(base_bg, hover_solid, active_solid)
                 .width(px(92.0))
                 .right(px(-2.0))
                 .gradient_stop(0.7)
@@ -2400,7 +2409,10 @@ impl Sidebar {
                     this.border_color(gpui::transparent_black())
                 }
             })
-            .when(!has_filter, |this| this.hover(|s| s.bg(hover_solid)))
+            .when(!has_filter, |this| {
+                this.hover(|s| s.bg(color.ghost_element_hover))
+                    .group_active(&group_name, |s| s.bg(color.ghost_element_active))
+            })
             .child(
                 h_flex()
                     .relative()
@@ -2467,22 +2479,31 @@ impl Sidebar {
             .children(opaque_window.then(|| gradient_overlay()))
             .child(
                 h_flex()
-                    .gap_px()
-                    .pr_1p5()
                     .children(opaque_window.then(|| gradient_overlay()))
-                    .child(self.render_new_thread_button(ix, id_prefix, key, &group_name, cx))
-                    .child(self.render_project_header_ellipsis_menu(
-                        ix,
-                        id_prefix,
-                        key,
-                        is_active,
-                        has_threads,
-                        &group_name,
-                        cx,
-                    ))
-                    .on_mouse_down(gpui::MouseButton::Left, |_, _, cx| {
-                        cx.stop_propagation();
-                    }),
+                    .child(
+                        h_flex()
+                            .gap_px()
+                            .pr_1p5()
+                            .child(self.render_new_thread_button(
+                                ix,
+                                id_prefix,
+                                key,
+                                &group_name,
+                                cx,
+                            ))
+                            .child(self.render_project_header_ellipsis_menu(
+                                ix,
+                                id_prefix,
+                                key,
+                                is_active,
+                                has_threads,
+                                &group_name,
+                                cx,
+                            ))
+                            .on_mouse_down(gpui::MouseButton::Left, |_, _, cx| {
+                                cx.stop_propagation();
+                            }),
+                    ),
             )
             .on_mouse_down(gpui::MouseButton::Right, {
                 let menu_handle = self
@@ -2552,6 +2573,12 @@ impl Sidebar {
             SharedString::from(format!("{id_prefix}project-header-new-thread-{ix}")),
             IconName::Plus,
         )
+        .when(!is_menu_open && !self.has_filter_query(cx), |button| {
+            let color = cx.theme().colors();
+            button
+                .hover_background(color.element_background)
+                .active_background(color.element_active)
+        })
         .selected_style(ButtonStyle::Tinted(TintColor::Accent))
         .icon_size(IconSize::Small)
         .when(!is_menu_open, |this| this.visible_on_hover(group_name));
@@ -2870,6 +2897,12 @@ impl Sidebar {
             .with_handle(menu_handle)
             .trigger(
                 IconButton::new(trigger_id, IconName::Ellipsis)
+                    .when(!is_menu_open && !self.has_filter_query(cx), |button| {
+                        let color = cx.theme().colors();
+                        button
+                            .hover_background(color.element_background)
+                            .active_background(color.element_active)
+                    })
                     .selected_style(ButtonStyle::Tinted(TintColor::Accent))
                     .icon_size(IconSize::Small)
                     .when(!is_menu_open, |el| el.visible_on_hover(group_name)),
@@ -3288,9 +3321,7 @@ impl Sidebar {
             .unwrap_or(px(0.));
 
         let color = cx.theme().colors();
-        let background = color
-            .title_bar_background
-            .blend(color.panel_background.opacity(0.2));
+        let background = color.panel_background_for_overlay();
 
         let element = v_flex()
             .absolute()
@@ -5372,8 +5403,58 @@ impl Sidebar {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let store = ThreadMetadataStore::global(cx);
-        let metadata = store.read(cx).entry_by_session(session_id).cloned();
+        let (metadata, thread_entry) = self.thread_to_archive(session_id, cx);
+
+        if let (
+            Some(metadata),
+            Some(ThreadEntryWorkspace::Closed {
+                folder_paths,
+                project_group_key,
+            }),
+        ) = (
+            metadata.as_ref(),
+            thread_entry.as_ref().map(|thread| &thread.workspace),
+        ) && self.should_load_closed_workspace_for_archive(
+            folder_paths,
+            project_group_key,
+            metadata.remote_connection.as_ref(),
+            Some(metadata.thread_id),
+            None,
+            cx,
+        ) {
+            let session_id = session_id.clone();
+            self.open_workspace_for_archive(
+                folder_paths.clone(),
+                project_group_key.clone(),
+                window,
+                cx,
+                move |this, _workspace, window, cx| {
+                    this.update_entries(cx);
+                    let (metadata, thread_entry) = this.thread_to_archive(&session_id, cx);
+                    this.archive_thread_in_loaded_workspace(
+                        &session_id,
+                        metadata,
+                        thread_entry,
+                        window,
+                        cx,
+                    );
+                },
+            );
+            return;
+        }
+
+        self.archive_thread_in_loaded_workspace(session_id, metadata, thread_entry, window, cx);
+    }
+
+    fn thread_to_archive(
+        &self,
+        session_id: &acp::SessionId,
+        cx: &App,
+    ) -> (Option<ThreadMetadata>, Option<Arc<ThreadEntry>>) {
+        let metadata = ThreadMetadataStore::global(cx)
+            .read(cx)
+            .entry_by_session(session_id)
+            .cloned();
         let metadata_thread_id = metadata.as_ref().map(|metadata| metadata.thread_id);
         let thread_entry = self.contents.entries.iter().find_map(|entry| match entry {
             ListEntry::Thread(thread) => metadata_thread_id
@@ -5384,6 +5465,18 @@ impl Sidebar {
                 .then(|| thread.clone()),
             _ => None,
         });
+        (metadata, thread_entry)
+    }
+
+    fn archive_thread_in_loaded_workspace(
+        &mut self,
+        session_id: &acp::SessionId,
+        metadata: Option<ThreadMetadata>,
+        thread_entry: Option<Arc<ThreadEntry>>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let metadata_thread_id = metadata.as_ref().map(|metadata| metadata.thread_id);
         let thread_id = metadata_thread_id.or_else(|| {
             thread_entry
                 .as_ref()
@@ -5411,37 +5504,6 @@ impl Sidebar {
                     .as_ref()
                     .map(|workspace| PathList::new(&workspace.read(cx).root_paths(cx)))
             });
-        let thread_entry_workspace = thread_entry.map(|thread| thread.workspace.clone());
-
-        if let (
-            Some(metadata),
-            Some(ThreadEntryWorkspace::Closed {
-                folder_paths,
-                project_group_key,
-            }),
-        ) = (metadata.as_ref(), thread_entry_workspace)
-            && self.should_load_closed_workspace_for_archive(
-                &folder_paths,
-                &project_group_key,
-                metadata.remote_connection.as_ref(),
-                Some(metadata.thread_id),
-                None,
-                cx,
-            )
-        {
-            let session_id = session_id.clone();
-            self.open_workspace_for_archive(
-                folder_paths,
-                project_group_key,
-                window,
-                cx,
-                move |this, _workspace, window, cx| {
-                    this.update_entries(cx);
-                    this.archive_thread(&session_id, window, cx);
-                },
-            );
-            return;
-        }
 
         // Compute which linked worktree roots should be archived from disk if
         // this thread is archived. This must happen before we remove any
@@ -6279,9 +6341,9 @@ impl Sidebar {
         let id = SharedString::from(format!("thread-entry-{}", ix));
 
         let color = cx.theme().colors();
-        let sidebar_bg = color
-            .title_bar_background
-            .blend(color.panel_background.opacity(0.25));
+        let sidebar_bg = color.panel_background;
+        let button_hover_bg = color.element_background;
+        let button_active_bg = color.element_active;
 
         let timestamp: SharedString = if is_empty_draft {
             SharedString::default()
@@ -6345,6 +6407,8 @@ impl Sidebar {
             })
             .when(is_hovered && !is_renaming, |this| {
                 let rename_button = IconButton::new(("rename-thread", ix), IconName::Pencil)
+                    .hover_background(button_hover_bg)
+                    .active_background(button_active_bg)
                     .icon_size(IconSize::Small)
                     .tooltip({
                         let focus_handle = focus_handle.clone();
@@ -6387,6 +6451,8 @@ impl Sidebar {
                         Some(DraftKind::Empty) => None,
                         Some(DraftKind::WithContent) => Some(
                             IconButton::new("discard_thread", IconName::Close)
+                                .hover_background(button_hover_bg)
+                                .active_background(button_active_bg)
                                 .icon_size(IconSize::Small)
                                 .tooltip(Tooltip::text(t!("sidebar.thread.discard_draft")))
                                 .on_click({
@@ -6404,6 +6470,8 @@ impl Sidebar {
                         ),
                         None => Some(
                             IconButton::new("archive-thread", IconName::Archive)
+                                .hover_background(button_hover_bg)
+                                .active_background(button_active_bg)
                                 .icon_size(IconSize::Small)
                                 .tooltip({
                                     let focus_handle = focus_handle.clone();
@@ -6602,9 +6670,9 @@ impl Sidebar {
         let timestamp = format_history_entry_timestamp(terminal.metadata.created_at);
         let is_hovered = self.hovered_thread_index == Some(ix);
         let color = cx.theme().colors();
-        let sidebar_bg = color
-            .title_bar_background
-            .blend(color.panel_background.opacity(0.25));
+        let sidebar_bg = color.panel_background;
+        let button_hover_bg = color.element_background;
+        let button_active_bg = color.element_active;
         let metadata = terminal.metadata.clone();
         let workspace = terminal.workspace.clone();
         let focus_handle = self.focus_handle.clone();
@@ -6650,6 +6718,8 @@ impl Sidebar {
             .when(is_hovered && !is_renaming, |this| {
                 this.action_slot(
                     IconButton::new("close-terminal", IconName::Close)
+                        .hover_background(button_hover_bg)
+                        .active_background(button_active_bg)
                         .icon_size(IconSize::Small)
                         .icon_color(Color::Muted)
                         .tooltip({
@@ -7436,7 +7506,11 @@ impl Sidebar {
                     )
             })
             .when(right_window_controls, |this| {
-                this.children(Self::render_right_window_controls(window, cx))
+                this
+                    // Without projects, nothing flex-grows to push right-side window controls
+                    // to the edge.
+                    .when(no_open_projects, |this| this.justify_end())
+                    .children(Self::render_right_window_controls(window, cx))
             })
     }
 
@@ -7944,9 +8018,7 @@ impl Render for Sidebar {
         let sticky_header = self.render_sticky_header(window, cx);
 
         let color = cx.theme().colors();
-        let bg = color
-            .title_bar_background
-            .blend(color.panel_background.opacity(0.25));
+        let bg = color.background.blend(color.panel_background);
 
         let no_open_projects = !self.contents.has_open_projects;
         let no_search_results = self.contents.entries.is_empty();

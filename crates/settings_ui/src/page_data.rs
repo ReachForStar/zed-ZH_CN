@@ -559,6 +559,27 @@ fn general_page(cx: &App) -> SettingsPage {
         ]
     }
 
+    fn extensions_section() -> [SettingsPageItem; 2] {
+        [
+            SettingsPageItem::SectionHeader("Extensions".into()),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Suggest Extensions".into(),
+                description:
+                    "Whether to suggest installing extensions based on the files you open.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("suggest_extensions"),
+                    pick: |settings_content| Some(&settings_content.extension.suggest_extensions),
+                    write: |settings_content, value, _| {
+                        settings_content.extension.suggest_extensions = value.unwrap_or(true);
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+        ]
+    }
+
     SettingsPage {
         title: t!("settings_ui.page_data.general_page_title").into(),
         items: concat_sections!(
@@ -569,6 +590,7 @@ fn general_page(cx: &App) -> SettingsPage {
             scoped_settings_section(),
             privacy_section(),
             auto_update_section(),
+            extensions_section(),
         )
         .into(),
     }
@@ -1356,7 +1378,7 @@ fn appearance_page() -> SettingsPage {
         ]
     }
 
-    fn markdown_preview_font_section() -> [SettingsPageItem; 4] {
+    fn markdown_preview_font_section() -> [SettingsPageItem; 5] {
         [
             SettingsPageItem::SectionHeader(
                 t!("settings_ui.page_data.markdown_preview_font_section").into(),
@@ -1374,6 +1396,7 @@ fn appearance_page() -> SettingsPage {
                             .as_ref()?
                             .font_family
                             .as_ref()
+                            .or(settings_content.theme.ui_font_family.as_ref())
                     },
                     write: |settings_content, value, _| {
                         settings_content
@@ -1400,6 +1423,7 @@ fn appearance_page() -> SettingsPage {
                             .as_ref()?
                             .code_font_family
                             .as_ref()
+                            .or(settings_content.theme.buffer_font_family.as_ref())
                     },
                     write: |settings_content, value, _| {
                         settings_content
@@ -1430,6 +1454,55 @@ fn appearance_page() -> SettingsPage {
                             .markdown_preview
                             .get_or_insert_default()
                             .font_size = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Heading Font Weight".into(),
+                description: "Font weight for headings in the markdown preview, in CSS units from 100 to 900.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("markdown_preview.heading_font_weight"),
+                    pick: |settings_content| {
+                        settings_content
+                            .markdown_preview
+                            .as_ref()?
+                            .heading_font_weight
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .markdown_preview
+                            .get_or_insert_default()
+                            .heading_font_weight = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+        ]
+    }
+
+    fn mermaid_font_section() -> [SettingsPageItem; 2] {
+        [
+            SettingsPageItem::SectionHeader("Mermaid Font".into()),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Font Family".into(),
+                description: "Font family for Mermaid diagrams in the agent panel and markdown preview. Falls back to the UI font family.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("mermaid_font_family"),
+                    pick: |settings_content| {
+                        settings_content
+                            .theme
+                            .mermaid_font_family
+                            .as_ref()
+                            .or(settings_content.theme.ui_font_family.as_ref())
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content.theme.mermaid_font_family = value;
                     },
                 }),
                 metadata: None,
@@ -1713,6 +1786,7 @@ fn appearance_page() -> SettingsPage {
         ui_font_section(),
         agent_panel_font_section(),
         markdown_preview_font_section(),
+        mermaid_font_section(),
         text_rendering_section(),
         cursor_section(),
         highlighting_section(),
@@ -4058,7 +4132,7 @@ fn search_and_files_page() -> SettingsPage {
         ]
     }
 
-    fn file_finder_section() -> [SettingsPageItem; 4] {
+    fn file_finder_section() -> [SettingsPageItem; 5] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.file_finder_section").into()),
             // todo: null by default
@@ -4129,6 +4203,29 @@ fn search_and_files_page() -> SettingsPage {
                             .file_finder
                             .get_or_insert_default()
                             .skip_focus_for_active_in_search = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Prefill Query From Selection".into(),
+                description: "Whether to pre-fill the file finder's query with the text selected in the focused item (e.g. an editor or a terminal).".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("file_finder.prefill_query_from_selection"),
+                    pick: |settings_content| {
+                        settings_content
+                            .file_finder
+                            .as_ref()?
+                            .prefill_query_from_selection
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .file_finder
+                            .get_or_insert_default()
+                            .prefill_query_from_selection = value;
                     },
                 }),
                 metadata: None,
@@ -4502,7 +4599,7 @@ fn window_and_layout_page() -> SettingsPage {
         ]
     }
 
-    fn title_bar_section() -> [SettingsPageItem; 11] {
+    fn title_bar_section() -> [SettingsPageItem; 12] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.title_bar_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
@@ -4832,6 +4929,29 @@ fn window_and_layout_page() -> SettingsPage {
                         }
                     })
                     .collect(),
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Open Menus on Hover".into(),
+                description: "Automatically open menus in the titlebar on hover.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("title_bar.open_menus_on_hover"),
+                    pick: |settings_content| {
+                        settings_content
+                            .title_bar
+                            .as_ref()?
+                            .open_menus_on_hover
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .title_bar
+                            .get_or_insert_default()
+                            .open_menus_on_hover = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
             }),
         ]
     }
@@ -6388,7 +6508,7 @@ fn panels_page() -> SettingsPage {
         ]
     }
 
-    fn terminal_panel_section() -> [SettingsPageItem; 4] {
+    fn terminal_panel_section() -> [SettingsPageItem; 5] {
         [
             SettingsPageItem::SectionHeader(
                 t!("settings_ui.page_data.terminal_panel_section").into(),
@@ -6402,6 +6522,25 @@ fn panels_page() -> SettingsPage {
                     pick: |settings_content| settings_content.terminal.as_ref()?.dock.as_ref(),
                     write: |settings_content, value, _| {
                         settings_content.terminal.get_or_insert_default().dock = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Starts Open".into(),
+                description: "Whether the terminal panel should open on startup.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("terminal.starts_open"),
+                    pick: |settings_content| {
+                        settings_content.terminal.as_ref()?.starts_open.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .terminal
+                            .get_or_insert_default()
+                            .starts_open = value;
                     },
                 }),
                 metadata: None,
@@ -6705,7 +6844,7 @@ fn panels_page() -> SettingsPage {
         ]
     }
 
-    fn git_panel_section() -> [SettingsPageItem; 17] {
+    fn git_panel_section() -> [SettingsPageItem; 19] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.git_panel_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
@@ -6731,6 +6870,25 @@ fn panels_page() -> SettingsPage {
                     pick: |settings_content| settings_content.git_panel.as_ref()?.dock.as_ref(),
                     write: |settings_content, value, _| {
                         settings_content.git_panel.get_or_insert_default().dock = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Starts Open".into(),
+                description: "Whether the git panel should open on startup.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git_panel.starts_open"),
+                    pick: |settings_content| {
+                        settings_content.git_panel.as_ref()?.starts_open.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .git_panel
+                            .get_or_insert_default()
+                            .starts_open = value;
                     },
                 }),
                 metadata: None,
@@ -6951,6 +7109,26 @@ fn panels_page() -> SettingsPage {
                             .git_panel
                             .get_or_insert_default()
                             .entry_primary_click_action = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Commit Editor".into(),
+                description:
+                    "Whether the commit message editor is shown in the Git panel by default.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git_panel.commit_editor"),
+                    pick: |settings_content| {
+                        settings_content.git_panel.as_ref()?.commit_editor.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .git_panel
+                            .get_or_insert_default()
+                            .commit_editor = value;
                     },
                 }),
                 metadata: None,
@@ -8736,7 +8914,7 @@ fn version_control_page() -> SettingsPage {
         ]
     }
 
-    fn git_hunks_section() -> [SettingsPageItem; 4] {
+    fn git_hunks_section() -> [SettingsPageItem; 5] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.git_hunks_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
@@ -8748,6 +8926,20 @@ fn version_control_page() -> SettingsPage {
                     pick: |settings_content| settings_content.git.as_ref()?.hunk_style.as_ref(),
                     write: |settings_content, value, _| {
                         settings_content.git.get_or_insert_default().hunk_style = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+SettingsPageItem::SettingItem(SettingItem {
+                title: "Diff Base".into(),
+                description: "Whether git features show changes relative to HEAD (uncommitted changes) or to the default branch (all changes on the current branch).".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.diff_base"),
+                    pick: |settings_content| settings_content.git.as_ref()?.diff_base.as_ref(),
+                    write: |settings_content, value, _| {
+                        settings_content.git.get_or_insert_default().diff_base = value;
                     },
                 }),
                 metadata: None,
@@ -9294,6 +9486,29 @@ fn ai_page(cx: &App) -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
+                title: "Max Idle Threads".into(),
+                description: "Maximum number of idle agent threads with loadable sessions to keep loaded. When the limit is exceeded, the least recently updated threads are unloaded.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("agent.max_idle_retained_threads"),
+                    pick: |settings_content| {
+                        settings_content
+                            .agent
+                            .as_ref()?
+                            .max_idle_retained_threads
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .agent
+                            .get_or_insert_default()
+                            .max_idle_retained_threads = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.agent_expand_edit_card_title").into(),
                 description: t!("settings_ui.page_data.agent_expand_edit_card_description").into(),
                 field: Box::new(SettingField {
@@ -9793,7 +10008,7 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
         ]
     }
 
-    fn wrapping_section() -> [SettingsPageItem; 6] {
+    fn wrapping_section() -> [SettingsPageItem; 7] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.wrapping_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
@@ -9811,6 +10026,26 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
                     write: |settings_content, value, _| {
                         language_settings_field_mut(settings_content, value, |language, value| {
                             language.soft_wrap = value;
+                        })
+                    },
+                }),
+                metadata: None,
+                files: USER | PROJECT,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Soft Wrap Indent".into(),
+                description: "How to indent soft-wrapped lines.".into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("languages.$(language).soft_wrap_indent"),
+                    pick: |settings_content| {
+                        language_settings_field(settings_content, |language| {
+                            language.soft_wrap_indent.as_ref()
+                        })
+                    },
+                    write: |settings_content, value, _| {
+                        language_settings_field_mut(settings_content, value, |language, value| {
+                            language.soft_wrap_indent = value;
                         })
                     },
                 }),
