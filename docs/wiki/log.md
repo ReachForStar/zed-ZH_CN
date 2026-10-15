@@ -31,3 +31,5 @@
 ## [2026-09-28] query | 补记 webrtc-sys 构建脚本行为：download_webrtc 每次删除 OUT_DIR 旧解压后整包重下，无本地缓存；LK_CUSTOM_WEBRTC 指向含 include/lib/webrtc.ninja 的目录可跳过下载；os error 10060 与 tls handshake eof 同为代理上游断开，用 curl -x 访 google 探针区分代理死亡与仅 github 阻断
 
 ## [2026-09-28] query | 修正 git-proxy 页与脚本现状不符——grep 实测 scripts/git-proxy.ps1 无 OutputEncoding 设置行，改记 iconv 补救为现行方案；SKILL.md 已补探针/瞬断/非 git 进程边界说明
+
+## [2026-10-16] feat | 合并 upstream/main（953ac75529，297 提交）并保留 fork 汉化与特性：冲突消解取上游新 API/新结构与 acp_v1 拆分、恢复 image_resolver 两参数 API、tabular_data_preview 面板迁 TableView、补回 git_panel.starts_open 等三项丢失设置；本地全量 clippy/fmt/typos/check-todos/check-keymaps 通过，合并提交 80851bcbbc 已推送 fork main；沉淀 upstream-merge-2026-10 查询页与 fork-upstream-sync 要点

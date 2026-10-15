@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-09-28
+updated: 2026-10-16
 ---
 
 # Wiki 索引
@@ -26,3 +26,4 @@ updated: 2026-09-28
 - [run_tests Clippy 失败链](queries/run-tests-clippy-failure-chain.md) — typos 路径→dead_code→redundant_clone→useless_format 四层串行根因；本地全量 clippy 复现、webrtc 下载代理坑与无缓存行为
 - [git bash 调用 pwsh 脚本的两类失败](queries/git-bash-pwsh-invocation-pitfalls.md) — `chcp` 包装与裸反斜杠路径分别报退出码 1/64；改用正斜杠引号路径直调 pwsh，脚本内设 OutputEncoding 解决 Write-Host 的 GBK 输出
 - [内存占用异常排查](queries/zed-memory-usage-audit.md) — 长时间使用单进程占 50G 的驻留结构审计：ACP 消息驻留（已修复）、undo 历史无界、buffer 无卸载、PTY 通道无界；ETW 堆追踪待实测
+- [2026-10 合并上游 main：冲突消解决策与编译失败链](queries/upstream-merge-2026-10.md) — 297 提交合并的取舍清单、六轮编译失败链（image_resolver 两参数、SharedString 补 `.into()`、`t!` 分支类型、redundant_clone）、历史丢失检测与本地校验清单
