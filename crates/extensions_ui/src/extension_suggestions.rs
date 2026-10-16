@@ -142,7 +142,7 @@ fn suggest_for_buffer(
                 .more_info_message("Learn more")
                 .more_info_url(suggestion.docs_url)
                 .primary_message(suggestion.install_message)
-                .secondary_message("Don't show again")
+                .secondary_message(t!("extensions_ui.extension_suggestions.dont_show_again"))
             });
         }
         None => {

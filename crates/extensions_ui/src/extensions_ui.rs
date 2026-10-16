@@ -907,11 +907,14 @@ impl ExtensionsPage {
     }
 
     fn retry_button(&self, cx: &mut Context<Self>) -> Button {
-        Button::new("retry-fetch-extensions", "Retry")
-            .style(ButtonStyle::Outlined)
-            .on_click(cx.listener(|this, _, _, cx| {
-                this.fetch_extensions(FetchDebounce::Immediate, None, cx);
-            }))
+        Button::new(
+            "retry-fetch-extensions",
+            t!("extensions_ui.extensions_ui.retry"),
+        )
+        .style(ButtonStyle::Outlined)
+        .on_click(cx.listener(|this, _, _, cx| {
+            this.fetch_extensions(FetchDebounce::Immediate, None, cx);
+        }))
     }
 
     fn render_text_input(
@@ -1633,9 +1636,9 @@ impl Render for ExtensionsPage {
                                     Banner::new()
                                         .severity(Severity::Warning)
                                         .child(
-                                            Label::new(
-                                                "Failed to load extensions. Showing installed extensions only.",
-                                            )
+                                            Label::new(t!(
+                                                "extensions_ui.extensions_ui.load_failed"
+                                            ))
                                             .mt_0p5(),
                                         )
                                         .action_slot(self.retry_button(cx)),

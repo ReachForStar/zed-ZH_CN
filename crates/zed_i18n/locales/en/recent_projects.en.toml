@@ -89,3 +89,8 @@ dont_show_again = "Don't Show Again"
 
 [recent_projects.wsl]
 enter_distro_name = "Enter WSL distro name"
+
+[recent_projects.remote_connections]
+retry = "Retry"
+cancel = "Cancel"
+

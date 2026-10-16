@@ -5073,6 +5073,7 @@ dependencies = [
  "workspace",
  "worktree",
  "yaml-rust2",
+ "zed_i18n",
 ]
 
 [[package]]

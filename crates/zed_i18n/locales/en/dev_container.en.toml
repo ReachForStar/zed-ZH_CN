@@ -1,0 +1,17 @@
+_version = 1
+
+[dev_container.lib]
+create_dev_container = "Create Dev Container"
+go_back = "Go Back"
+cancel = "Cancel"
+confirm_selections = "Confirm Selections"
+continue = "Continue"
+overwrite = "Overwrite"
+overwrite_existing_config = "Overwrite Existing Configuration?"
+querying_features = "Querying features..."
+querying_template_registry = "Querying template registry..."
+search_templates = "Search for Dev Container Templates"
+select_feature = "Select Feature"
+select_template = "Select a template"
+select_features_to_add = "Select features to add"
+template_option = "Template Option: "

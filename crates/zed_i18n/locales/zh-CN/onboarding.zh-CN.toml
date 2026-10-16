@@ -12,6 +12,8 @@ import_warning = "导入 %{source} 设置可能会覆盖你现有的设置。将
 import_success = "你的 %{source} 设置已成功导入。"
 import_failed = "导入设置失败。详情请查看日志"
 open_log = "打开日志"
+import = "导入"
+cancel = "取消"
 
 [onboarding.basics_page]
 theme = "主题"

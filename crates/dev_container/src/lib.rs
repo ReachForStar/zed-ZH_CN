@@ -1,4 +1,5 @@
 use std::path::Path;
+use zed_i18n::t;
 
 use fs::Fs;
 use gpui::AppContext;
@@ -429,7 +430,7 @@ impl PickerDelegate for TemplatePickerDelegate {
                 .border_t_1()
                 .border_color(cx.theme().colors().border_variant)
                 .child(
-                    Button::new("run-action", "Continue")
+                    Button::new("run-action", t!("dev_container.lib.continue"))
                         .key_binding(
                             KeyBinding::for_action(&menu::Confirm, cx)
                                 .map(|kb| kb.size(rems_from_px(12_f32))),
@@ -626,7 +627,7 @@ impl PickerDelegate for FeaturePickerDelegate {
                 .border_t_1()
                 .border_color(cx.theme().colors().border_variant)
                 .child(
-                    Button::new("run-action", "Select Feature")
+                    Button::new("run-action", t!("dev_container.lib.select_feature"))
                         .key_binding(
                             KeyBinding::for_action(&menu::Confirm, cx)
                                 .map(|kb| kb.size(rems_from_px(12_f32))),
@@ -636,14 +637,17 @@ impl PickerDelegate for FeaturePickerDelegate {
                         }),
                 )
                 .child(
-                    Button::new("run-action-secondary", "Confirm Selections")
-                        .key_binding(
-                            KeyBinding::for_action(&menu::SecondaryConfirm, cx)
-                                .map(|kb| kb.size(rems_from_px(12_f32))),
-                        )
-                        .on_click(|_, window, cx| {
-                            window.dispatch_action(menu::SecondaryConfirm.boxed_clone(), cx)
-                        }),
+                    Button::new(
+                        "run-action-secondary",
+                        t!("dev_container.lib.confirm_selections"),
+                    )
+                    .key_binding(
+                        KeyBinding::for_action(&menu::SecondaryConfirm, cx)
+                            .map(|kb| kb.size(rems_from_px(12_f32))),
+                    )
+                    .on_click(|_, window, cx| {
+                        window.dispatch_action(menu::SecondaryConfirm.boxed_clone(), cx)
+                    }),
                 )
                 .into_any_element(),
         )
@@ -670,7 +674,8 @@ impl DevContainerModal {
                 .child(
                     div().track_focus(&self.focus_handle).child(
                         ModalHeader::new().child(
-                            Headline::new("Create Dev Container").size(HeadlineSize::XSmall),
+                            Headline::new(t!("dev_container.lib.create_dev_container"))
+                                .size(HeadlineSize::XSmall),
                         ),
                     ),
                 )
@@ -699,7 +704,7 @@ impl DevContainerModal {
                                     );
                                     cx.notify();
                                 }))
-                                .child(Label::new("Search for Dev Container Templates")),
+                                .child(Label::new(t!("dev_container.lib.search_templates"))),
                         ),
                 )
                 .into_any_element(),
@@ -765,7 +770,8 @@ impl DevContainerModal {
                         .child(
                             ModalHeader::new()
                                 .child(
-                                    Headline::new("Template Option: ").size(HeadlineSize::XSmall),
+                                    Headline::new(t!("dev_container.lib.template_option"))
+                                        .size(HeadlineSize::XSmall),
                                 )
                                 .child(
                                     Headline::new(&next_option_entries.option_name)
@@ -845,7 +851,7 @@ impl DevContainerModal {
                                     this.accept_message(DevContainerMessage::GoBack, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Go Back")),
+                                .child(Label::new(t!("dev_container.lib.go_back"))),
                         ),
                 )
                 .into_any_element(),
@@ -887,7 +893,7 @@ impl DevContainerModal {
                         ModalHeader::new()
                             .icon(Icon::new(IconName::Warning).color(Color::Warning))
                             .child(
-                                Headline::new("Overwrite Existing Configuration?")
+                                Headline::new(t!("dev_container.lib.overwrite_existing_config"))
                                     .size(HeadlineSize::XSmall),
                             ),
                     ),
@@ -923,7 +929,7 @@ impl DevContainerModal {
                                     );
                                     cx.notify();
                                 }))
-                                .child(Label::new("Overwrite")),
+                                .child(Label::new(t!("dev_container.lib.overwrite"))),
                         ),
                 )
                 .child(
@@ -944,7 +950,7 @@ impl DevContainerModal {
                                     this.dismiss(&menu::Cancel, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Cancel")),
+                                .child(Label::new(t!("dev_container.lib.cancel"))),
                         ),
                 )
                 .into_any_element(),
@@ -961,7 +967,8 @@ impl DevContainerModal {
                 .child(
                     div().track_focus(&self.focus_handle).child(
                         ModalHeader::new().child(
-                            Headline::new("Create Dev Container").size(HeadlineSize::XSmall),
+                            Headline::new(t!("dev_container.lib.create_dev_container"))
+                                .size(HeadlineSize::XSmall),
                         ),
                     ),
                 )
@@ -976,7 +983,9 @@ impl DevContainerModal {
                                     .color(Color::Muted)
                                     .with_rotate_animation(2),
                             )
-                            .child(Label::new("Querying template registry...")),
+                            .child(Label::new(t!(
+                                "dev_container.lib.querying_template_registry"
+                            ))),
                     ),
                 )
                 .child(ListSeparator)
@@ -998,7 +1007,7 @@ impl DevContainerModal {
                                     this.accept_message(DevContainerMessage::GoBack, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Go Back")),
+                                .child(Label::new(t!("dev_container.lib.go_back"))),
                         ),
                 )
                 .into_any_element(),
@@ -1013,7 +1022,8 @@ impl DevContainerModal {
                 .child(
                     div().track_focus(&self.focus_handle).child(
                         ModalHeader::new().child(
-                            Headline::new("Create Dev Container").size(HeadlineSize::XSmall),
+                            Headline::new(t!("dev_container.lib.create_dev_container"))
+                                .size(HeadlineSize::XSmall),
                         ),
                     ),
                 )
@@ -1028,7 +1038,7 @@ impl DevContainerModal {
                                     .color(Color::Muted)
                                     .with_rotate_animation(2),
                             )
-                            .child(Label::new("Querying features...")),
+                            .child(Label::new(t!("dev_container.lib.querying_features"))),
                     ),
                 )
                 .child(ListSeparator)
@@ -1050,7 +1060,7 @@ impl DevContainerModal {
                                     this.accept_message(DevContainerMessage::GoBack, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Go Back")),
+                                .child(Label::new(t!("dev_container.lib.go_back"))),
                         ),
                 )
                 .into_any_element(),
@@ -1172,7 +1182,7 @@ impl StatefulModal for DevContainerModal {
                     .collect::<Vec<TemplateEntry>>();
                 if self.state == DevContainerState::QueryingTemplates {
                     let delegate = TemplatePickerDelegate::new(
-                        "Select a template".to_string(),
+                        t!("dev_container.lib.select_template").to_string(),
                         cx.weak_entity(),
                         items.clone(),
                         Box::new(|entry, this, window, cx| {
@@ -1302,7 +1312,7 @@ impl StatefulModal for DevContainerModal {
                         })
                         .collect::<Vec<FeatureEntry>>();
                     let delegate = FeaturePickerDelegate::new(
-                        "Select features to add".to_string(),
+                        t!("dev_container.lib.select_features_to_add").to_string(),
                         cx.weak_entity(),
                         features,
                         template_entry.clone(),

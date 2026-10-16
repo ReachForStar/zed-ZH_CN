@@ -12,6 +12,8 @@ import_warning = "Importing %{source} settings may overwrite your existing setti
 import_success = "Your %{source} settings were successfully imported."
 import_failed = "Failed to import settings. See log for details"
 open_log = "Open Log"
+import = "Import"
+cancel = "Cancel"
 
 [onboarding.basics_page]
 theme = "Theme"

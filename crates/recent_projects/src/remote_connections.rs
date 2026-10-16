@@ -331,7 +331,14 @@ pub async fn open_remote_project(
                             PromptLevel::Critical,
                             &title,
                             Some(&format!("{e:#}")),
-                            &["Retry", "Cancel"],
+                            &[
+                                gpui::PromptButton::new(t!(
+                                    "recent_projects.remote_connections.retry"
+                                )),
+                                gpui::PromptButton::new(t!(
+                                    "recent_projects.remote_connections.cancel"
+                                )),
+                            ],
                             cx,
                         )
                     })?
@@ -397,7 +404,14 @@ pub async fn open_remote_project(
                             PromptLevel::Critical,
                             &title,
                             Some(&format!("{e:#}")),
-                            &["Retry", "Cancel"],
+                            &[
+                                gpui::PromptButton::new(t!(
+                                    "recent_projects.remote_connections.retry"
+                                )),
+                                gpui::PromptButton::new(t!(
+                                    "recent_projects.remote_connections.cancel"
+                                )),
+                            ],
                             cx,
                         )
                     })?

@@ -83,3 +83,17 @@ language_rust = "Rust support is built-in to Zed!"
 language_typescript = "Typescript support is built-in to Zed!"
 open_in = "Zed supports linking to a source line on GitHub and others."
 vim = "Vim support is built-in to Zed!"
+
+[extensions_ui.extension_card]
+uninstall = "Uninstall"
+configure = "Configure"
+rebuild = "Rebuild"
+install = "Install"
+upgrade = "Upgrade"
+
+[extensions_ui.extension_suggestions]
+dont_show_again = "Don't show again"
+
+[extensions_ui.extensions_ui]
+load_failed = "Failed to load extensions. Showing installed extensions only."
+retry = "Retry"

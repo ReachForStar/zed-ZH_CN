@@ -89,3 +89,8 @@ dont_show_again = "不再显示"
 
 [recent_projects.wsl]
 enter_distro_name = "输入 WSL 发行版名称"
+
+[recent_projects.remote_connections]
+retry = "重试"
+cancel = "取消"
+

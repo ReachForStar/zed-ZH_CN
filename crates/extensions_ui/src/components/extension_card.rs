@@ -193,7 +193,7 @@ impl ExtensionCard {
     fn uninstall_button(extension_id: &Arc<str>, is_dev: bool) -> Button {
         Button::new(
             Self::button_id(extension_id, ExtensionOperation::Remove),
-            "Uninstall",
+            t!("extensions_ui.extension_card.uninstall"),
         )
         .on_click({
             let extension_id = extension_id.clone();
@@ -216,7 +216,7 @@ impl ExtensionCard {
     ) -> Button {
         Button::new(
             SharedString::from(format!("configure-{extension_id}")),
-            "Configure",
+            t!("extensions_ui.extension_card.configure"),
         )
         .on_click({
             let extension_id = extension_id.clone();
@@ -247,7 +247,7 @@ impl ExtensionCard {
         let rebuild = is_dev.then(|| {
             Button::new(
                 SharedString::from(format!("rebuild-{}", extension.id)),
-                "Rebuild",
+                t!("extensions_ui.extension_card.rebuild"),
             )
             .color(Color::Accent)
             .disabled(Self::disables_actions(status))
@@ -287,7 +287,7 @@ impl ExtensionCard {
     fn install_button(extension_id: &Arc<str>) -> Button {
         Button::new(
             Self::button_id(extension_id, ExtensionOperation::Install),
-            "Install",
+            t!("extensions_ui.extension_card.install"),
         )
         .style(ButtonStyle::Tinted(ui::TintColor::Accent))
         .start_icon(
@@ -340,7 +340,7 @@ impl ExtensionCard {
                 let upgrade = matches!(status, ExtensionStatus::Upgrading).then(|| {
                     Button::new(
                         Self::button_id(&extension.id, ExtensionOperation::Upgrade),
-                        "Upgrade",
+                        t!("extensions_ui.extension_card.upgrade"),
                     )
                     .disabled(Self::disables_actions(status))
                 });
@@ -361,7 +361,7 @@ impl ExtensionCard {
                     );
                     Button::new(
                         Self::button_id(&extension.id, ExtensionOperation::Upgrade),
-                        "Upgrade",
+                        t!("extensions_ui.extension_card.upgrade"),
                     )
                     .style(ButtonStyle::Tinted(ui::TintColor::Accent))
                     .when(!is_compatible, |button| {

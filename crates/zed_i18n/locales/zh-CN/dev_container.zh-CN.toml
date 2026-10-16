@@ -1,0 +1,17 @@
+_version = 1
+
+[dev_container.lib]
+create_dev_container = "创建开发容器"
+go_back = "返回"
+cancel = "取消"
+confirm_selections = "确认选择"
+continue = "继续"
+overwrite = "覆盖"
+overwrite_existing_config = "覆盖现有配置？"
+querying_features = "正在查询功能…"
+querying_template_registry = "正在查询模板仓库…"
+search_templates = "搜索开发容器模板"
+select_feature = "选择功能"
+select_template = "选择模板"
+select_features_to_add = "选择要添加的功能"
+template_option = "模板选项："
