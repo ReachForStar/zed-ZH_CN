@@ -1,0 +1,15 @@
+_version = 1
+
+[language_tools.lsp_button]
+language_servers_aria = "Language Servers"
+trust_required = "Language Servers can't run until you trust this project."
+restricted_mode = "Project is in Restricted Mode"
+restart_server = "Restart Server"
+stop_server = "Stop Server"
+view_logs = "View Logs"
+view_message = "View Message"
+
+[language_tools.syntax_tree_view]
+no_language = "Current editor has no associated language"
+focus_editor = "Focus an editor to show a new tree view"
+not_attached = "Not attached to an editor"

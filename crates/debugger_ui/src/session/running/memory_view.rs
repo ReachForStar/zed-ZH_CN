@@ -171,7 +171,7 @@ impl MemoryView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let view_state_handle = ViewStateHandle::new(0, WIDTHS[4].clone());
+        let view_state_handle = ViewStateHandle::new(0, view_widths()[4].clone());
 
         let query_editor = cx.new(|cx| Editor::single_line(window, cx));
 
@@ -331,7 +331,7 @@ impl MemoryView {
             "memory-view-width-picker",
             selected_width.label.clone(),
             ContextMenu::build(window, cx, |mut this, window, cx| {
-                for width in &WIDTHS {
+                for width in &view_widths() {
                     let weak = weak.clone();
                     let width = width.clone();
                     this = this.entry(width.label.clone(), None, move |_, cx| {
@@ -358,7 +358,7 @@ impl MemoryView {
                         });
                     });
                 }
-                if let Some(ix) = WIDTHS
+                if let Some(ix) = view_widths()
                     .iter()
                     .position(|width| width.width == selected_width.width)
                 {
@@ -691,23 +691,26 @@ struct ViewWidth {
 }
 
 impl ViewWidth {
-    const fn new(width: u8, label: &'static str) -> Self {
+    fn new(width: u8, label: impl Into<SharedString>) -> Self {
         Self {
             width,
-            label: SharedString::new_static(label),
+            label: label.into(),
         }
     }
 }
 
-static WIDTHS: [ViewWidth; 7] = [
-    ViewWidth::new(1, "1 byte"),
-    ViewWidth::new(2, "2 bytes"),
-    ViewWidth::new(4, "4 bytes"),
-    ViewWidth::new(8, "8 bytes"),
-    ViewWidth::new(16, "16 bytes"),
-    ViewWidth::new(32, "32 bytes"),
-    ViewWidth::new(64, "64 bytes"),
-];
+// 宽度标签需按语言即时取词，故不用 static 常量数组（t!() 不是常量表达式）。
+fn view_widths() -> [ViewWidth; 7] {
+    [
+        ViewWidth::new(1, t!("debugger_ui.memory_view.width_1")),
+        ViewWidth::new(2, t!("debugger_ui.memory_view.width_2")),
+        ViewWidth::new(4, t!("debugger_ui.memory_view.width_4")),
+        ViewWidth::new(8, t!("debugger_ui.memory_view.width_8")),
+        ViewWidth::new(16, t!("debugger_ui.memory_view.width_16")),
+        ViewWidth::new(32, t!("debugger_ui.memory_view.width_32")),
+        ViewWidth::new(64, t!("debugger_ui.memory_view.width_64")),
+    ]
+}
 
 fn render_single_memory_view_line(
     memory: &[MemoryCell],

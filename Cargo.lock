@@ -338,6 +338,7 @@ dependencies = [
  "watch",
  "web_search",
  "zed_env_vars",
+ "zed_i18n",
  "zlog",
  "zstd 0.13.3",
 ]
@@ -3883,6 +3884,7 @@ dependencies = [
  "ui",
  "util",
  "workspace",
+ "zed_i18n",
 ]
 
 [[package]]
@@ -5575,6 +5577,7 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
+ "zed_i18n",
  "zeta_prompt",
 ]
 
@@ -5662,6 +5665,7 @@ dependencies = [
  "vim_mode_setting",
  "workspace",
  "zed_actions",
+ "zed_i18n",
  "zlog",
  "ztracing",
 ]
@@ -9904,6 +9908,7 @@ dependencies = [
  "util",
  "x_ai",
  "x_ai_subscribed",
+ "zed_i18n",
 ]
 
 [[package]]
@@ -9994,6 +9999,7 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
+ "zed_i18n",
  "zlog",
 ]
 

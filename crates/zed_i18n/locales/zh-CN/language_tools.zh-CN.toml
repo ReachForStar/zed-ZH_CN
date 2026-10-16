@@ -1,0 +1,15 @@
+_version = 1
+
+[language_tools.lsp_button]
+language_servers_aria = "语言服务器"
+trust_required = "在信任此项目之前，语言服务器无法运行。"
+restricted_mode = "项目处于受限模式"
+restart_server = "重启服务器"
+stop_server = "停止服务器"
+view_logs = "查看日志"
+view_message = "查看消息"
+
+[language_tools.syntax_tree_view]
+no_language = "当前编辑器没有关联的语言"
+focus_editor = "聚焦编辑器以显示新的树视图"
+not_attached = "未关联编辑器"

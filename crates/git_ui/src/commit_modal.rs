@@ -328,7 +328,7 @@ impl CommitModal {
                                 },
                             )
                             .item(
-                                ContextMenuEntry::new("Skip Hooks")
+                                ContextMenuEntry::new(t!("git_ui.commit_modal.skip_hooks"))
                                     .toggleable(IconPosition::Start, skip_hooks_enabled)
                                     .action(Box::new(SkipHooks))
                                     .handler(move |window, cx| {

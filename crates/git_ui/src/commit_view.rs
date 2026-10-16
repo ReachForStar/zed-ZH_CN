@@ -548,12 +548,12 @@ impl CommitView {
             .justify_center()
             .gap_2()
             .child(
-                Label::new("This commit is at the boundary of a shallow clone.")
+                Label::new(t!("git_ui.commit_view.shallow_boundary"))
                     .color(Color::Muted),
             )
             .child(
                 Label::new(
-                    "Its parent history was not fetched, so the changes it introduced cannot be shown.",
+                    t!("git_ui.commit_view.parent_history_missing"),
                 )
                 .color(Color::Muted),
             )
@@ -569,9 +569,9 @@ impl CommitView {
                             Button::new(
                                 "fetch-unshallow",
                                 if fetch_in_flight {
-                                    "Fetching…"
+                                    t!("git_ui.commit_view.fetching")
                                 } else {
-                                    "Fetch Missing History"
+                                    t!("git_ui.commit_view.fetch_missing_history")
                                 },
                             )
                                 .style(ButtonStyle::Filled)
@@ -614,16 +614,16 @@ impl CommitView {
                         Button::new(
                             "load-shallow-snapshot",
                             if file_filter.is_some() {
-                                "Load File Snapshot"
+                                t!("git_ui.commit_view.load_file_snapshot")
                             } else {
-                                "Load Full Snapshot"
+                                t!("git_ui.commit_view.load_full_snapshot")
                             },
                         )
                             .style(ButtonStyle::Outlined)
                             .tooltip(Tooltip::text(if file_filter.is_some() {
-                                "Show this file's full contents at this commit as added."
+                                t!("git_ui.commit_view.load_file_snapshot_note")
                             } else {
-                                "Show every file at this commit as added. This can be slow in large repositories."
+                                t!("git_ui.commit_view.load_full_snapshot_note")
                             }))
                             .on_click(move |_, window, cx| {
                                 Self::open_with_options(

@@ -60,6 +60,8 @@ learn_more = "了解更多"
 
 [git_ui.blame_ui]
 open_permalink = "打开永久链接"
+blame_previous_revision = "追溯上一修订"
+blame_revision = "追溯该修订"
 
 [git_ui.branch_diff]
 changes_since = "%{base_ref} 之后的更改"
@@ -114,6 +116,7 @@ custom_commands = "自定义命令"
 [git_ui.commit_modal]
 no_branch = "<无分支>"
 title_exceeds_limit = "提交信息标题超出 %{max_title_length} 个字符的限制。"
+skip_hooks = "跳过钩子"
 
 [git_ui.commit_view]
 open_file_in_project = "在项目中打开文件"
@@ -123,6 +126,14 @@ commit_sha = "提交 SHA"
 buffer_search = "缓冲区搜索"
 view_on_provider = "在 %{provider} 上查看"
 stash_confirm = "%{action} stash@{%{index}}?"
+parent_history_missing = "其父提交的历史尚未获取，因此无法显示它引入的改动。"
+load_file_snapshot = "加载文件快照"
+load_full_snapshot = "加载完整快照"
+load_full_snapshot_note = "将该提交处的所有文件显示为新增。在大型仓库中可能较慢。"
+load_file_snapshot_note = "将该文件在此提交处的完整内容显示为新增。"
+shallow_boundary = "该提交位于浅克隆的边界处。"
+fetch_missing_history = "获取缺失的历史"
+fetching = "正在获取…"
 
 [git_ui.conflict_view]
 use_branch = "使用 %{branch}"
@@ -285,6 +296,8 @@ pick_init_directory = "您想在哪里初始化此 git 仓库?"
 add_co_authored_by = "添加共同作者"
 remove_co_authored_by = "移除共同作者"
 action_folder = "%{action}文件夹"
+copy = "复制"
+paste = "粘贴"
 
 [git_ui.git_picker]
 branches = "分支"
@@ -390,3 +403,9 @@ git_fetch_failed_for = "%{branch} 的 git fetch 失败"
 use_local_branch = "使用本地 %{branch}"
 show_error_logs = "显示错误日志"
 non_git_folders_toast = "部分项目文件夹不是 git 仓库。它们已按原样包含,未创建工作树。"
+
+[git_ui.commit_tooltip]
+fetch_missing_history = "获取缺失的历史"
+fetched_history = "已获取缺失的提交历史"
+shallow_boundary_note = "浅克隆边界：更早的历史缺失，因此这些行可能来自更早的提交"
+fetching = "正在获取…"

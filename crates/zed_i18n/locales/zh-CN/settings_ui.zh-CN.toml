@@ -1363,3 +1363,6 @@ verification_placeholder = "输入工具输入内容以测试你的规则…"
 [settings_ui.window]
 settings = "设置"
 title = "Zed — 设置"
+
+[settings_ui.settings_ui]
+clear_tooltip = "清除"

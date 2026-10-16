@@ -580,30 +580,38 @@ fn deploy_blame_entry_context_menu(
             .when_some(blame_revision, |this, (revision, path)| {
                 let repository = repository.clone();
                 let workspace = workspace.clone();
-                this.entry("Blame Revision", None, move |window, cx| {
-                    open_buffer_blame_at_revision(
-                        repository.clone(),
-                        workspace.clone(),
-                        path.clone(),
-                        revision,
-                        window,
-                        cx,
-                    );
-                })
+                this.entry(
+                    t!("git_ui.blame_ui.blame_revision"),
+                    None,
+                    move |window, cx| {
+                        open_buffer_blame_at_revision(
+                            repository.clone(),
+                            workspace.clone(),
+                            path.clone(),
+                            revision,
+                            window,
+                            cx,
+                        );
+                    },
+                )
             })
             .when_some(blame_previous_revision, |this, (revision, path)| {
                 let repository = repository.clone();
                 let workspace = workspace.clone();
-                this.entry("Blame Previous Revision", None, move |window, cx| {
-                    open_buffer_blame_at_revision(
-                        repository.clone(),
-                        workspace.clone(),
-                        path.clone(),
-                        revision,
-                        window,
-                        cx,
-                    );
-                })
+                this.entry(
+                    t!("git_ui.blame_ui.blame_previous_revision"),
+                    None,
+                    move |window, cx| {
+                        open_buffer_blame_at_revision(
+                            repository.clone(),
+                            workspace.clone(),
+                            path.clone(),
+                            revision,
+                            window,
+                            cx,
+                        );
+                    },
+                )
             })
     });
 

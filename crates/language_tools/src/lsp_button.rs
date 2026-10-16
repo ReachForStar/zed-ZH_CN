@@ -5,6 +5,7 @@ use std::{
     rc::Rc,
     time::{Duration, Instant},
 };
+use zed_i18n::t;
 
 use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
 
@@ -251,12 +252,12 @@ impl LanguageServerState {
                                         .size(IconSize::XSmall),
                                 )
                                 .child(
-                                    Label::new("Project is in Restricted Mode")
+                                    Label::new(t!("language_tools.lsp_button.restricted_mode"))
                                         .size(LabelSize::Small),
                                 ),
                         )
                         .child(
-                            Label::new("Language Servers can't run until you trust this project.")
+                            Label::new(t!("language_tools.lsp_button.trust_required"))
                                 .size(LabelSize::Small)
                                 .color(Color::Muted),
                         )
@@ -419,26 +420,29 @@ impl LanguageServerState {
                             let workspace_for_message = workspace.clone();
                             let message_for_handler = message.clone();
                             let server_name_for_message = submenu_server_name.clone();
-                            submenu = submenu.entry("View Message", None, move |window, cx| {
-                                let Some(create_buffer) = workspace_for_message
-                                    .update(cx, |workspace, cx| {
-                                        workspace.project().update(cx, |project, cx| {
-                                            project.create_buffer(None, false, cx)
+                            submenu = submenu.entry(
+                                t!("language_tools.lsp_button.view_message"),
+                                None,
+                                move |window, cx| {
+                                    let Some(create_buffer) = workspace_for_message
+                                        .update(cx, |workspace, cx| {
+                                            workspace.project().update(cx, |project, cx| {
+                                                project.create_buffer(None, false, cx)
+                                            })
                                         })
-                                    })
-                                    .ok()
-                                else {
-                                    return;
-                                };
+                                        .ok()
+                                    else {
+                                        return;
+                                    };
 
-                                let window_handle = window.window_handle();
-                                let workspace = workspace_for_message.clone();
-                                let message = message_for_handler.clone();
-                                let server_name = server_name_for_message.clone();
-                                cx.spawn(async move |cx| {
-                                    let buffer = create_buffer.await?;
-                                    buffer.update(cx, |buffer, cx| {
-                                        buffer.edit(
+                                    let window_handle = window.window_handle();
+                                    let workspace = workspace_for_message.clone();
+                                    let message = message_for_handler.clone();
+                                    let server_name = server_name_for_message.clone();
+                                    cx.spawn(async move |cx| {
+                                        let buffer = create_buffer.await?;
+                                        buffer.update(cx, |buffer, cx| {
+                                            buffer.edit(
                                             [(
                                                 0..0,
                                                 format!(
@@ -448,156 +452,177 @@ impl LanguageServerState {
                                             None,
                                             cx,
                                         );
-                                        buffer.set_capability(language::Capability::ReadOnly, cx);
-                                    });
+                                            buffer
+                                                .set_capability(language::Capability::ReadOnly, cx);
+                                        });
 
-                                    workspace.update(cx, |workspace, cx| {
-                                        window_handle.update(cx, |_, window, cx| {
-                                            workspace.add_item_to_active_pane(
-                                                Box::new(cx.new(|cx| {
-                                                    let mut editor = Editor::for_buffer(
-                                                        buffer, None, window, cx,
-                                                    );
-                                                    editor.set_read_only(true);
-                                                    editor
-                                                })),
-                                                None,
-                                                true,
-                                                window,
-                                                cx,
-                                            );
-                                        })
-                                    })??;
+                                        workspace.update(cx, |workspace, cx| {
+                                            window_handle.update(cx, |_, window, cx| {
+                                                workspace.add_item_to_active_pane(
+                                                    Box::new(cx.new(|cx| {
+                                                        let mut editor = Editor::for_buffer(
+                                                            buffer, None, window, cx,
+                                                        );
+                                                        editor.set_read_only(true);
+                                                        editor
+                                                    })),
+                                                    None,
+                                                    true,
+                                                    window,
+                                                    cx,
+                                                );
+                                            })
+                                        })??;
 
-                                    anyhow::Ok(())
-                                })
-                                .detach();
-                            });
+                                        anyhow::Ok(())
+                                    })
+                                    .detach();
+                                },
+                            );
                         }
 
                         if has_logs {
                             let lsp_logs_for_debug = lsp_logs.clone();
                             let workspace_for_debug = workspace.clone();
                             let server_selector_for_debug = server_selector.clone();
-                            submenu = submenu.entry("View Logs", None, move |window, cx| {
-                                lsp_log_view::open(
-                                    &lsp_logs_for_debug,
-                                    workspace_for_debug.clone(),
-                                    server_selector_for_debug.clone(),
-                                    window,
-                                    cx,
-                                );
-                            });
+                            submenu = submenu.entry(
+                                t!("language_tools.lsp_button.view_logs"),
+                                None,
+                                move |window, cx| {
+                                    lsp_log_view::open(
+                                        &lsp_logs_for_debug,
+                                        workspace_for_debug.clone(),
+                                        server_selector_for_debug.clone(),
+                                        window,
+                                        cx,
+                                    );
+                                },
+                            );
                         }
 
                         let state_for_restart = state.clone();
                         let workspace_for_restart = workspace.clone();
                         let lsp_store_for_restart = lsp_store.clone();
                         let server_name_for_restart = submenu_server_name.clone();
-                        submenu = submenu.entry("Restart Server", None, move |_window, cx| {
-                            let Some(workspace) = workspace_for_restart.upgrade() else {
-                                return;
-                            };
+                        submenu = submenu.entry(
+                            t!("language_tools.lsp_button.restart_server"),
+                            None,
+                            move |_window, cx| {
+                                let Some(workspace) = workspace_for_restart.upgrade() else {
+                                    return;
+                                };
 
-                            let project = workspace.read(cx).project().clone();
-                            let path_style = project.read(cx).path_style(cx);
-                            let buffer_store = project.read(cx).buffer_store().clone();
+                                let project = workspace.read(cx).project().clone();
+                                let path_style = project.read(cx).path_style(cx);
+                                let buffer_store = project.read(cx).buffer_store().clone();
 
-                            let buffers = state_for_restart
-                                .update(cx, |state, cx| {
-                                    let server_buffers = state
-                                        .language_servers
-                                        .servers_per_buffer_abs_path
-                                        .iter()
-                                        .filter_map(|(abs_path, servers)| {
-                                            // Check if this server is associated with this path
-                                            let has_server = servers.servers.values().any(|name| {
-                                                name.as_ref() == Some(&server_name_for_restart)
-                                            });
-
-                                            if !has_server {
-                                                return None;
-                                            }
-
-                                            let worktree = servers.worktree.as_ref()?.upgrade()?;
-                                            let worktree_ref = worktree.read(cx);
-                                            let relative_path = abs_path
-                                                .strip_prefix(&worktree_ref.abs_path())
-                                                .ok()?;
-                                            let relative_path =
-                                                RelPath::new(relative_path, path_style)
-                                                    .log_err()?;
-                                            let entry =
-                                                worktree_ref.entry_for_path(&relative_path)?;
-                                            let project_path =
-                                                project.read(cx).path_for_entry(entry.id, cx)?;
-
-                                            buffer_store.read(cx).get_by_path(&project_path)
-                                        })
-                                        .collect::<Vec<_>>();
-
-                                    if server_buffers.is_empty() {
-                                        state
+                                let buffers = state_for_restart
+                                    .update(cx, |state, cx| {
+                                        let server_buffers = state
                                             .language_servers
                                             .servers_per_buffer_abs_path
                                             .iter()
                                             .filter_map(|(abs_path, servers)| {
+                                                // Check if this server is associated with this path
+                                                let has_server =
+                                                    servers.servers.values().any(|name| {
+                                                        name.as_ref()
+                                                            == Some(&server_name_for_restart)
+                                                    });
+
+                                                if !has_server {
+                                                    return None;
+                                                }
+
                                                 let worktree =
-                                                    servers.worktree.as_ref()?.upgrade()?.read(cx);
+                                                    servers.worktree.as_ref()?.upgrade()?;
+                                                let worktree_ref = worktree.read(cx);
                                                 let relative_path = abs_path
-                                                    .strip_prefix(&worktree.abs_path())
+                                                    .strip_prefix(&worktree_ref.abs_path())
                                                     .ok()?;
                                                 let relative_path =
                                                     RelPath::new(relative_path, path_style)
                                                         .log_err()?;
                                                 let entry =
-                                                    worktree.entry_for_path(&relative_path)?;
+                                                    worktree_ref.entry_for_path(&relative_path)?;
                                                 let project_path = project
                                                     .read(cx)
                                                     .path_for_entry(entry.id, cx)?;
+
                                                 buffer_store.read(cx).get_by_path(&project_path)
                                             })
-                                            .collect()
-                                    } else {
-                                        server_buffers
-                                    }
-                                })
-                                .unwrap_or_default();
+                                            .collect::<Vec<_>>();
 
-                            if !buffers.is_empty() {
-                                lsp_store_for_restart
-                                    .update(cx, |lsp_store, cx| {
-                                        lsp_store.restart_language_servers_for_buffers(
-                                            buffers,
-                                            HashSet::from_iter([LanguageServerSelector::Name(
-                                                server_name_for_restart.clone(),
-                                            )]),
-                                            cx,
-                                        );
+                                        if server_buffers.is_empty() {
+                                            state
+                                                .language_servers
+                                                .servers_per_buffer_abs_path
+                                                .iter()
+                                                .filter_map(|(abs_path, servers)| {
+                                                    let worktree = servers
+                                                        .worktree
+                                                        .as_ref()?
+                                                        .upgrade()?
+                                                        .read(cx);
+                                                    let relative_path = abs_path
+                                                        .strip_prefix(&worktree.abs_path())
+                                                        .ok()?;
+                                                    let relative_path =
+                                                        RelPath::new(relative_path, path_style)
+                                                            .log_err()?;
+                                                    let entry =
+                                                        worktree.entry_for_path(&relative_path)?;
+                                                    let project_path = project
+                                                        .read(cx)
+                                                        .path_for_entry(entry.id, cx)?;
+                                                    buffer_store.read(cx).get_by_path(&project_path)
+                                                })
+                                                .collect()
+                                        } else {
+                                            server_buffers
+                                        }
                                     })
-                                    .ok();
-                            }
-                        });
+                                    .unwrap_or_default();
+
+                                if !buffers.is_empty() {
+                                    lsp_store_for_restart
+                                        .update(cx, |lsp_store, cx| {
+                                            lsp_store.restart_language_servers_for_buffers(
+                                                buffers,
+                                                HashSet::from_iter([LanguageServerSelector::Name(
+                                                    server_name_for_restart.clone(),
+                                                )]),
+                                                cx,
+                                            );
+                                        })
+                                        .ok();
+                                }
+                            },
+                        );
 
                         if can_stop {
                             let lsp_store_for_stop = lsp_store.clone();
                             let server_selector_for_stop = server_selector.clone();
 
-                            submenu = submenu.entry("Stop Server", None, move |_window, cx| {
-                                lsp_store_for_stop
-                                    .update(cx, |lsp_store, cx| {
-                                        lsp_store
-                                            .stop_language_servers_for_buffers(
-                                                Vec::new(),
-                                                HashSet::from_iter([
-                                                    server_selector_for_stop.clone()
-                                                ]),
-                                                cx,
-                                            )
-                                            .detach_and_log_err(cx);
-                                    })
-                                    .ok();
-                            });
+                            submenu = submenu.entry(
+                                t!("language_tools.lsp_button.stop_server"),
+                                None,
+                                move |_window, cx| {
+                                    lsp_store_for_stop
+                                        .update(cx, |lsp_store, cx| {
+                                            lsp_store
+                                                .stop_language_servers_for_buffers(
+                                                    Vec::new(),
+                                                    HashSet::from_iter([
+                                                        server_selector_for_stop.clone()
+                                                    ]),
+                                                    cx,
+                                                )
+                                                .detach_and_log_err(cx);
+                                        })
+                                        .ok();
+                                },
+                            );
                         }
 
                         submenu = submenu.separator().custom_row({
@@ -1465,11 +1490,16 @@ impl Render for LspButton {
                         .when_some(indicator, IconButton::indicator)
                         .icon_size(IconSize::Small)
                         .tab_index(0isize)
-                        .aria_label("Language Servers")
+                        .aria_label(t!("language_tools.lsp_button.language_servers_aria"))
                         .when(is_restricted, |s| s.icon_color(Color::Warning))
                         .indicator_border_color(Some(cx.theme().colors().status_bar_background)),
                     move |_window, cx| {
-                        Tooltip::with_meta("Language Servers", Some(&ToggleMenu), description, cx)
+                        Tooltip::with_meta(
+                            t!("language_tools.lsp_button.language_servers_aria"),
+                            Some(&ToggleMenu),
+                            description,
+                            cx,
+                        )
                     },
                 ),
         )

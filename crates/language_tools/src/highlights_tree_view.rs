@@ -16,6 +16,7 @@ use theme::SyntaxTheme;
 use ui::{
     ButtonLike, ContextMenu, PopoverMenu, PopoverMenuHandle, Tooltip, WithScrollbar, prelude::*,
 };
+use zed_i18n::t;
 
 use workspace::{
     Event as WorkspaceEvent, SplitDirection, ToolbarItemEvent, ToolbarItemLocation,
@@ -846,24 +847,24 @@ impl Render for HighlightsTreeView {
                             if self.editor.is_some() {
                                 let has_any = !self.cached_entries.is_empty();
                                 if has_any {
-                                    this.child(Label::new("All highlights are filtered out"))
+                                    this.child(Label::new(t!("language_tools.highlights_tree_view.all_filtered_out")))
                                         .child(
                                             Label::new(
-                                                "Enable text, syntax, or semantic highlights in the toolbar",
+                                                t!("language_tools.highlights_tree_view.enable_hints"),
                                             )
                                             .size(LabelSize::Small),
                                         )
                                 } else {
-                                    this.child(Label::new("No highlights found")).child(
+                                    this.child(Label::new(t!("language_tools.highlights_tree_view.no_highlights"))).child(
                                         Label::new(
-                                            "The editor has no text, syntax, or semantic token highlights",
+                                            t!("language_tools.highlights_tree_view.no_token_highlights"),
                                         )
                                         .size(LabelSize::Small),
                                     )
                                 }
                             } else {
-                                this.child(Label::new("Not attached to an editor")).child(
-                                    Label::new("Focus an editor to show highlights")
+                                this.child(Label::new(t!("language_tools.highlights_tree_view.not_attached"))).child(
+                                    Label::new(t!("language_tools.highlights_tree_view.focus_editor"))
                                         .size(LabelSize::Small),
                                 )
                             }
@@ -985,7 +986,7 @@ impl HighlightsTreeToolbarItemView {
                 IconButton::new("toggle-highlights-settings-icon", IconName::Filter)
                     .icon_size(IconSize::Small)
                     .toggle_state(self.toggle_settings_handle.is_deployed()),
-                Tooltip::text("Highlights Settings"),
+                Tooltip::text(t!("language_tools.highlights_tree_view.settings_tooltip")),
             )
             .anchor(gpui::Anchor::TopRight)
             .with_handle(self.toggle_settings_handle.clone())

@@ -1274,8 +1274,15 @@ pub(crate) fn commit_message_editor(
         Some(ContextMenu::build(window, cx, |menu, _, _| {
             menu.context(focus_handle)
                 .action_disabled_when(!has_selection, "Cut", Box::new(editor::actions::Cut))
-                .action_disabled_when(!has_selection, "Copy", Box::new(editor::actions::Copy))
-                .action("Paste", Box::new(editor::actions::Paste))
+                .action_disabled_when(
+                    !has_selection,
+                    t!("git_ui.git_panel.copy"),
+                    Box::new(editor::actions::Copy),
+                )
+                .action(
+                    t!("git_ui.git_panel.paste"),
+                    Box::new(editor::actions::Paste),
+                )
         }))
     });
     commit_editor

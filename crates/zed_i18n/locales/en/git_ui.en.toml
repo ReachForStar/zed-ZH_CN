@@ -60,6 +60,8 @@ learn_more = "Learn more"
 
 [git_ui.blame_ui]
 open_permalink = "Open Permalink"
+blame_previous_revision = "Blame Previous Revision"
+blame_revision = "Blame Revision"
 
 [git_ui.branch_diff]
 changes_since = "Changes since %{base_ref}"
@@ -114,6 +116,7 @@ custom_commands = "Custom Commands"
 [git_ui.commit_modal]
 no_branch = "<no branch>"
 title_exceeds_limit = "Commit message title exceeds %{max_title_length}-character limit."
+skip_hooks = "Skip Hooks"
 
 [git_ui.commit_view]
 open_file_in_project = "Open File in Project"
@@ -123,6 +126,14 @@ commit_sha = "Commit SHA"
 buffer_search = "Buffer Search"
 view_on_provider = "View on %{provider}"
 stash_confirm = "%{action} stash@{%{index}}?"
+parent_history_missing = "Its parent history was not fetched, so the changes it introduced cannot be shown."
+load_file_snapshot = "Load File Snapshot"
+load_full_snapshot = "Load Full Snapshot"
+load_full_snapshot_note = "Show every file at this commit as added. This can be slow in large repositories."
+load_file_snapshot_note = "Show this file's full contents at this commit as added."
+shallow_boundary = "This commit is at the boundary of a shallow clone."
+fetch_missing_history = "Fetch Missing History"
+fetching = "Fetching…"
 
 [git_ui.conflict_view]
 use_branch = "Use %{branch}"
@@ -285,6 +296,8 @@ pick_init_directory = "Where would you like to initialize this git repository?"
 add_co_authored_by = "Add co-authored-by"
 remove_co_authored_by = "Remove co-authored-by"
 action_folder = "%{action} Folder"
+copy = "Copy"
+paste = "Paste"
 
 [git_ui.git_picker]
 branches = "Branches"
@@ -390,3 +403,9 @@ git_fetch_failed_for = "git fetch failed for %{branch}"
 use_local_branch = "Use local %{branch}"
 show_error_logs = "Show Error Logs"
 non_git_folders_toast = "Some project folders are not git repositories. They were included as-is without creating a worktree."
+
+[git_ui.commit_tooltip]
+fetch_missing_history = "Fetch Missing History"
+fetched_history = "Fetched the missing commit history"
+shallow_boundary_note = "Shallow clone boundary: earlier history is missing, so these lines may come from an older commit."
+fetching = "Fetching…"
