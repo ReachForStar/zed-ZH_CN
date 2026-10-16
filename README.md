@@ -15,7 +15,7 @@ Zed 是一款高性能、多人协作代码编辑器，由 [Atom](https://github
 
 ### 覆盖范围
 
-汉化通过 `crates/zed_i18n` 实现，当前已翻译 **52 个模块**的界面文本，涵盖：
+汉化通过 `crates/zed_i18n` 实现，当前已翻译 **70 个模块**的界面文本，涵盖：
 
 - 编辑器核心 UI（命令面板、文件查找、诊断、项目面板、搜索、大纲、终端等）
 - AI / Agent 面板（agent_ui、ai_onboarding 等）
@@ -42,7 +42,7 @@ Zed 是一款高性能、多人协作代码编辑器，由 [Atom](https://github
 ```
 crates/zed_i18n/locales/
 ├── en/            # 英文（上游原始文本）
-├── zh-CN/         # 简体中文翻译（52 个 .toml 文件）
+├── zh-CN/         # 简体中文翻译（70 个 .toml 文件）
 ├── en.toml
 └── zh-CN.toml
 ```
@@ -58,11 +58,21 @@ crates/zed_i18n/locales/
 
 ---
 
+## 本 fork 相比上游 Zed 的主要改动
+
+- **i18n 体系**：通过 `crates/zed_i18n` 为 70 个模块实现运行时语言切换（`ui_language`：`zh-CN` / `en`）。
+- **tabular_data_preview**：表格与 SQLite/CSV 预览的内联设置面板，挂载在上游 `TableView` 上。
+- **fs_watcher 健康检查**：`check_watch_health` + `watched_paths`，watch 丢失时自动重扫。
+- **Agent / Agent UI**：保留并强化 fork 特性，包括可恢复消息、混淆字符扫揃（请求与解析后路径同时检查）、markdown 内联图表缓存等。
+- **CI / 发布**：精简 `run_tests.yml` + `release.yml`（三平台未签名包自动发布）；`run_tests` 改为手动触发；`check_style` 增加汉化键完整性检查（`scripts/i18n/check-missing-keys.py`）。
+- **分支策略**：`main` 为稳定发布分支（当前 `v1.24.2`），功能开发在 `develop` 分支进行并 PR 合并至 `main`。
+
+
 ### 安装
 
 macOS、Linux 和 Windows 可直接[下载 Zed](https://zed.dev/download)，或通过包管理器安装（[macOS](https://zed.dev/docs/installation#macos)/[Linux](https://zed.dev/docs/linux#installing-via-a-package-manager)/[Windows](https://zed.dev/docs/windows#package-managers)）。
 
-> 本汉化版需自行从源码构建，构建方式见下方开发指南。
+> 本汉化版提供 GitHub Releases 三平台未签名包：[Releases 页面](https://github.com/ReachForStar/zed-ZH_CN/releases/latest)；或按下方开发指南自行从源码构建。
 
 其他平台暂不可用：
 
@@ -78,7 +88,7 @@ macOS、Linux 和 Windows 可直接[下载 Zed](https://zed.dev/download)，或�
 
 参见 [CONTRIBUTING.md](./CONTRIBUTING.md) 了解贡献方式。
 
-汉化相关贡献请直接提交 PR 至本仓库（[MindFlowLab/zed-ZH_CN](https://github.com/MindFlowLab/zed-ZH_CN)）。
+汉化相关贡献请直接提交 PR 至本仓库（[ReachForStar/zed-ZH_CN](https://github.com/ReachForStar/zed-ZH_CN)）。
 
 ### 许可证
 
