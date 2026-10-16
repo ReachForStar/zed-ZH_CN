@@ -4,7 +4,6 @@ type: concept
 tags: [i18n, 汉化, rust-i18n, locale, workflow]
 created: 2026-10-16
 updated: 2026-10-16
-sources: []
 status: active
 ---
 
@@ -47,10 +46,10 @@ status: active
 
 ## 验证
 
-- **键完整性检查**：`python3 scripts/i18n/check-missing-keys.py` 扫描 `crates/**/*.rs` 里静态字面量形式的 `t!("键")`（含换行写法，已屏蔽 `//` 注释），比对 en 与 zh-CN 键集合，报「代码引用但 locale 缺失」与「仅单侧有」。退出码非 0 即有问题；已接入 CI 的 `check_style` job。脚本要求 Python 3.11+（用 `tomllib`）。
+- **键完整性检查**：`python3 scripts/i18n/check-missing-keys.py` 扫描 `crates/**/*.rs` 里静态字面量形式的 `t!("键")`（含换行写法，已屏蔽 `//` 注释），比对 en 与 zh-CN 键集合，报「代码引用但 locale 缺失」与「仅单侧有」。退出码非 0 即有问题；已加入 CI 的 `check_style` job。脚本要求 Python 3.11+（用 `tomllib`）。
 - 测试不调用 `zed_i18n::init()`，单测下 locale 为 `en`，`t!` 解析回英文原文，因此按标签精确匹配的用例（如 `simulate_prompt_answer("Save All")`）不受影响。
 - 全量门禁：`cargo clippy --workspace --all-targets -- --deny warnings`。只跑 `cargo check` 漏掉 test 目标与 lint。
-- 每轮推送后按 `head_sha` 核对 CI（run_tests）结论，勿以「本地通过」代替。
+- run_tests 已改为手动触发（`gh workflow run run_tests --ref main`），文案类提交不再自动拉全量 clippy；需要判定时按该 run 结论为准，勿以「本地通过」代替。
 
 ## 未覆盖项
 

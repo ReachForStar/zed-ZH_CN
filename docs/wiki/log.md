@@ -37,3 +37,5 @@
 ## [2026-10-16] feat | 合并后汉化补齐：分 8 批处理 30+ crate 界面文案（workspace/ui/editor/language_models/edit_prediction_ui/agent_ui/copilot_ui/language_tools/git_ui/debugger_ui/settings_ui/onboarding/recent_projects/extensions_ui/dev_container/vim/zed/project_panel/picker/outline_panel/collab_ui/command_palette/miniprofiler_ui/acp_tools/auto_update/remote_connection/call_hierarchy/lsp_command_selector/git_ui_core/markdown_preview/agent_servers），en 与 zh-CN 双侧补键；判定整体跳过 project/git_hosting_providers/which_key/languages/gpui 平台 crate 与 component preview、dev-tools 面板；批量脚本落 `scripts/i18n/`，沉淀 concepts/i18n-localization-workflow 页
 ## [2026-10-16] fix | 修复汉化引入的 clippy redundant_clone（edit_prediction_button.rs 命名参数 t! 后又 to_string），本地全量 clippy 过、批次 6 起 CI 转 success
 ## [2026-10-16] fix | 合并后逐 hunk 审计发现静默丢失：thread_view.rs 的 sandbox_confusable_findings 该扫 requested 与 canonical_or_requested 两条路径（上游 953ac75529 已改），合并结果退回只扫 requested；恢复上游实现并推送 e26a09420f
+
+## [2026-10-16] chore | run_tests 改为手动触发（workflow_dispatch），去掉 push/PR 自动运行，避免每次文案提交拉起全量 clippy；check_style 新增汉化键完整性检查（scripts/i18n/check-missing-keys.py，比对代码静态 t! 引用与 en/zh-CN 键集合）
