@@ -328,7 +328,6 @@ impl Render for EditPredictionButton {
                                 let tooltip_meta = match settings.edit_predictions.ollama.as_ref() {
                                     Some(settings) if !settings.model.trim().is_empty() => {
                                         t!("edit_prediction_ui.edit_prediction_button.powered_by_ollama", model = settings.model)
-                                            .to_string()
                                     }
                                     _ => {
                                         t!("edit_prediction_ui.edit_prediction_button.ollama_model_not_configured")
