@@ -8,8 +8,11 @@
 #   - clippy 使用 debug 模式（去掉 --release/--all-features），避免公共 runner 超时
 #
 # 保留的校验：
-#   - check_style：cargo fmt / typos / check-todos / check-keymaps（快速门禁）
+#   - check_style：cargo fmt / typos / check-todos / check-keymaps / 汉化键完整性（快速门禁）
 #   - clippy：全工作区编译 + lint（验证汉化改动不破坏编译）
+#
+# 触发方式：仅手动（workflow_dispatch）。文案类提交不必每次拉全量 clippy；需要验证时
+#          在 Actions 页面点 “Run workflow”，或执行 `gh workflow run run_tests --ref main`。
 #
 # 注意：本文件不再由 `cargo xtask workflows` 生成，请勿运行该命令覆盖本文件。
 name: run_tests
@@ -20,13 +23,7 @@ env:
   CARGO_INCREMENTAL: "0"
 
 on:
-  pull_request:
-    branches:
-      - "**"
-  push:
-    branches:
-      - main
-      - v[0-9]+.[0-9]+.x
+  workflow_dispatch:
 
 permissions:
   contents: read
