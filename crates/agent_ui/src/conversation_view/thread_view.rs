@@ -9847,11 +9847,20 @@ impl ThreadView {
                 findings.push((decoded, suspicious));
             }
         }
-        for path in &details.write_paths {
-            let display = path.requested.display().to_string();
-            let suspicious = unicode_confusables::scan(&display);
-            if !suspicious.is_empty() {
-                findings.push((display, suspicious));
+        for granted in &details.write_paths {
+            // Scan both the requested path and the resolved target (when they
+            // differ), so a confusable in either the shown request or the real
+            // grant destination is surfaced.
+            let requested = granted.requested.display().to_string();
+            let resolved = granted.canonical_or_requested().display().to_string();
+            for display in [requested, resolved]
+                .into_iter()
+                .collect::<std::collections::BTreeSet<_>>()
+            {
+                let suspicious = unicode_confusables::scan(&display);
+                if !suspicious.is_empty() {
+                    findings.push((display, suspicious));
+                }
             }
         }
         findings
