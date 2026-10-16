@@ -2,6 +2,7 @@ use std::{
     collections::BTreeSet,
     sync::{Arc, atomic::AtomicBool},
 };
+use zed_i18n::t;
 
 use editor::Editor;
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
@@ -370,7 +371,7 @@ impl PickerDelegate for LspCommandSelectorDelegate {
                         .gap_2()
                         .justify_between()
                         .child(
-                            Label::new("Arguments")
+                            Label::new(t!("lsp_command_selector.arguments"))
                                 .size(LabelSize::Small)
                                 .color(Color::Muted),
                         )
@@ -383,7 +384,7 @@ impl PickerDelegate for LspCommandSelectorDelegate {
                                     cx,
                                 ))
                                 .child(
-                                    Label::new("to switch focus")
+                                    Label::new(t!("lsp_command_selector.to_switch_focus"))
                                         .size(LabelSize::Small)
                                         .color(Color::Muted),
                                 ),
@@ -393,7 +394,7 @@ impl PickerDelegate for LspCommandSelectorDelegate {
                 .map(|footer| match &self.execution {
                     Execution::Idle => footer,
                     Execution::Running { .. } => footer.child(
-                        Label::new("Executing command…")
+                        Label::new(t!("lsp_command_selector.executing_command"))
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     ),

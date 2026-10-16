@@ -31,6 +31,7 @@ use std::{
 };
 use util::command::new_command;
 use workspace::Workspace;
+use zed_i18n::t;
 
 const SHOULD_SHOW_UPDATE_NOTIFICATION_KEY: &str = "auto-updater-should-show-updated-notification";
 
@@ -307,9 +308,9 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     {
         drop(window.prompt(
             gpui::PromptLevel::Info,
-            "Zed was installed via a package manager.",
+            &t!("auto_update.installed_via_package_manager"),
             Some(&message),
-            &["OK"],
+            &[gpui::PromptButton::new(t!("auto_update.ok"))],
             cx,
         ));
         return;
@@ -327,9 +328,9 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     } else {
         drop(window.prompt(
             gpui::PromptLevel::Info,
-            "Could not check for updates",
-            Some("Auto-updates disabled for non-bundled app."),
-            &["OK"],
+            &t!("auto_update.could_not_check_for_updates"),
+            Some(&t!("auto_update.non_bundled_detail")),
+            &[gpui::PromptButton::new(t!("auto_update.ok"))],
             cx,
         ));
     }

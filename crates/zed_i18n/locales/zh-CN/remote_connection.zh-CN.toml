@@ -1,0 +1,5 @@
+_version = 1
+
+[remote_connection]
+caps_lock_on = "大写锁定已开启。"
+cancel = "取消"

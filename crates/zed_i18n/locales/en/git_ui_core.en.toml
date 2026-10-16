@@ -1,0 +1,4 @@
+_version = 1
+[git_ui_core]
+view_log = "View Log"
+git_action_failed = "git %{action} failed"

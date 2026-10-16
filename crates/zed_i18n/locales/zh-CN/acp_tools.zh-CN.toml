@@ -1,0 +1,7 @@
+_version = 1
+
+[acp_tools]
+no_active_connections = "无活动连接"
+restart_connection = "重新启动连接"
+copy_all_messages = "复制全部消息"
+clear_messages = "清空消息"

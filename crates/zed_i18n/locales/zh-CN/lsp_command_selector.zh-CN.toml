@@ -1,0 +1,6 @@
+_version = 1
+
+[lsp_command_selector]
+arguments = "参数"
+to_switch_focus = "切换焦点"
+executing_command = "正在执行命令…"

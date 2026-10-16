@@ -1,0 +1,5 @@
+_version = 1
+
+[agent_servers.auth]
+login = "登录"
+login_description = "使用你的 Google 或 Vertex AI 账户登录"

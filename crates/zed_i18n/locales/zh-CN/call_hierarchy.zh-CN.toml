@@ -1,0 +1,5 @@
+_version = 1
+
+[call_hierarchy]
+back = "返回"
+switch_direction = "切换方向"

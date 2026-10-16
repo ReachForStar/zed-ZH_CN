@@ -1,0 +1,7 @@
+_version = 1
+
+[acp_tools]
+no_active_connections = "No active connections"
+restart_connection = "Restart Connection"
+copy_all_messages = "Copy All Messages"
+clear_messages = "Clear Messages"

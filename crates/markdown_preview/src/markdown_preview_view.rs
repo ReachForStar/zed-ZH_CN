@@ -1698,7 +1698,10 @@ impl Item for MarkdownPreviewView {
         _: &mut Window,
         _: &mut Context<Self>,
     ) -> Vec<(SharedString, Box<dyn Action>)> {
-        vec![("Show Source".into(), Box::new(CloseAndReturnToEditor))]
+        vec![(
+            t!("markdown_preview.tab_menu.show_source").into(),
+            Box::new(CloseAndReturnToEditor),
+        )]
     }
 
     fn added_to_workspace(

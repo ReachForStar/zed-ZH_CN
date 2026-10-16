@@ -5,6 +5,7 @@ use notifications::status_toast::StatusToast;
 use proto::RpcError;
 use ui::prelude::*;
 use workspace::Workspace;
+use zed_i18n::t;
 
 pub fn open_output(
     operation: impl Into<SharedString>,
@@ -50,22 +51,29 @@ pub fn show_error_toast(
         cx.defer(move |cx| {
             workspace.update(cx, |workspace, cx| {
                 let workspace_weak = cx.weak_entity();
-                let toast = StatusToast::new(format!("git {} failed", action), cx, |this, _cx| {
-                    this.icon(
-                        Icon::new(IconName::XCircle)
-                            .size(IconSize::Small)
-                            .color(Color::Error),
-                    )
-                    .action("View Log", move |window, cx| {
-                        let message = message.clone();
-                        let action = action.clone();
-                        workspace_weak
-                            .update(cx, move |workspace, cx| {
-                                open_output(action, workspace, &message, window, cx)
-                            })
-                            .ok();
-                    })
-                });
+                let toast = StatusToast::new(
+                    t!("git_ui_core.git_action_failed", action = action),
+                    cx,
+                    |this, _cx| {
+                        this.icon(
+                            Icon::new(IconName::XCircle)
+                                .size(IconSize::Small)
+                                .color(Color::Error),
+                        )
+                        .action(
+                            t!("git_ui_core.view_log"),
+                            move |window, cx| {
+                                let message = message.clone();
+                                let action = action.clone();
+                                workspace_weak
+                                    .update(cx, move |workspace, cx| {
+                                        open_output(action, workspace, &message, window, cx)
+                                    })
+                                    .ok();
+                            },
+                        )
+                    },
+                );
                 workspace.toggle_status_toast(toast, cx)
             });
         });

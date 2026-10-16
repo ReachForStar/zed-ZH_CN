@@ -1,0 +1,6 @@
+_version = 1
+
+[lsp_command_selector]
+arguments = "Arguments"
+to_switch_focus = "to switch focus"
+executing_command = "Executing command…"

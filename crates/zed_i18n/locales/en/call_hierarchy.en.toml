@@ -1,0 +1,5 @@
+_version = 1
+
+[call_hierarchy]
+back = "Back"
+switch_direction = "Switch Direction"

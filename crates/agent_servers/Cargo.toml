@@ -62,6 +62,7 @@ util.workspace = true
 watch.workspace = true
 zed_credentials_provider.workspace = true
 
+zed_i18n.workspace = true
 [dev-dependencies]
 client = { workspace = true, features = ["test-support"] }
 env_logger.workspace = true

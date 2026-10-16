@@ -7,3 +7,6 @@ _version = 1
 copy = "Copy"
 copy_as_markdown = "Copy as Markdown"
 copy_link = "Copy Link"
+
+[markdown_preview.tab_menu]
+show_source = "Show Source"

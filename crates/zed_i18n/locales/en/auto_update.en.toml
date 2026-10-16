@@ -1,0 +1,7 @@
+_version = 1
+
+[auto_update]
+ok = "OK"
+installed_via_package_manager = "Zed was installed via a package manager."
+could_not_check_for_updates = "Could not check for updates"
+non_bundled_detail = "Auto-updates disabled for non-bundled app."

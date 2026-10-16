@@ -1,4 +1,5 @@
 use std::{path::PathBuf, sync::Arc};
+use zed_i18n::t;
 
 use anyhow::Result;
 use askpass::EncryptedPassword;
@@ -203,7 +204,7 @@ impl Render for RemoteConnectionPrompt {
                                     .color(Color::Muted),
                             )
                             .child(
-                                Label::new("Caps lock is on.")
+                                Label::new(t!("remote_connection.caps_lock_on"))
                                     .size(LabelSize::Small)
                                     .color(Color::Muted),
                             ),
@@ -403,7 +404,7 @@ impl Render for RemoteConnectionModal {
                         .inset(true)
                         .spacing(ui::ListItemSpacing::Sparse)
                         .start_slot(Icon::new(IconName::Close).color(Color::Muted))
-                        .child(Label::new("Cancel"))
+                        .child(Label::new(t!("remote_connection.cancel")))
                         .end_slot(
                             KeyBinding::for_action_in(&menu::Cancel, &self.focus_handle(cx), cx)
                                 .size(rems_from_px(12_f32)),

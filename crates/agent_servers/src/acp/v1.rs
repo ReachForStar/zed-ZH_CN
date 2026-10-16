@@ -37,6 +37,7 @@ use std::{any::Any, cell::RefCell};
 use task::SpawnInTerminal;
 use util::ResultExt as _;
 use util::path_list::PathList;
+use zed_i18n::t;
 
 use anyhow::{Context as _, Result};
 use gpui::{App, AppContext as _, AsyncApp, Entity, SharedString, Subscription, Task, WeakEntity};
@@ -656,9 +657,12 @@ impl AcpConnection {
             });
             let meta = acp_v2::Meta::from_iter([("terminal-auth".to_string(), value)]);
             vec![acp_v2::AuthMethod::Agent(
-                acp_v2::AuthMethodAgent::new(GEMINI_TERMINAL_AUTH_METHOD_ID, "Login")
-                    .description("Login with your Google or Vertex AI account")
-                    .meta(meta),
+                acp_v2::AuthMethodAgent::new(
+                    GEMINI_TERMINAL_AUTH_METHOD_ID,
+                    t!("agent_servers.auth.login"),
+                )
+                .description(t!("agent_servers.auth.login_description"))
+                .meta(meta),
             )]
         } else {
             acp_thread::auth_methods::from_v1(response.auth_methods)?

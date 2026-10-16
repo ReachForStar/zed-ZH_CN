@@ -1,0 +1,7 @@
+_version = 1
+
+[auto_update]
+ok = "确定"
+installed_via_package_manager = "Zed 通过包管理器安装。"
+could_not_check_for_updates = "无法检查更新"
+non_bundled_detail = "非捆绑应用已禁用自动更新。"
