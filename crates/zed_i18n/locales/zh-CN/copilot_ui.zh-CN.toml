@@ -1,0 +1,22 @@
+_version = 1
+
+[copilot_ui.sign_in]
+cancel = "取消"
+error_title = "出错了"
+copy = "复制"
+copied = "已复制！"
+done = "完成"
+paste_code_hint = "点击下方按钮后，将此代码粘贴到 GitHub。"
+authenticate_to_use = "登录后使用"
+authorized = "已授权"
+chat_enabled_title = "Copilot 聊天已启用！"
+edit_predictions_enabled_title = "Copilot 编辑预测已启用！"
+reinstall_and_sign_in = "重新安装 Copilot 编辑预测并登录"
+subscribe_on_github = "在 GitHub 上订阅"
+use_chat_title = "在 Zed 中使用 GitHub Copilot 聊天"
+use_edit_predictions_title = "在 Zed 中使用 GitHub Copilot 编辑预测"
+chat_requires_subscription = "使用 Copilot 聊天需要有效的 GitHub 订阅。"
+edit_predictions_requires_subscription = "使用 Copilot 编辑预测需要有效的 GitHub 订阅。"
+must_have_subscription = "需要有有效的 GitHub Copilot 订阅。"
+chat_all_set = "你已可以开始使用 Copilot 聊天。"
+edit_predictions_all_set = "你已可以开始使用 Copilot 编辑预测。"

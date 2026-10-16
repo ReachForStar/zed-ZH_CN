@@ -1,0 +1,4 @@
+_version = 1
+
+[agent.web_search_tool]
+failed_title = "网页搜索失败"

@@ -1,0 +1,22 @@
+_version = 1
+
+[copilot_ui.sign_in]
+cancel = "Cancel"
+error_title = "An Error Happened"
+copy = "Copy"
+copied = "Copied!"
+done = "Done"
+paste_code_hint = "Paste this code into GitHub after clicking the button below."
+authenticate_to_use = "Authenticate To Use"
+authorized = "Authorized"
+chat_enabled_title = "Copilot Chat Enabled!"
+edit_predictions_enabled_title = "Copilot Edit Predictions Enabled!"
+reinstall_and_sign_in = "Reinstall Copilot Edit Predictions and Sign In"
+subscribe_on_github = "Subscribe on GitHub"
+use_chat_title = "Use GitHub Copilot Chat in Zed"
+use_edit_predictions_title = "Use GitHub Copilot Edit Predictions in Zed"
+chat_requires_subscription = "Using Copilot Chat requires an active subscription on GitHub."
+edit_predictions_requires_subscription = "Using Copilot edit predictions requires an active subscription on GitHub."
+must_have_subscription = "You must have an active GitHub Copilot subscription."
+chat_all_set = "You're all set to use Copilot Chat."
+edit_predictions_all_set = "You're all set to use Copilot edit predictions."

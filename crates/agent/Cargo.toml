@@ -77,6 +77,7 @@ uuid.workspace = true
 watch.workspace = true
 web_search.workspace = true
 zed_env_vars.workspace = true
+zed_i18n.workspace = true
 zstd.workspace = true
 
 # Used only on Windows to resolve the running release channel/version so the WSL

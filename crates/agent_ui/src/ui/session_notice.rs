@@ -2,6 +2,7 @@ use agent_client_protocol::schema::v2 as acp;
 use component::{Component, ComponentScope, example_group_with_title, single_example};
 use gpui::{AnyElement, App, ClickEvent, ElementId, Stateful, Window, px};
 use ui::{Callout, Color, IconButton, IconName, IconSize, Severity, Tooltip, prelude::*};
+use zed_i18n::t;
 
 #[derive(IntoElement)]
 pub struct SessionNotice {
@@ -41,7 +42,9 @@ impl SessionNotice {
                                 .icon_color(Color::Muted)
                                 .aria_label(format!("Dismiss notice: {}", notice.title))
                                 .tab_index(0_isize)
-                                .tooltip(Tooltip::text("Dismiss Notice"))
+                                .tooltip(Tooltip::text(t!(
+                                    "agent_ui.session_notice.dismiss_notice"
+                                )))
                                 .on_click(on_dismiss),
                         ),
                 ),

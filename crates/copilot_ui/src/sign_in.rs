@@ -15,6 +15,7 @@ use settings::Settings as _;
 use ui::{ButtonLike, CommonAnimationExt, ConfiguredApiCard, Vector, VectorName, prelude::*};
 use util::ResultExt as _;
 use workspace::{AppState, Toast, Workspace, notifications::NotificationId};
+use zed_i18n::t;
 
 const COPILOT_SIGN_UP_URL: &str = "https://github.com/features/copilot";
 const ERROR_LABEL: &str = "Copilot Edit Predictions had issues starting. You can try reinstalling it and signing in again.";
@@ -254,7 +255,11 @@ impl CopilotCodeVerification {
                     .p_1()
                     .justify_between()
                     .child(Label::new(data.user_code.clone()))
-                    .child(Label::new(if copied { "Copied!" } else { "Copy" })),
+                    .child(Label::new(if copied {
+                        t!("copilot_ui.sign_in.copied")
+                    } else {
+                        t!("copilot_ui.sign_in.copy")
+                    })),
             )
             .on_click({
                 let user_code = data.user_code.clone();
@@ -283,20 +288,17 @@ impl CopilotCodeVerification {
             .items_center()
             .text_center()
             .child(
-                Headline::new("Use GitHub Copilot Edit Predictions in Zed")
+                Headline::new(t!("copilot_ui.sign_in.use_edit_predictions_title"))
                     .size(HeadlineSize::Large),
             )
             .child(
-                Label::new(
-                    "Using Copilot edit predictions requires an active subscription on GitHub.",
-                )
+                Label::new(t!(
+                    "copilot_ui.sign_in.edit_predictions_requires_subscription"
+                ))
                 .color(Color::Muted),
             )
             .child(Self::render_device_code(data, cx))
-            .child(
-                Label::new("Paste this code into GitHub after clicking the button below.")
-                    .color(Color::Muted),
-            )
+            .child(Label::new(t!("copilot_ui.sign_in.paste_code_hint")).color(Color::Muted))
             .child(
                 v_flex()
                     .w_full()
@@ -356,12 +358,15 @@ impl CopilotCodeVerification {
                             }),
                     )
                     .child(
-                        Button::new("copilot-enable-cancel-button", "Cancel")
-                            .full_width()
-                            .size(ButtonSize::Medium)
-                            .on_click(cx.listener(|_, _, _, cx| {
-                                cx.emit(DismissEvent);
-                            })),
+                        Button::new(
+                            "copilot-enable-cancel-button",
+                            t!("copilot_ui.sign_in.cancel"),
+                        )
+                        .full_width()
+                        .size(ButtonSize::Medium)
+                        .on_click(cx.listener(|_, _, _, cx| {
+                            cx.emit(DismissEvent);
+                        })),
                     ),
             )
     }
@@ -371,12 +376,15 @@ impl CopilotCodeVerification {
             .gap_2()
             .text_center()
             .justify_center()
-            .child(Headline::new("Copilot Edit Predictions Enabled!").size(HeadlineSize::Large))
             .child(
-                Label::new("You're all set to use Copilot edit predictions.").color(Color::Muted),
+                Headline::new(t!("copilot_ui.sign_in.edit_predictions_enabled_title"))
+                    .size(HeadlineSize::Large),
             )
             .child(
-                Button::new("copilot-enabled-done-button", "Done")
+                Label::new(t!("copilot_ui.sign_in.edit_predictions_all_set")).color(Color::Muted),
+            )
+            .child(
+                Button::new("copilot-enabled-done-button", t!("copilot_ui.sign_in.done"))
                     .full_width()
                     .style(ButtonStyle::Outlined)
                     .size(ButtonSize::Medium)
@@ -397,22 +405,28 @@ impl CopilotCodeVerification {
             .text_center()
             .justify_center()
             .child(
-                Headline::new("You must have an active GitHub Copilot subscription.")
+                Headline::new(t!("copilot_ui.sign_in.must_have_subscription"))
                     .size(HeadlineSize::Large),
             )
             .child(Label::new(description).color(Color::Warning))
             .child(
-                Button::new("copilot-subscribe-button", "Subscribe on GitHub")
-                    .full_width()
-                    .style(ButtonStyle::Outlined)
-                    .size(ButtonSize::Medium)
-                    .on_click(move |_, _, cx| cx.open_url(&sign_up_url)),
+                Button::new(
+                    "copilot-subscribe-button",
+                    t!("copilot_ui.sign_in.subscribe_on_github"),
+                )
+                .full_width()
+                .style(ButtonStyle::Outlined)
+                .size(ButtonSize::Medium)
+                .on_click(move |_, _, cx| cx.open_url(&sign_up_url)),
             )
             .child(
-                Button::new("copilot-subscribe-cancel-button", "Cancel")
-                    .full_width()
-                    .size(ButtonSize::Medium)
-                    .on_click(cx.listener(|_, _, _, cx| cx.emit(DismissEvent))),
+                Button::new(
+                    "copilot-subscribe-cancel-button",
+                    t!("copilot_ui.sign_in.cancel"),
+                )
+                .full_width()
+                .size(ButtonSize::Medium)
+                .on_click(cx.listener(|_, _, _, cx| cx.emit(DismissEvent))),
             )
     }
 
@@ -421,12 +435,12 @@ impl CopilotCodeVerification {
             .gap_2()
             .text_center()
             .justify_center()
-            .child(Headline::new("An Error Happened").size(HeadlineSize::Large))
+            .child(Headline::new(t!("copilot_ui.sign_in.error_title")).size(HeadlineSize::Large))
             .child(Label::new(ERROR_LABEL).color(Color::Muted))
             .child(
                 Button::new(
                     "copilot-subscribe-button",
-                    "Reinstall Copilot Edit Predictions and Sign In",
+                    t!("copilot_ui.sign_in.reinstall_and_sign_in"),
                 )
                 .full_width()
                 .style(ButtonStyle::Outlined)
@@ -582,7 +596,11 @@ impl CopilotChatCodeVerification {
                     .p_1()
                     .justify_between()
                     .child(Label::new(user_code.clone()))
-                    .child(Label::new(if copied { "Copied!" } else { "Copy" })),
+                    .child(Label::new(if copied {
+                        t!("copilot_ui.sign_in.copied")
+                    } else {
+                        t!("copilot_ui.sign_in.copy")
+                    })),
             )
             .on_click(move |_, window, cx| {
                 cx.write_to_clipboard(ClipboardItem::new_string(user_code.clone()));
@@ -606,16 +624,12 @@ impl CopilotChatCodeVerification {
             .gap_2p5()
             .items_center()
             .text_center()
-            .child(Headline::new("Use GitHub Copilot Chat in Zed").size(HeadlineSize::Large))
+            .child(Headline::new(t!("copilot_ui.sign_in.use_chat_title")).size(HeadlineSize::Large))
             .child(
-                Label::new("Using Copilot Chat requires an active subscription on GitHub.")
-                    .color(Color::Muted),
+                Label::new(t!("copilot_ui.sign_in.chat_requires_subscription")).color(Color::Muted),
             )
             .child(Self::render_device_code(&device_flow.user_code, cx))
-            .child(
-                Label::new("Paste this code into GitHub after clicking the button below.")
-                    .color(Color::Muted),
-            )
+            .child(Label::new(t!("copilot_ui.sign_in.paste_code_hint")).color(Color::Muted))
             .child(
                 v_flex()
                     .w_full()
@@ -634,12 +648,15 @@ impl CopilotChatCodeVerification {
                             }),
                     )
                     .child(
-                        Button::new("copilot-chat-enable-cancel-button", "Cancel")
-                            .full_width()
-                            .size(ButtonSize::Medium)
-                            .on_click(cx.listener(|_, _, _, cx| {
-                                cx.emit(DismissEvent);
-                            })),
+                        Button::new(
+                            "copilot-chat-enable-cancel-button",
+                            t!("copilot_ui.sign_in.cancel"),
+                        )
+                        .full_width()
+                        .size(ButtonSize::Medium)
+                        .on_click(cx.listener(|_, _, _, cx| {
+                            cx.emit(DismissEvent);
+                        })),
                     ),
             )
     }
@@ -649,14 +666,20 @@ impl CopilotChatCodeVerification {
             .gap_2()
             .text_center()
             .justify_center()
-            .child(Headline::new("Copilot Chat Enabled!").size(HeadlineSize::Large))
-            .child(Label::new("You're all set to use Copilot Chat.").color(Color::Muted))
             .child(
-                Button::new("copilot-chat-enabled-done-button", "Done")
-                    .full_width()
-                    .style(ButtonStyle::Outlined)
-                    .size(ButtonSize::Medium)
-                    .on_click(cx.listener(|_, _, _, cx| cx.emit(DismissEvent))),
+                Headline::new(t!("copilot_ui.sign_in.chat_enabled_title"))
+                    .size(HeadlineSize::Large),
+            )
+            .child(Label::new(t!("copilot_ui.sign_in.chat_all_set")).color(Color::Muted))
+            .child(
+                Button::new(
+                    "copilot-chat-enabled-done-button",
+                    t!("copilot_ui.sign_in.done"),
+                )
+                .full_width()
+                .style(ButtonStyle::Outlined)
+                .size(ButtonSize::Medium)
+                .on_click(cx.listener(|_, _, _, cx| cx.emit(DismissEvent))),
             )
     }
 
@@ -665,14 +688,17 @@ impl CopilotChatCodeVerification {
             .gap_2()
             .text_center()
             .justify_center()
-            .child(Headline::new("An Error Happened").size(HeadlineSize::Large))
+            .child(Headline::new(t!("copilot_ui.sign_in.error_title")).size(HeadlineSize::Large))
             .child(Label::new(message.to_owned()).color(Color::Muted))
             .child(
-                Button::new("copilot-chat-error-cancel-button", "Cancel")
-                    .full_width()
-                    .style(ButtonStyle::Outlined)
-                    .size(ButtonSize::Medium)
-                    .on_click(cx.listener(|_, _, _, cx| cx.emit(DismissEvent))),
+                Button::new(
+                    "copilot-chat-error-cancel-button",
+                    t!("copilot_ui.sign_in.cancel"),
+                )
+                .full_width()
+                .style(ButtonStyle::Outlined)
+                .size(ButtonSize::Medium)
+                .on_click(cx.listener(|_, _, _, cx| cx.emit(DismissEvent))),
             )
     }
 
@@ -955,7 +981,7 @@ impl ConfigurationView {
                     v_flex()
                         .w_full()
                         .max_w_1_2()
-                        .child(Label::new("Authenticate To Use"))
+                        .child(Label::new(t!("copilot_ui.sign_in.authenticate_to_use")))
                         .child(
                             Label::new(description)
                                 .color(Color::Muted)
@@ -1034,20 +1060,23 @@ impl Render for ConfigurationView {
         let edit_prediction = self.edit_prediction;
 
         if is_authenticated(cx) {
-            return ConfiguredApiCard::new("copilot-authorized", "Authorized")
-                .button_label("Sign Out")
-                .on_click(move |_, window, cx| {
-                    if edit_prediction {
-                        if let Some(auth) = GlobalCopilotAuth::try_global(cx) {
-                            initiate_sign_out(auth.0.clone(), window, cx);
-                        }
-                    } else if let Some(copilot_chat) = CopilotChat::global(cx) {
-                        copilot_chat
-                            .update(cx, |copilot_chat, cx| copilot_chat.sign_out(cx))
-                            .detach_and_log_err(cx);
+            return ConfiguredApiCard::new(
+                "copilot-authorized",
+                t!("copilot_ui.sign_in.authorized"),
+            )
+            .button_label("Sign Out")
+            .on_click(move |_, window, cx| {
+                if edit_prediction {
+                    if let Some(auth) = GlobalCopilotAuth::try_global(cx) {
+                        initiate_sign_out(auth.0.clone(), window, cx);
                     }
-                })
-                .into_any_element();
+                } else if let Some(copilot_chat) = CopilotChat::global(cx) {
+                    copilot_chat
+                        .update(cx, |copilot_chat, cx| copilot_chat.sign_out(cx))
+                        .detach_and_log_err(cx);
+                }
+            })
+            .into_any_element();
         }
 
         if self.edit_prediction {

@@ -337,6 +337,8 @@ generating_changes = "正在生成更改…"
 reject_all = "全部拒绝"
 keep_all = "全部保留"
 review_all_files = "审查所有文件"
+keep = "保留"
+reject = "拒绝"
 
 [agent_ui.thread_view]
 copy_code = "复制代码"
@@ -604,3 +606,10 @@ keep_all = "全部保留"
 context_too_large = "上下文过大"
 context_too_large_message = "此对话超出了模型的上下文窗口长度。请开启新对话或移除部分附加文件后继续。"
 new_thread = "新建对话"
+
+[agent_ui.session_notice]
+dismiss_notice = "关闭通知"
+
+[agent_ui.inline_assistant]
+configure = "配置"
+cancel = "取消"

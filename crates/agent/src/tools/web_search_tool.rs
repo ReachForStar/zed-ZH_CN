@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use zed_i18n::t;
 
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v2 as acp;
@@ -109,7 +110,7 @@ impl AgentTool for WebSearchTool {
                         Ok(response) => response,
                         Err(err) => {
                             event_stream
-                                .update_fields(|update| update.title("Web Search Failed"));
+                                .update_fields(|update| update.title(t!("agent.web_search_tool.failed_title")));
                             return Err(WebSearchToolOutput::Error { error: err.to_string() });
                         }
                     }

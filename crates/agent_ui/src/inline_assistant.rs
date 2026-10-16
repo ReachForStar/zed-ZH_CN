@@ -5,6 +5,7 @@ use std::mem;
 use std::ops::Range;
 use std::sync::Arc;
 use uuid::Uuid;
+use zed_i18n::t;
 
 use crate::context::load_context;
 use crate::mention_set::MentionSet;
@@ -278,7 +279,10 @@ impl InlineAssistant {
                             gpui::PromptLevel::Warning,
                             &error.to_string(),
                             None,
-                            &["Configure", "Cancel"],
+                            &[
+                                gpui::PromptButton::new(t!("agent_ui.inline_assistant.configure")),
+                                gpui::PromptButton::new(t!("agent_ui.inline_assistant.cancel")),
+                            ],
                         )
                         .await
                         .ok();

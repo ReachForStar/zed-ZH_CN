@@ -337,6 +337,8 @@ generating_changes = "Generating Changes…"
 reject_all = "Reject All"
 keep_all = "Keep All"
 review_all_files = "Review All Files"
+keep = "Keep"
+reject = "Reject"
 
 [agent_ui.thread_view]
 copy_code = "Copy Code"
@@ -604,3 +606,10 @@ keep_all = "Keep All"
 context_too_large = "Context Too Large"
 context_too_large_message = "This conversation is too long for the model's context window. Start a new thread or remove some attached files to continue."
 new_thread = "New Thread"
+
+[agent_ui.session_notice]
+dismiss_notice = "Dismiss Notice"
+
+[agent_ui.inline_assistant]
+configure = "Configure"
+cancel = "Cancel"
