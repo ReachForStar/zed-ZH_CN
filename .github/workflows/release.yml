@@ -314,7 +314,17 @@ jobs:
             echo ""
             echo "## 变更内容"
             echo ""
-            cat generated-notes.md
+            if [ -f RELEASE_NOTES.md ]; then
+              cat RELEASE_NOTES.md
+            else
+              cat generated-notes.md
+            fi
+            if [ -s generated-notes.md ]; then
+              echo ""
+              echo "---"
+              echo ""
+              cat generated-notes.md
+            fi
           } > release-body.md
         env:
           VERSION: ${{ steps.meta.outputs.version }}
