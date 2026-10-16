@@ -66,6 +66,10 @@ jobs:
       - name: 检查快捷键映射
         run: ./script/check-keymaps
 
+      - name: 检查汉化键完整性
+        # 汉化键缺失时界面会直接显示键名，此项防止新增 t! 调用漏配 locale
+        run: python3 scripts/i18n/check-missing-keys.py
+
   clippy:
     name: Clippy (Linux)
     needs: check_style
