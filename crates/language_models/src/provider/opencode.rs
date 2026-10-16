@@ -31,6 +31,7 @@ use ui::{
 };
 use ui_input::InputField;
 use util::ResultExt;
+use zed_i18n::t;
 
 use crate::provider::anthropic::{AnthropicEventMapper, into_anthropic};
 use crate::provider::google::{GoogleEventMapper, into_google};
@@ -1215,7 +1216,8 @@ struct ConfigurationView {
 impl ConfigurationView {
     fn new(state: Entity<State>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let api_key_editor = cx.new(|cx| {
-            InputField::new(window, cx, "sk-00000000000000000000000000000000").label("API key")
+            InputField::new(window, cx, "sk-00000000000000000000000000000000")
+                .label(t!("language_models.settings.api_key"))
         });
 
         cx.observe(&state, |_, _, cx| {
@@ -1336,21 +1338,21 @@ impl Render for ConfigurationView {
         let api_key_section = v_flex()
             .on_action(cx.listener(Self::save_api_key))
             .child(Label::new(
-                "To use OpenCode models in Zed, you need an API key:",
+                t!("language_models.opencode.use_api_key_intro"),
             ).color(Color::Muted))
             .child(
                 List::new()
                     .child(
                         ListBulletItem::new("")
-                            .child(Label::new("Sign in and get your key at").color(Color::Muted))
+                            .child(Label::new(t!("language_models.opencode.sign_in_hint")).color(Color::Muted))
                             .child(ButtonLink::new(
-                                "OpenCode Console",
+                                t!("language_models.opencode.console"),
                                 "https://opencode.ai/auth",
                             )),
                     )
                     .when(is_editing, |this| {
                         this.child(ListBulletItem::new(
-                            "Paste your API key below and hit enter to start using OpenCode",
+                            t!("language_models.opencode.paste_api_key"),
                         ).label_color(Color::Muted))
                     }),
             )
@@ -1373,11 +1375,11 @@ impl Render for ConfigurationView {
 
             let subscription_toggles = v_flex()
                 .gap_2()
-                .child(Label::new("Subscriptions"))
+                .child(Label::new(t!("language_models.opencode.subscriptions")))
                 .child(
                     Switch::new("opencode-show-zen-models", show_zen.into())
                         .full_width(true)
-                        .label("Show Zen models")
+                        .label(t!("language_models.opencode.show_zen_models"))
                         .label_position(SwitchLabelPosition::Start)
                         .on_click(cx.listener(|this, state, window, cx| {
                             this.set_subscription_enabled(
@@ -1392,7 +1394,7 @@ impl Render for ConfigurationView {
                 .child(
                     Switch::new("opencode-show-go-models", show_go.into())
                         .full_width(true)
-                        .label("Show Go models")
+                        .label(t!("language_models.opencode.show_go_models"))
                         .label_position(SwitchLabelPosition::Start)
                         .on_click(cx.listener(|this, state, window, cx| {
                             this.set_subscription_enabled(
@@ -1405,9 +1407,11 @@ impl Render for ConfigurationView {
                 );
 
             let no_subscriptions_warning = if !show_zen && !show_go {
-                Some(Banner::new().severity(Severity::Warning).child(Label::new(
-                    "No subscriptions enabled. Enable at least one subscription to use OpenCode.",
-                )))
+                Some(
+                    Banner::new()
+                        .severity(Severity::Warning)
+                        .child(Label::new(t!("language_models.opencode.no_subscriptions"))),
+                )
             } else {
                 None
             };

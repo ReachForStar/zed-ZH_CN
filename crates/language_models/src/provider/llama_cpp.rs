@@ -28,6 +28,7 @@ use ui::{
 };
 use ui_input::InputField;
 use util::ResultExt;
+use zed_i18n::t;
 
 use crate::AllLanguageModelSettings;
 use language_model::chat_completion::ChatCompletionEventMapper;
@@ -1003,16 +1004,20 @@ struct ConfigurationView {
 
 impl ConfigurationView {
     pub fn new(state: Entity<State>, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let api_key_editor = cx.new(|cx| InputField::new(window, cx, "sk-...").label("API key"));
+        let api_key_editor = cx.new(|cx| {
+            InputField::new(window, cx, "sk-...").label(t!("language_models.settings.api_key"))
+        });
 
         let api_url_editor = cx.new(|cx| {
-            let input = InputField::new(window, cx, LLAMA_CPP_API_URL).label("API URL");
+            let input = InputField::new(window, cx, LLAMA_CPP_API_URL)
+                .label(t!("language_models.settings.api_url"));
             input.set_text(&LlamaCppLanguageModelProvider::api_url(cx), window, cx);
             input
         });
 
         let context_window_editor = cx.new(|cx| {
-            let input = InputField::new(window, cx, "8192").label("Context Window");
+            let input = InputField::new(window, cx, "8192")
+                .label(t!("language_models.settings.context_window"));
             if let Some(context_window) = LlamaCppLanguageModelProvider::settings(cx).context_window
             {
                 input.set_text(&context_window.to_string(), window, cx);

@@ -16,6 +16,7 @@ use zed_actions::agent::AddSelectionToThread;
 use zed_actions::preview::{
     markdown::OpenPreview as OpenMarkdownPreview, svg::OpenPreview as OpenSvgPreview,
 };
+use zed_i18n::t;
 
 #[derive(Debug)]
 pub enum MenuPosition {
@@ -247,58 +248,85 @@ pub fn deploy_context_menu(
             let builder = menu
                 .on_blur_subscription(Subscription::new(|| {}))
                 .when(run_to_cursor, |builder| {
-                    builder.action("Run to Cursor", Box::new(RunToCursor))
+                    builder.action(
+                        t!("editor.mouse_context_menu.run_to_cursor"),
+                        Box::new(RunToCursor),
+                    )
                 })
                 .when(evaluate_selection && has_selections, |builder| {
-                    builder.action("Evaluate Selection", Box::new(EvaluateSelectedText))
+                    builder.action(
+                        t!("editor.mouse_context_menu.evaluate_selection"),
+                        Box::new(EvaluateSelectedText),
+                    )
                 })
                 .when(
                     run_to_cursor || (evaluate_selection && has_selections),
                     |builder| builder.separator(),
                 )
-                .action("Go to Definition", Box::new(GoToDefinition::default()))
-                .action("Go to Declaration", Box::new(GoToDeclaration::default()))
                 .action(
-                    "Go to Type Definition",
+                    t!("editor.mouse_context_menu.go_to_definition"),
+                    Box::new(GoToDefinition::default()),
+                )
+                .action(
+                    t!("editor.mouse_context_menu.go_to_declaration"),
+                    Box::new(GoToDeclaration::default()),
+                )
+                .action(
+                    t!("editor.mouse_context_menu.go_to_type_definition"),
                     Box::new(GoToTypeDefinition::default()),
                 )
                 .action(
-                    "Go to Implementation",
+                    t!("editor.mouse_context_menu.go_to_implementation"),
                     Box::new(GoToImplementation::default()),
                 )
                 .action(
-                    "Find All References",
+                    t!("editor.mouse_context_menu.find_all_references"),
                     Box::new(FindAllReferences::default()),
                 )
                 .action(
-                    "Show Incoming Calls",
+                    t!("editor.mouse_context_menu.show_incoming_calls"),
                     Box::new(zed_actions::ShowIncomingCalls),
                 )
                 .action(
-                    "Show Outgoing Calls",
+                    t!("editor.mouse_context_menu.show_outgoing_calls"),
                     Box::new(zed_actions::ShowOutgoingCalls),
                 )
                 .separator()
-                .action("Rename Symbol", Box::new(Rename))
-                .action("Format Buffer", Box::new(Format))
+                .action(
+                    t!("editor.mouse_context_menu.rename_symbol"),
+                    Box::new(Rename),
+                )
+                .action(
+                    t!("editor.mouse_context_menu.format_buffer"),
+                    Box::new(Format),
+                )
                 .when(format_selections, |cx| {
-                    cx.action("Format Selections", Box::new(FormatSelections))
+                    cx.action(
+                        t!("editor.mouse_context_menu.format_selections"),
+                        Box::new(FormatSelections),
+                    )
                 })
                 .action(
-                    "Show Code Actions",
+                    t!("editor.mouse_context_menu.show_code_actions"),
                     Box::new(ToggleCodeActions {
                         deployed_from: None,
                         quick_launch: false,
                     }),
                 )
                 .when(!disable_ai && has_selections, |this| {
-                    this.action("Add to Agent Thread", Box::new(AddSelectionToThread))
+                    this.action(
+                        t!("editor.mouse_context_menu.add_to_agent_thread"),
+                        Box::new(AddSelectionToThread),
+                    )
                 })
                 .separator()
                 .action("Cut", Box::new(Cut))
-                .action("Copy", Box::new(Copy))
-                .action("Copy and Trim", Box::new(CopyAndTrim))
-                .action("Paste", Box::new(Paste))
+                .action(t!("editor.mouse_context_menu.copy"), Box::new(Copy))
+                .action(
+                    t!("editor.mouse_context_menu.copy_and_trim"),
+                    Box::new(CopyAndTrim),
+                )
+                .action(t!("editor.mouse_context_menu.paste"), Box::new(Paste))
                 .separator()
                 .action_disabled_when(
                     !has_reveal_target,
@@ -306,10 +334,16 @@ pub fn deploy_context_menu(
                     Box::new(RevealInFileManager),
                 )
                 .when(is_markdown, |builder| {
-                    builder.action("Open Markdown Preview", Box::new(OpenMarkdownPreview))
+                    builder.action(
+                        t!("editor.mouse_context_menu.open_markdown_preview"),
+                        Box::new(OpenMarkdownPreview),
+                    )
                 })
                 .when(is_svg, |builder| {
-                    builder.action("Open SVG Preview", Box::new(OpenSvgPreview))
+                    builder.action(
+                        t!("editor.mouse_context_menu.open_svg_preview"),
+                        Box::new(OpenSvgPreview),
+                    )
                 })
                 .action_disabled_when(
                     !has_reveal_target,

@@ -2,6 +2,7 @@ use std::{
     ops::{Range, RangeInclusive},
     sync::Arc,
 };
+use zed_i18n::t;
 
 use buffer_diff::{BufferDiff, BufferDiffSnapshot, DiffHunkStatus};
 use collections::HashMap;
@@ -463,7 +464,7 @@ impl RenderOnce for DiffStyleControls {
                 IconButton::new("diff-style-unified", IconName::DiffUnified)
                     .icon_size(IconSize::Small)
                     .toggle_state(diff_view_style == DiffViewStyle::Unified)
-                    .tooltip(Tooltip::text("Unified"))
+                    .tooltip(Tooltip::text(t!("editor.split.unified")))
                     .on_click({
                         let splittable_editor = self.splittable_editor.clone();
                         move |_, window, cx| {

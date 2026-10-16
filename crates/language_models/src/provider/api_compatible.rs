@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use zed_i18n::t;
 
 use ::util::ResultExt;
 use anyhow::Result;
@@ -253,7 +254,7 @@ impl<S: ApiCompatibleProviderSettings> Render for ApiCompatibleProviderConfigura
                 )
                 .child(
                     h_flex().flex_shrink_0().child(
-                        Button::new("reset-api-key", "Reset API Key")
+                        Button::new("reset-api-key", t!("language_models.api_compatible.reset_api_key"))
                             .label_size(LabelSize::Small)
                             .start_icon(Icon::new(IconName::Undo).size(IconSize::Small))
                             .layer(ElevationIndex::ModalSurface)
@@ -279,17 +280,22 @@ impl<S: ApiCompatibleProviderSettings> Render for ApiCompatibleProviderConfigura
                 .child(api_key_section)
                 .child(
                     h_flex().w_full().justify_end().child(
-                        Button::new("remove-compatible-provider", "Remove Provider")
-                            .style(ButtonStyle::OutlinedGhost)
-                            .label_size(LabelSize::Small)
-                            .start_icon(
-                                Icon::new(IconName::Trash)
-                                    .size(IconSize::Small)
-                                    .color(Color::Muted),
-                            )
-                            .on_click(cx.listener(|this, _event, window, cx| {
+                        Button::new(
+                            "remove-compatible-provider",
+                            t!("language_models.api_compatible.remove_provider"),
+                        )
+                        .style(ButtonStyle::OutlinedGhost)
+                        .label_size(LabelSize::Small)
+                        .start_icon(
+                            Icon::new(IconName::Trash)
+                                .size(IconSize::Small)
+                                .color(Color::Muted),
+                        )
+                        .on_click(
+                            cx.listener(|this, _event, window, cx| {
                                 this.remove_provider(window, cx)
-                            })),
+                            }),
+                        ),
                     ),
                 )
                 .into_any()

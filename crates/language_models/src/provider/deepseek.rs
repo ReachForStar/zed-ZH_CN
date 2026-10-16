@@ -2,6 +2,7 @@ use anyhow::{Result, anyhow};
 use collections::{HashMap, IndexMap};
 use credentials_provider::CredentialsProvider;
 use deepseek::DEEPSEEK_API_URL;
+use zed_i18n::t;
 
 use futures::Stream;
 use futures::{FutureExt, StreamExt, future::BoxFuture, stream::BoxStream};
@@ -313,7 +314,7 @@ fn language_model(model: &deepseek::Model) -> LanguageModel {
                     is_default: false,
                 },
                 LanguageModelEffortLevel {
-                    name: "High".into(),
+                    name: t!("language_models.deepseek.reasoning_effort_high").into(),
                     value: "high".into(),
                     is_default: true,
                 },

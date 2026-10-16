@@ -16,6 +16,7 @@ use language_model::{
     RateLimiter, Role, SubPageProviderSettings,
 };
 use lmstudio::{LMSTUDIO_API_URL, ModelType, get_models};
+use zed_i18n::t;
 
 pub use settings::LmStudioAvailableModel as AvailableModel;
 use settings::{Settings, SettingsStore, update_settings_file};
@@ -594,10 +595,13 @@ struct ConfigurationView {
 
 impl ConfigurationView {
     pub fn new(state: Entity<State>, _window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let api_key_editor = cx.new(|cx| InputField::new(_window, cx, "sk-...").label("API key"));
+        let api_key_editor = cx.new(|cx| {
+            InputField::new(_window, cx, "sk-...").label(t!("language_models.settings.api_key"))
+        });
 
         let api_url_editor = cx.new(|cx| {
-            let input = InputField::new(_window, cx, LMSTUDIO_API_URL).label("API URL");
+            let input = InputField::new(_window, cx, LMSTUDIO_API_URL)
+                .label(t!("language_models.settings.api_url"));
             input.set_text(&LmStudioLanguageModelProvider::api_url(cx), _window, cx);
             input
         });
@@ -774,16 +778,16 @@ impl Render for ConfigurationView {
                     .gap_1()
                     .child(Headline::new("LM Studio").size(HeadlineSize::Small))
                     .child(
-                        Label::new("Run local LLMs like Llama, Phi, and Qwen.").color(Color::Muted),
+                        Label::new(t!("language_models.lmstudio.description")).color(Color::Muted),
                     )
                     .child(
                         List::new()
                             .child(ListBulletItem::new(
-                                "LM Studio needs to be running with at least one model downloaded.",
+                                t!("language_models.lmstudio.needs_running"),
                             ).label_color(Color::Muted))
                             .child(
                                 ListBulletItem::new("")
-                                    .child(Label::new("To get your first model, try running").color(Color::Muted))
+                                    .child(Label::new(t!("language_models.lmstudio.first_model_hint")).color(Color::Muted))
                                     .child(Label::new("lms get qwen2.5-coder-7b").inline_code(cx).color(Color::Muted).ml_1()),
                             ),
                     )

@@ -1,0 +1,28 @@
+_version = 1
+
+[language_models.settings]
+api_key = "API 密钥"
+api_url = "API 地址"
+context_window = "上下文窗口"
+
+[language_models.lmstudio]
+needs_running = "LM Studio 需要处于运行状态，并至少已下载一个模型。"
+description = "运行 Llama、Phi、Qwen 等本地大语言模型。"
+first_model_hint = "要获取第一个模型，可尝试运行"
+
+[language_models.opencode]
+use_api_key_intro = "在 Zed 中使用 OpenCode 模型需要一个 API 密钥："
+sign_in_hint = "登录并在以下地址获取密钥"
+console = "OpenCode 控制台"
+paste_api_key = "在下方粘贴 API 密钥并按回车，即可开始使用 OpenCode"
+subscriptions = "订阅"
+show_zen_models = "显示 Zen 模型"
+show_go_models = "显示 Go 模型"
+no_subscriptions = "未启用任何订阅。启用至少一个订阅才能使用 OpenCode。"
+
+[language_models.api_compatible]
+remove_provider = "移除提供方"
+reset_api_key = "重置 API 密钥"
+
+[language_models.deepseek]
+reasoning_effort_high = "高"

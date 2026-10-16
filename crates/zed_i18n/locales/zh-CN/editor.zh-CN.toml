@@ -1,0 +1,45 @@
+_version = 1
+
+[editor.mouse_context_menu]
+add_to_agent_thread = "添加到智能体线程"
+copy = "复制"
+copy_and_trim = "复制并去除首尾空白"
+evaluate_selection = "求值所选内容"
+find_all_references = "查找所有引用"
+format_buffer = "格式化缓冲区"
+format_selections = "格式化所选内容"
+go_to_declaration = "转到声明"
+go_to_definition = "转到定义"
+go_to_implementation = "转到实现"
+go_to_type_definition = "转到类型定义"
+open_markdown_preview = "打开 Markdown 预览"
+open_svg_preview = "打开 SVG 预览"
+paste = "粘贴"
+rename_symbol = "重命名符号"
+run_to_cursor = "运行到光标处"
+show_code_actions = "显示代码操作"
+show_incoming_calls = "显示调用方"
+show_outgoing_calls = "显示被调用方"
+
+[editor.git]
+add_review_tooltip = "添加评审（拖动可选择多行）"
+add_comment = "添加评论"
+cancel = "取消"
+close = "关闭"
+confirm = "确认"
+
+[editor.header]
+copy_path = "复制路径"
+copy_relative_path = "复制相对路径"
+open_file = "打开文件"
+open_in_terminal = "在终端中打开"
+reveal_in_project_panel = "在项目面板中显示"
+
+[editor.hover_popover]
+copy_diagnostic = "复制诊断信息"
+
+[editor.bookmarks]
+buffer_title = "书签"
+
+[editor.split]
+unified = "统一视图"

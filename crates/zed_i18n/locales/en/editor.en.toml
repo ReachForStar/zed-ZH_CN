@@ -1,0 +1,45 @@
+_version = 1
+
+[editor.mouse_context_menu]
+add_to_agent_thread = "Add to Agent Thread"
+copy = "Copy"
+copy_and_trim = "Copy and Trim"
+evaluate_selection = "Evaluate Selection"
+find_all_references = "Find All References"
+format_buffer = "Format Buffer"
+format_selections = "Format Selections"
+go_to_declaration = "Go to Declaration"
+go_to_definition = "Go to Definition"
+go_to_implementation = "Go to Implementation"
+go_to_type_definition = "Go to Type Definition"
+open_markdown_preview = "Open Markdown Preview"
+open_svg_preview = "Open SVG Preview"
+paste = "Paste"
+rename_symbol = "Rename Symbol"
+run_to_cursor = "Run to Cursor"
+show_code_actions = "Show Code Actions"
+show_incoming_calls = "Show Incoming Calls"
+show_outgoing_calls = "Show Outgoing Calls"
+
+[editor.git]
+add_review_tooltip = "Add Review (drag to select multiple lines)"
+add_comment = "Add comment"
+cancel = "Cancel"
+close = "Close"
+confirm = "Confirm"
+
+[editor.header]
+copy_path = "Copy Path"
+copy_relative_path = "Copy Relative Path"
+open_file = "Open File"
+open_in_terminal = "Open in Terminal"
+reveal_in_project_panel = "Reveal In Project Panel"
+
+[editor.hover_popover]
+copy_diagnostic = "Copy Diagnostic"
+
+[editor.bookmarks]
+buffer_title = "Bookmarks"
+
+[editor.split]
+unified = "Unified"

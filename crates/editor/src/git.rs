@@ -7,6 +7,7 @@ use ::git::{
 };
 use buffer_diff::{BufferDiff, DiffHunkStatus, DiffHunkStatusKind};
 use project::git_store::Repository;
+use zed_i18n::t;
 
 #[derive(Clone)]
 struct ResolvedDiffHunk {
@@ -1046,7 +1047,7 @@ impl Editor {
                     .border_color(icon_color.opacity(0.5))
             })
             .child(Icon::new(IconName::Plus).size(IconSize::Small))
-            .tooltip(Tooltip::text("Add Review (drag to select multiple lines)"))
+            .tooltip(Tooltip::text(t!("editor.git.add_review_tooltip")))
             .on_mouse_down(
                 gpui::MouseButton::Left,
                 cx.listener(move |editor, _event: &gpui::MouseDownEvent, window, cx| {
@@ -2643,7 +2644,7 @@ impl Editor {
                                 IconButton::new("diff-review-close", IconName::Close)
                                     .icon_color(ui::Color::Muted)
                                     .icon_size(action_icon_size)
-                                    .tooltip(Tooltip::text("Close"))
+                                    .tooltip(Tooltip::text(t!("editor.git.close")))
                                     .on_click(|_, window, cx| {
                                         window
                                             .dispatch_action(Box::new(crate::actions::Cancel), cx);
@@ -2653,7 +2654,7 @@ impl Editor {
                                 IconButton::new("diff-review-add", IconName::Return)
                                     .icon_color(ui::Color::Muted)
                                     .icon_size(action_icon_size)
-                                    .tooltip(Tooltip::text("Add comment"))
+                                    .tooltip(Tooltip::text(t!("editor.git.add_comment")))
                                     .on_click(|_, window, cx| {
                                         window.dispatch_action(
                                             Box::new(crate::actions::SubmitDiffReviewComment),
@@ -2813,7 +2814,7 @@ impl Editor {
                         )
                         .icon_color(ui::Color::Muted)
                         .icon_size(action_icon_size)
-                        .tooltip(Tooltip::text("Cancel"))
+                        .tooltip(Tooltip::text(t!("editor.git.cancel")))
                         .on_click(move |_, window, cx| {
                             window.dispatch_action(
                                 Box::new(crate::actions::CancelEditReviewComment {
@@ -2830,7 +2831,7 @@ impl Editor {
                         )
                         .icon_color(ui::Color::Muted)
                         .icon_size(action_icon_size)
-                        .tooltip(Tooltip::text("Confirm"))
+                        .tooltip(Tooltip::text(t!("editor.git.confirm")))
                         .on_click(move |_, window, cx| {
                             window.dispatch_action(
                                 Box::new(crate::actions::ConfirmEditReviewComment {

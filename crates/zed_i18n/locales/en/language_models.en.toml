@@ -1,0 +1,28 @@
+_version = 1
+
+[language_models.settings]
+api_key = "API key"
+api_url = "API URL"
+context_window = "Context Window"
+
+[language_models.lmstudio]
+needs_running = "LM Studio needs to be running with at least one model downloaded."
+description = "Run local LLMs like Llama, Phi, and Qwen."
+first_model_hint = "To get your first model, try running"
+
+[language_models.opencode]
+use_api_key_intro = "To use OpenCode models in Zed, you need an API key:"
+sign_in_hint = "Sign in and get your key at"
+console = "OpenCode Console"
+paste_api_key = "Paste your API key below and hit enter to start using OpenCode"
+subscriptions = "Subscriptions"
+show_zen_models = "Show Zen models"
+show_go_models = "Show Go models"
+no_subscriptions = "No subscriptions enabled. Enable at least one subscription to use OpenCode."
+
+[language_models.api_compatible]
+remove_provider = "Remove Provider"
+reset_api_key = "Reset API Key"
+
+[language_models.deepseek]
+reasoning_effort_high = "High"

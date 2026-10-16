@@ -70,6 +70,7 @@ util.workspace = true
 x_ai = { workspace = true, features = ["schemars"] }
 x_ai_subscribed.workspace = true
 
+zed_i18n.workspace = true
 [dev-dependencies]
 client = { workspace = true, features = ["test-support"] }
 clock = { workspace = true, features = ["test-support"] }

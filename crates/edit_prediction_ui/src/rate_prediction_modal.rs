@@ -27,6 +27,7 @@ use ui::{
     Tooltip, prelude::*,
 };
 use workspace::{ModalView, Workspace};
+use zed_i18n::t;
 use zeta_prompt::{ContextSource, FilePosition, RelatedExcerpt, RelatedFile, Zeta3PromptInput};
 
 actions!(
@@ -882,7 +883,12 @@ impl RatePredictionsModal {
                                 .px_2()
                                 .border_b_1()
                                 .border_color(border_color)
-                                .child(Label::new("Predicted Patch").size(LabelSize::Small)),
+                                .child(
+                                    Label::new(t!(
+                                        "edit_prediction_ui.rate_prediction_modal.predicted_patch"
+                                    ))
+                                    .size(LabelSize::Small),
+                                ),
                         )
                         .child(
                             div()
@@ -908,7 +914,12 @@ impl RatePredictionsModal {
                                 .gap_2()
                                 .border_b_1()
                                 .border_color(border_color)
-                                .child(Label::new("Expected Patch").size(LabelSize::Small)),
+                                .child(
+                                    Label::new(t!(
+                                        "edit_prediction_ui.rate_prediction_modal.expected_patch"
+                                    ))
+                                    .size(LabelSize::Small),
+                                ),
                         )
                         .child(
                             div()
@@ -1092,7 +1103,7 @@ impl RatePredictionsModal {
                             .child(
                                 DropdownMenu::new(
                                         "failure-mode-dropdown",
-                                        "Issue",
+                                        t!("edit_prediction_ui.rate_prediction_modal.issue"),
                                         failure_mode_menu,
                                     )
                                     .handle(self.failure_mode_menu_handle.clone())
@@ -1146,7 +1157,7 @@ impl RatePredictionsModal {
                                             .size(IconSize::Small)
                                             .color(Color::Success),
                                     )
-                                    .child(Label::new("Rated completion.").color(Color::Muted)),
+                                    .child(Label::new(t!("edit_prediction_ui.rate_prediction_modal.rated_completion")).color(Color::Muted)),
                             )
                         } else if active_prediction.prediction.edits.is_empty() {
                             Some(
@@ -1156,7 +1167,7 @@ impl RatePredictionsModal {
                                             .size(IconSize::Small)
                                             .color(Color::Warning),
                                     )
-                                    .child(Label::new("No edits produced.").color(Color::Muted)),
+                                    .child(Label::new(t!("edit_prediction_ui.rate_prediction_modal.no_edits")).color(Color::Muted)),
                             )
                         } else {
                             Some(label_container)
@@ -1165,12 +1176,12 @@ impl RatePredictionsModal {
                             h_flex()
                                 .gap_1()
                                 .child(
-                                    Button::new("bad", "Bad Prediction")
+                                    Button::new("bad", t!("edit_prediction_ui.rate_prediction_modal.bad_prediction"))
                                         .start_icon(Icon::new(IconName::ThumbsDown).size(IconSize::Small))
                                         .disabled(rated || feedback_empty)
                                         .when(feedback_empty, |this| {
                                             this.tooltip(Tooltip::text(
-                                                "Explain what's bad about it before reporting it",
+                                                t!("edit_prediction_ui.rate_prediction_modal.explain"),
                                             ))
                                         })
                                         .key_binding(KeyBinding::for_action_in(
@@ -1189,7 +1200,7 @@ impl RatePredictionsModal {
                                         })),
                                 )
                                 .child(
-                                    Button::new("good", "Good Prediction")
+                                    Button::new("good", t!("edit_prediction_ui.rate_prediction_modal.good_prediction"))
                                         .start_icon(Icon::new(IconName::ThumbsUp).size(IconSize::Small))
                                         .disabled(rated)
                                         .key_binding(KeyBinding::for_action_in(
@@ -1358,9 +1369,11 @@ impl Render for RatePredictionsModal {
                             .border_color(border_color)
                             .child(Icon::new(icons.base).size(IconSize::Small))
                             .child(
-                                Label::new("From most recent to oldest")
-                                    .color(Color::Muted)
-                                    .size(LabelSize::Small),
+                                Label::new(t!(
+                                    "edit_prediction_ui.rate_prediction_modal.from_most_recent"
+                                ))
+                                .color(Color::Muted)
+                                .size(LabelSize::Small),
                             )
                     })
                     .child(
