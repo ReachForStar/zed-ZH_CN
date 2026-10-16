@@ -1,0 +1,13 @@
+_version = 1
+
+[vim.command]
+cancel = "取消"
+argument_required = "需要参数"
+no_file_name = "没有文件名"
+partial_write_requires_file_name = "部分写入缓冲区需要文件名。"
+use_bang_for_partial_write = "写入部分缓冲区需要使用 !"
+use_bang_detail = "用所选缓冲区内容覆盖当前文件需要使用 '!'。"
+file_exists_detail = "已存在同名文件或文件夹，替换会覆盖其当前内容。"
+replace = "替换"
+path_exists_prompt = "%{path} 已存在，要替换它吗？"
+invalid_argument = "参数无效：%{argument}"

@@ -1,0 +1,13 @@
+_version = 1
+
+[vim.command]
+cancel = "Cancel"
+argument_required = "Argument required"
+no_file_name = "No file name"
+partial_write_requires_file_name = "Partial buffer write requires file name."
+use_bang_for_partial_write = "Use ! to write partial buffer"
+use_bang_detail = "Overwriting the current file with selected buffer content requires '!'."
+file_exists_detail = "A file or folder with the same name already exists. Replacing it will overwrite its current contents."
+replace = "Replace"
+path_exists_prompt = "%{path} already exists. Do you want to replace it?"
+invalid_argument = "Invalid argument: %{argument}"

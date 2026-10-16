@@ -107,6 +107,8 @@ diagnostics = "诊断"
 toggle_gpui_inspector = "切换 GPUI 检查器"
 
 [app_menus.go]
+show_incoming_calls = "显示传入调用"
+show_outgoing_calls = "显示传出调用"
 back = "后退"
 forward = "前进"
 command_palette = "命令面板…"

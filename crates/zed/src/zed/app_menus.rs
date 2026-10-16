@@ -393,8 +393,14 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                     t!("app_menus.go.find_all_references"),
                     editor::actions::FindAllReferences::default(),
                 ),
-                MenuItem::action("Show Incoming Calls", call_hierarchy::ShowIncomingCalls),
-                MenuItem::action("Show Outgoing Calls", call_hierarchy::ShowOutgoingCalls),
+                MenuItem::action(
+                    t!("app_menus.go.show_incoming_calls"),
+                    call_hierarchy::ShowIncomingCalls,
+                ),
+                MenuItem::action(
+                    t!("app_menus.go.show_outgoing_calls"),
+                    call_hierarchy::ShowOutgoingCalls,
+                ),
                 MenuItem::separator(),
                 MenuItem::action(
                     t!("app_menus.go.next_problem"),

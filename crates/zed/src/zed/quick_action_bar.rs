@@ -31,6 +31,7 @@ use workspace::{
     ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace, item::ItemHandle,
 };
 use zed_actions::{agent::AddSelectionToThread, assistant::InlineAssist, outline::ToggleOutline};
+use zed_i18n::t;
 
 const MAX_CODE_ACTION_MENU_LINES: u32 = 16;
 
@@ -148,7 +149,7 @@ impl Render for QuickActionBar {
                 !self.buffer_search_bar.read(cx).is_dismissed(),
                 Box::new(buffer_search::Deploy::find()),
                 focus_handle.clone(),
-                "Buffer Search",
+                t!("zed.quick_action_bar.buffer_search"),
                 {
                     let buffer_search_bar = self.buffer_search_bar.clone();
                     move |_, window, cx| {
@@ -166,7 +167,7 @@ impl Render for QuickActionBar {
             false,
             Box::new(InlineAssist::default()),
             focus_handle,
-            "Inline Assist",
+            t!("zed.quick_action_bar.inline_assist"),
             move |_, window, cx| {
                 window.dispatch_action(Box::new(InlineAssist::default()), cx);
             },
@@ -199,7 +200,7 @@ impl Render for QuickActionBar {
                         .when(!is_deployed, |this| {
                             this.when(has_available_code_actions, |this| {
                                 this.tooltip(Tooltip::for_action_title(
-                                    "Code Actions",
+                                    t!("zed.quick_action_bar.code_actions"),
                                     &ToggleCodeActions::default(),
                                 ))
                             })
@@ -207,7 +208,7 @@ impl Render for QuickActionBar {
                                 !has_available_code_actions,
                                 |this| {
                                     this.tooltip(Tooltip::for_action_title(
-                                        "No Code Actions Available",
+                                        t!("zed.quick_action_bar.no_code_actions_available"),
                                         &ToggleCodeActions::default(),
                                     ))
                                 },
@@ -261,7 +262,7 @@ impl Render for QuickActionBar {
                         .icon_size(IconSize::Small)
                         .style(ButtonStyle::Subtle)
                         .toggle_state(self.toggle_selections_handle.is_deployed()),
-                    Tooltip::text("Selection Controls"),
+                    Tooltip::text(t!("zed.quick_action_bar.selection_controls")),
                 )
                 .with_handle(self.toggle_selections_handle.clone())
                 .anchor(Anchor::TopRight)
@@ -269,23 +270,29 @@ impl Render for QuickActionBar {
                     let focus = focus.clone();
                     let menu = ContextMenu::build(window, cx, move |menu, _, _| {
                         menu.context(focus.clone())
-                            .action("Select All", Box::new(SelectAll))
+                            .action(t!("zed.quick_action_bar.select_all"), Box::new(SelectAll))
                             .action(
-                                "Select Next Occurrence",
+                                t!("zed.quick_action_bar.select_next_occurrence"),
                                 Box::new(SelectNext {
                                     replace_newest: false,
                                 }),
                             )
-                            .action("Expand Selection", Box::new(SelectLargerSyntaxNode))
-                            .action("Shrink Selection", Box::new(SelectSmallerSyntaxNode))
                             .action(
-                                "Add Cursor Above",
+                                t!("zed.quick_action_bar.expand_selection"),
+                                Box::new(SelectLargerSyntaxNode),
+                            )
+                            .action(
+                                t!("zed.quick_action_bar.shrink_selection"),
+                                Box::new(SelectSmallerSyntaxNode),
+                            )
+                            .action(
+                                t!("zed.quick_action_bar.add_cursor_above"),
                                 Box::new(AddSelectionAbove {
                                     skip_soft_wrap: true,
                                 }),
                             )
                             .action(
-                                "Add Cursor Below",
+                                t!("zed.quick_action_bar.add_cursor_below"),
                                 Box::new(AddSelectionBelow {
                                     skip_soft_wrap: true,
                                 }),
@@ -293,30 +300,52 @@ impl Render for QuickActionBar {
                             .when(!disable_ai, |this| {
                                 this.separator().action_disabled_when(
                                     !has_selection,
-                                    "Add to Agent Thread",
+                                    t!("zed.quick_action_bar.add_to_agent_thread"),
                                     Box::new(AddSelectionToThread),
                                 )
                             })
                             .separator()
-                            .action("Go to Symbol", Box::new(ToggleOutline))
-                            .action("Go to Line/Column", Box::new(ToggleGoToLine))
-                            .separator()
-                            .action("Next Problem", Box::new(GoToDiagnostic::default()))
                             .action(
-                                "Previous Problem",
+                                t!("zed.quick_action_bar.go_to_symbol"),
+                                Box::new(ToggleOutline),
+                            )
+                            .action(
+                                t!("zed.quick_action_bar.go_to_line_column"),
+                                Box::new(ToggleGoToLine),
+                            )
+                            .separator()
+                            .action(
+                                t!("zed.quick_action_bar.next_problem"),
+                                Box::new(GoToDiagnostic::default()),
+                            )
+                            .action(
+                                t!("zed.quick_action_bar.previous_problem"),
                                 Box::new(GoToPreviousDiagnostic::default()),
                             )
                             .separator()
-                            .action_disabled_when(!has_diff_hunks, "Next Hunk", Box::new(GoToHunk))
                             .action_disabled_when(
                                 !has_diff_hunks,
-                                "Previous Hunk",
+                                t!("zed.quick_action_bar.next_hunk"),
+                                Box::new(GoToHunk),
+                            )
+                            .action_disabled_when(
+                                !has_diff_hunks,
+                                t!("zed.quick_action_bar.previous_hunk"),
                                 Box::new(GoToPreviousHunk),
                             )
                             .separator()
-                            .action("Move Line Up", Box::new(MoveLineUp))
-                            .action("Move Line Down", Box::new(MoveLineDown))
-                            .action("Duplicate Selection", Box::new(DuplicateLineDown))
+                            .action(
+                                t!("zed.quick_action_bar.move_line_up"),
+                                Box::new(MoveLineUp),
+                            )
+                            .action(
+                                t!("zed.quick_action_bar.move_line_down"),
+                                Box::new(MoveLineDown),
+                            )
+                            .action(
+                                t!("zed.quick_action_bar.duplicate_selection"),
+                                Box::new(DuplicateLineDown),
+                            )
                     });
                     Some(menu)
                 })
@@ -339,7 +368,7 @@ impl Render for QuickActionBar {
                     IconButton::new("toggle_editor_settings_icon", IconName::Filter)
                         .icon_size(IconSize::Small)
                         .toggle_state(self.toggle_settings_handle.is_deployed()),
-                    Tooltip::text("Editor Controls"),
+                    Tooltip::text(t!("zed.quick_action_bar.editor_controls")),
                 )
                 .anchor(Anchor::TopRight)
                 .with_handle(self.toggle_settings_handle.clone())
@@ -351,7 +380,7 @@ impl Render for QuickActionBar {
 
                             if supports_inlay_hints {
                                 menu = menu.toggleable_entry(
-                                    "Inlay Hints",
+                                    t!("zed.quick_action_bar.inlay_hints"),
                                     inlay_hints_enabled,
                                     IconPosition::Start,
                                     Some(editor::actions::ToggleInlayHints.boxed_clone()),
@@ -372,7 +401,7 @@ impl Render for QuickActionBar {
                                 );
 
                                 menu = menu.toggleable_entry(
-                                    "Inline Values",
+                                    t!("zed.quick_action_bar.inline_values"),
                                     inline_values_enabled,
                                     IconPosition::Start,
                                     Some(editor::actions::ToggleInlineValues.boxed_clone()),
@@ -395,7 +424,7 @@ impl Render for QuickActionBar {
 
                             if supports_semantic_tokens {
                                 menu = menu.toggleable_entry(
-                                    "Semantic Highlights",
+                                    t!("zed.quick_action_bar.semantic_highlights"),
                                     semantic_highlights_enabled,
                                     IconPosition::Start,
                                     Some(editor::actions::ToggleSemanticHighlights.boxed_clone()),
@@ -418,7 +447,7 @@ impl Render for QuickActionBar {
 
                             if supports_code_lens {
                                 menu = menu.toggleable_entry(
-                                    "Code Lens",
+                                    t!("zed.quick_action_bar.code_lens"),
                                     code_lens_enabled,
                                     IconPosition::Start,
                                     Some(editor::actions::ToggleCodeLens.boxed_clone()),
@@ -440,7 +469,7 @@ impl Render for QuickActionBar {
                             }
 
                             if supports_minimap {
-                                menu = menu.toggleable_entry("Minimap", minimap_enabled, IconPosition::Start, Some(editor::actions::ToggleMinimap.boxed_clone()), {
+                                menu = menu.toggleable_entry(t!("zed.quick_action_bar.minimap"), minimap_enabled, IconPosition::Start, Some(editor::actions::ToggleMinimap.boxed_clone()), {
                                     let editor = editor.clone();
                                     move |window, cx| {
                                         editor
@@ -457,7 +486,7 @@ impl Render for QuickActionBar {
                             }
 
                             if has_edit_prediction_provider {
-                                let mut edit_prediction_entry = ContextMenuEntry::new("Edit Predictions")
+                                let mut edit_prediction_entry = ContextMenuEntry::new(t!("zed.quick_action_bar.edit_predictions"))
                                     .toggleable(IconPosition::Start, edit_predictions_enabled_at_cursor && show_edit_predictions)
                                     .disabled(!edit_predictions_enabled_at_cursor)
                                     .action(
@@ -478,7 +507,7 @@ impl Render for QuickActionBar {
                                     });
                                 if !edit_predictions_enabled_at_cursor {
                                     edit_prediction_entry = edit_prediction_entry.documentation_aside(DocumentationSide::Left, |_| {
-                                        Label::new("You can't toggle edit predictions for this file as it is within the excluded files list.").into_any_element()
+                                        Label::new(t!("zed.quick_action_bar.excluded_files_edit_predictions")).into_any_element()
                                     });
                                 }
 
@@ -489,7 +518,7 @@ impl Render for QuickActionBar {
 
                             if is_full {
                                 menu = menu.toggleable_entry(
-                                    "Diagnostics",
+                                    t!("zed.quick_action_bar.diagnostics"),
                                     diagnostics_enabled,
                                     IconPosition::Start,
                                     Some(ToggleDiagnostics.boxed_clone()),
@@ -510,7 +539,7 @@ impl Render for QuickActionBar {
                                 );
 
                                 if supports_inline_diagnostics {
-                                    let mut inline_diagnostics_item = ContextMenuEntry::new("Inline Diagnostics")
+                                    let mut inline_diagnostics_item = ContextMenuEntry::new(t!("zed.quick_action_bar.inline_diagnostics"))
                                         .toggleable(IconPosition::Start, diagnostics_enabled && inline_diagnostics_enabled)
                                         .action(ToggleInlineDiagnostics.boxed_clone())
                                         .handler({
@@ -528,7 +557,7 @@ impl Render for QuickActionBar {
                                             }
                                         });
                                     if !diagnostics_enabled {
-                                        inline_diagnostics_item = inline_diagnostics_item.disabled(true).documentation_aside(DocumentationSide::Left, |_|  Label::new("Inline diagnostics are not available until regular diagnostics are enabled.").into_any_element());
+                                        inline_diagnostics_item = inline_diagnostics_item.disabled(true).documentation_aside(DocumentationSide::Left, |_|  Label::new(t!("zed.quick_action_bar.inline_diagnostics_hint")).into_any_element());
                                     }
                                     menu = menu.item(inline_diagnostics_item)
                                 }
@@ -537,7 +566,7 @@ impl Render for QuickActionBar {
                             }
 
                             menu = menu.toggleable_entry(
-                                "Line Numbers",
+                                t!("zed.quick_action_bar.line_numbers"),
                                 show_line_numbers,
                                 IconPosition::Start,
                                 Some(editor::actions::ToggleLineNumbers.boxed_clone()),
@@ -558,7 +587,7 @@ impl Render for QuickActionBar {
                             );
 
                             menu = menu.toggleable_entry(
-                                "Selection Menu",
+                                t!("zed.quick_action_bar.selection_menu"),
                                 selection_menu_enabled,
                                 IconPosition::Start,
                                 Some(editor::actions::ToggleSelectionMenu.boxed_clone()),
@@ -579,7 +608,7 @@ impl Render for QuickActionBar {
                             );
 
                             menu = menu.toggleable_entry(
-                                "Auto Signature Help",
+                                t!("zed.quick_action_bar.auto_signature_help"),
                                 auto_signature_help_enabled,
                                 IconPosition::Start,
                                 Some(editor::actions::ToggleAutoSignatureHelp.boxed_clone()),
@@ -602,7 +631,7 @@ impl Render for QuickActionBar {
                             menu = menu.separator();
 
                             menu = menu.toggleable_entry(
-                                "Inline Git Blame",
+                                t!("zed.quick_action_bar.inline_git_blame"),
                                 git_blame_inline_enabled,
                                 IconPosition::Start,
                                 Some(editor::actions::ToggleGitBlameInline.boxed_clone()),
@@ -623,7 +652,7 @@ impl Render for QuickActionBar {
                             );
 
                             menu = menu.toggleable_entry(
-                                "Column Git Blame",
+                                t!("zed.quick_action_bar.column_git_blame"),
                                 show_git_blame_gutter,
                                 IconPosition::Start,
                                 Some(git::Blame.boxed_clone()),
@@ -645,7 +674,7 @@ impl Render for QuickActionBar {
 
                             if let Some(fs) = fs.clone() {
                                 menu = menu.toggleable_entry(
-                                    "Diff Against Default Branch",
+                                    t!("zed.quick_action_bar.diff_against_default_branch"),
                                     diff_against_default_branch,
                                     IconPosition::Start,
                                     None,
@@ -668,7 +697,7 @@ impl Render for QuickActionBar {
                             menu = menu.separator();
 
                             menu = menu.toggleable_entry(
-                                "Vim Mode",
+                                t!("zed.quick_action_bar.vim_mode"),
                                 vim_mode_enabled,
                                 IconPosition::Start,
                                 None,
@@ -682,7 +711,7 @@ impl Render for QuickActionBar {
                                 },
                             );
                             menu = menu.toggleable_entry(
-                                "Helix Mode",
+                                t!("zed.quick_action_bar.helix_mode"),
                                 helix_mode_enabled,
                                 IconPosition::Start,
                                 None,

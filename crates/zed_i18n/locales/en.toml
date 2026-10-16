@@ -107,6 +107,8 @@ diagnostics = "Diagnostics"
 toggle_gpui_inspector = "Toggle GPUI Inspector"
 
 [app_menus.go]
+show_incoming_calls = "Show Incoming Calls"
+show_outgoing_calls = "Show Outgoing Calls"
 back = "Back"
 forward = "Forward"
 command_palette = "Command Palette..."

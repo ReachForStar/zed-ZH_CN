@@ -39,6 +39,7 @@ use util::{
 use workspace::{Item, SaveIntent, Workspace, notifications::NotifyResultExt};
 use workspace::{SplitDirection, notifications::DetachAndPromptErr};
 use zed_actions::{OpenDocs, RevealTarget};
+use zed_i18n::t;
 
 use crate::{
     ToggleMarksView, ToggleRegistersView, Vim, VimSettings,
@@ -340,9 +341,9 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
     Vim::action(editor, cx, |_, _: &ArgumentRequired, window, cx| {
         let _ = window.prompt(
             gpui::PromptLevel::Critical,
-            "Argument required",
+            &t!("vim.command.argument_required"),
             None,
-            &["Cancel"],
+            &[gpui::PromptButton::new(t!("vim.command.cancel"))],
             cx,
         );
     });
@@ -353,17 +354,19 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                 let Some(range) = range.buffer_range(vim, editor, window, cx).ok() else {
                     return;
                 };
-                let Some((line_ending, encoding, has_bom, text, whole_buffer)) = editor.buffer().update(cx, |multi, cx| {
-                    Some(multi.as_singleton()?.update(cx, |buffer, _| {
-                        (
-                            buffer.line_ending(),
-                            buffer.encoding(),
-                            buffer.has_bom(),
-                            buffer.as_rope().slice_rows(range.start.0..range.end.0 + 1),
-                            range.start.0 == 0 && range.end.0 + 1 >= buffer.row_count(),
-                        )
-                    }))
-                }) else {
+                let Some((line_ending, encoding, has_bom, text, whole_buffer)) =
+                    editor.buffer().update(cx, |multi, cx| {
+                        Some(multi.as_singleton()?.update(cx, |buffer, _| {
+                            (
+                                buffer.line_ending(),
+                                buffer.encoding(),
+                                buffer.has_bom(),
+                                buffer.as_rope().slice_rows(range.start.0..range.end.0 + 1),
+                                range.start.0 == 0 && range.end.0 + 1 >= buffer.row_count(),
+                            )
+                        }))
+                    })
+                else {
                     return;
                 };
 
@@ -377,9 +380,9 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                     else {
                         let _ = window.prompt(
                             gpui::PromptLevel::Warning,
-                            "No file name",
-                            Some("Partial buffer write requires file name."),
-                            &["Cancel"],
+                            &t!("vim.command.no_file_name"),
+                            Some(&t!("vim.command.partial_write_requires_file_name")),
+                            &[gpui::PromptButton::new(t!("vim.command.cancel"))],
                             cx,
                         );
                         return;
@@ -399,7 +402,12 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                                         window,
                                         cx,
                                     )
-                                    .detach_and_prompt_err("Failed to save", window, cx, |_, _, _| None);
+                                    .detach_and_prompt_err(
+                                        "Failed to save",
+                                        window,
+                                        cx,
+                                        |_, _, _| None,
+                                    );
                             });
                         }
                         return;
@@ -407,9 +415,9 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                     if Some(SaveIntent::Overwrite) != action.save_intent {
                         let _ = window.prompt(
                             gpui::PromptLevel::Warning,
-                            "Use ! to write partial buffer",
-                            Some("Overwriting the current file with selected buffer content requires '!'."),
-                            &["Cancel"],
+                            &t!("vim.command.use_bang_for_partial_write"),
+                            Some(&t!("vim.command.use_bang_detail")),
+                            &[gpui::PromptButton::new(t!("vim.command.cancel"))],
                             cx,
                         );
                         return;
@@ -430,17 +438,23 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                             return;
                         };
 
-                        let rx = (worktree.entry_for_path(&path).is_some() && Some(SaveIntent::Overwrite) != action.save_intent).then(|| {
-                            window.prompt(
-                                gpui::PromptLevel::Warning,
-                                &format!("{path:?} already exists. Do you want to replace it?"),
-                                Some(
-                                    "A file or folder with the same name already exists. Replacing it will overwrite its current contents.",
-                                ),
-                                &["Replace", "Cancel"],
-                                cx
-                            )
-                        });
+                        let rx = (worktree.entry_for_path(&path).is_some()
+                            && Some(SaveIntent::Overwrite) != action.save_intent)
+                            .then(|| {
+                                window.prompt(
+                                    gpui::PromptLevel::Warning,
+                                    &t!(
+                                        "vim.command.path_exists_prompt",
+                                        path = format!("{path:?}")
+                                    ),
+                                    Some(&t!("vim.command.file_exists_detail")),
+                                    &[
+                                        gpui::PromptButton::new(t!("vim.command.replace")),
+                                        gpui::PromptButton::new(t!("vim.command.cancel")),
+                                    ],
+                                    cx,
+                                )
+                            });
                         let filename = filename.clone();
                         cx.spawn_in(window, async move |this, cx| {
                             if let Some(rx) = rx
@@ -450,12 +464,26 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                             }
 
                             let _ = this.update_in(cx, |worktree, window, cx| {
-                                let Some(path) = RelPath::new(Path::new(&filename), path_style).ok() else {
+                                let Some(path) =
+                                    RelPath::new(Path::new(&filename), path_style).ok()
+                                else {
                                     return;
                                 };
                                 worktree
-                                    .write_file(path.into_arc(), text.clone(), line_ending, encoding, has_bom, cx)
-                                    .detach_and_prompt_err("Failed to write lines", window, cx, |_, _, _| None);
+                                    .write_file(
+                                        path.into_arc(),
+                                        text.clone(),
+                                        line_ending,
+                                        encoding,
+                                        has_bom,
+                                        cx,
+                                    )
+                                    .detach_and_prompt_err(
+                                        "Failed to write lines",
+                                        window,
+                                        cx,
+                                        |_, _, _| None,
+                                    );
                             });
                         })
                         .detach();
@@ -510,15 +538,15 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
             {
                 let answer = window.prompt(
                     gpui::PromptLevel::Critical,
-                    &format!(
-                        "{} already exists. Do you want to replace it?",
-                        project_path.path.display(path_style)
+                    &t!(
+                        "vim.command.path_exists_prompt",
+                        path = project_path.path.display(path_style)
                     ),
-                    Some(
-                        "A file or folder with the same name already exists. \
-                        Replacing it will overwrite its current contents.",
-                    ),
-                    &["Replace", "Cancel"],
+                    Some(&t!("vim.command.file_exists_detail")),
+                    &[
+                        gpui::PromptButton::new(t!("vim.command.replace")),
+                        gpui::PromptButton::new(t!("vim.command.cancel")),
+                    ],
                     cx,
                 );
                 cx.spawn_in(window, async move |editor, cx| {
@@ -576,9 +604,9 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
         fn err(s: String, window: &mut Window, cx: &mut Context<Editor>) {
             let _ = window.prompt(
                 gpui::PromptLevel::Critical,
-                &format!("Invalid argument: {}", s),
+                &t!("vim.command.invalid_argument", argument = s),
                 None,
-                &["Cancel"],
+                &[gpui::PromptButton::new(t!("vim.command.cancel"))],
                 cx,
             );
         }

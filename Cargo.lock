@@ -20338,6 +20338,7 @@ dependencies = [
  "vim_mode_setting",
  "workspace",
  "zed_actions",
+ "zed_i18n",
 ]
 
 [[package]]
