@@ -6,7 +6,7 @@ use crate::{
     thread_metadata_store::{ThreadId, ThreadMetadataStore},
 };
 use agent_client_protocol::schema::v2 as acp_v2;
-use std::{cell::RefCell, path::Path};
+use std::{borrow::Cow, cell::RefCell, path::Path};
 
 use acp_thread::{
     Elicitation, ElicitationEntryId, ElicitationStatus, ForegroundActivity,
@@ -1561,22 +1561,28 @@ impl ThreadView {
         (!matches!(record.state, SubmissionState::Completed)).then(|| record.content.clone())
     }
 
-    fn submission_text_parts(content: &[acp_v2::ContentBlock]) -> impl Iterator<Item = &str> {
+    fn submission_text_parts(
+        content: &[acp_v2::ContentBlock],
+    ) -> impl Iterator<Item = Cow<'_, str>> {
         content.iter().map(|block| match block {
-            acp_v2::ContentBlock::Text(text) => text.text.as_str(),
-            acp_v2::ContentBlock::ResourceLink(link) => link.name.as_str(),
+            acp_v2::ContentBlock::Text(text) => Cow::Borrowed(text.text.as_str()),
+            acp_v2::ContentBlock::ResourceLink(link) => Cow::Borrowed(link.name.as_str()),
             acp_v2::ContentBlock::Resource(resource) => match &resource.resource {
                 acp_v2::EmbeddedResourceResource::TextResourceContents(resource) => {
-                    resource.uri.as_str()
+                    Cow::Borrowed(resource.uri.as_str())
                 }
                 acp_v2::EmbeddedResourceResource::BlobResourceContents(resource) => {
-                    resource.uri.as_str()
+                    Cow::Borrowed(resource.uri.as_str())
                 }
-                _ => "[Resource attachment]",
+                _ => t!("agent_ui.thread_view.submission_attachment_resource"),
             },
-            acp_v2::ContentBlock::Image(_) => "[Image attachment]",
-            acp_v2::ContentBlock::Audio(_) => "[Audio attachment]",
-            _ => "[Unsupported attachment]",
+            acp_v2::ContentBlock::Image(_) => {
+                t!("agent_ui.thread_view.submission_attachment_image")
+            }
+            acp_v2::ContentBlock::Audio(_) => {
+                t!("agent_ui.thread_view.submission_attachment_audio")
+            }
+            _ => t!("agent_ui.thread_view.submission_attachment_unsupported"),
         })
     }
 
@@ -1619,53 +1625,65 @@ impl ThreadView {
     }
 
     fn render_recoverable_submissions(&self, cx: &mut Context<Self>) -> Option<Stateful<Div>> {
-        let submissions = {
-            let thread = self.thread.read(cx);
-            if !thread.uses_reported_activity() {
-                return None;
-            }
-            thread
-                .recoverable_submissions()
-                .map(|(submission_id, record)| {
-                    let (status, settled): (SharedString, bool) = match &record.state {
-                        SubmissionState::Pending => ("Sending message…".into(), false),
-                        SubmissionState::Accepted { echoed: false, .. } => {
-                            ("Waiting for message to appear…".into(), false)
+        let submissions =
+            {
+                let thread = self.thread.read(cx);
+                if !thread.uses_reported_activity() {
+                    return None;
+                }
+                thread
+                    .recoverable_submissions()
+                    .map(|(submission_id, record)| {
+                        let (status, settled): (SharedString, bool) = match &record.state {
+                        SubmissionState::Pending => {
+                            (t!("agent_ui.thread_view.submission_status_sending").into(), false)
                         }
-                        SubmissionState::Disconnected { receipt: Some(_) } => {
-                            ("Message accepted; agent connection lost".into(), true)
-                        }
+                        SubmissionState::Accepted { echoed: false, .. } => (
+                            t!("agent_ui.thread_view.submission_status_waiting").into(),
+                            false,
+                        ),
+                        SubmissionState::Disconnected { receipt: Some(_) } => (
+                            t!("agent_ui.thread_view.submission_status_accepted_connection_lost")
+                                .into(),
+                            true,
+                        ),
                         SubmissionState::Disconnected { receipt: None } => (
-                            "Connection lost; message acceptance is unknown".into(),
+                            t!("agent_ui.thread_view.submission_status_connection_lost_unknown")
+                                .into(),
                             true,
                         ),
                         SubmissionState::Failed(error) => (
-                            format!(
-                                "Message failed to send: {}",
-                                util::truncate_and_trailoff(error, 160)
+                            t!(
+                                "agent_ui.thread_view.submission_failed_to_send",
+                                error = util::truncate_and_trailoff(error, 160)
                             )
                             .into(),
                             true,
                         ),
-                        SubmissionState::Cancelled => ("Message cancelled".into(), true),
-                        _ => ("Message".into(), false),
+                        SubmissionState::Cancelled => {
+                            (t!("agent_ui.thread_view.submission_status_cancelled").into(), true)
+                        }
+                        _ => (t!("agent_ui.thread_view.submission_status_fallback").into(), false),
                     };
-                    (
-                        submission_id,
-                        status,
-                        settled,
-                        matches!(
-                            record.state,
-                            SubmissionState::Failed(_) | SubmissionState::Cancelled
-                        ),
-                        Itertools::intersperse(Self::submission_text_parts(&record.content), "\n")
-                            .flat_map(str::chars)
-                            .take(161)
-                            .collect::<String>(),
-                    )
-                })
-                .collect::<Vec<_>>()
-        };
+                        (
+                            submission_id,
+                            status,
+                            settled,
+                            matches!(
+                                record.state,
+                                SubmissionState::Failed(_) | SubmissionState::Cancelled
+                            ),
+                            Self::submission_text_parts(&record.content)
+                                .map(Cow::into_owned)
+                                .collect::<Vec<_>>()
+                                .join("\n")
+                                .chars()
+                                .take(161)
+                                .collect::<String>(),
+                        )
+                    })
+                    .collect::<Vec<_>>()
+            };
         if submissions.is_empty() {
             return None;
         }
@@ -1688,9 +1706,13 @@ impl ThreadView {
                                 div()
                                     .debug_selector(move || format!("copy-submission-{row_id}"))
                                     .child(
-                                        Button::new(("copy-submission", row_id), "Copy")
-                                            .label_size(LabelSize::Small)
-                                            .on_click(cx.listener(move |this, _, _, cx| {
+                                        Button::new(
+                                            ("copy-submission", row_id),
+                                            t!("agent_ui.thread_view.copy"),
+                                        )
+                                        .label_size(LabelSize::Small)
+                                        .on_click(
+                                            cx.listener(move |this, _, _, cx| {
                                                 if let Some(record) =
                                                     this.thread.read(cx).submission(submission_id)
                                                 {
@@ -1702,7 +1724,8 @@ impl ThreadView {
                                                         ClipboardItem::new_string(text),
                                                     );
                                                 }
-                                            })),
+                                            }),
+                                        ),
                                     ),
                             )
                             .when(restorable, |this| {
@@ -1712,31 +1735,41 @@ impl ThreadView {
                                             format!("restore-submission-{row_id}")
                                         })
                                         .child(
-                                            Button::new(("restore-submission", row_id), "Restore")
-                                                .label_size(LabelSize::Small)
-                                                .tooltip(Tooltip::text("Copy into an empty composer. The saved submission is kept until discarded."))
-                                                .on_click(cx.listener(
-                                                    move |this, _, window, cx| {
-                                                        this.restore_submission(
-                                                            submission_id,
-                                                            window,
-                                                            cx,
-                                                        );
-                                                    },
-                                                )),
+                                            Button::new(
+                                                ("restore-submission", row_id),
+                                                t!("agent_ui.thread_view.submission_restore"),
+                                            )
+                                            .label_size(LabelSize::Small)
+                                            .tooltip(Tooltip::text(t!(
+                                                "agent_ui.thread_view.submission_restore_tooltip"
+                                            )))
+                                            .on_click(
+                                                cx.listener(move |this, _, window, cx| {
+                                                    this.restore_submission(
+                                                        submission_id,
+                                                        window,
+                                                        cx,
+                                                    );
+                                                }),
+                                            ),
                                         ),
                                 )
                             })
                             .when(settled, |this| {
                                 this.child(
-                                    Button::new(("discard-submission", row_id), "Discard")
-                                        .label_size(LabelSize::Small)
-                                        .on_click(cx.listener(move |this, _, _, cx| {
+                                    Button::new(
+                                        ("discard-submission", row_id),
+                                        t!("agent_ui.thread_view.submission_discard"),
+                                    )
+                                    .label_size(LabelSize::Small)
+                                    .on_click(cx.listener(
+                                        move |this, _, _, cx| {
                                             this.thread.update(cx, |thread, cx| {
                                                 thread.forget_submission(submission_id, cx);
                                             });
                                             cx.notify();
-                                        })),
+                                        },
+                                    )),
                                 )
                             }),
                     )
