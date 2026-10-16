@@ -223,7 +223,13 @@ jobs:
           cache-on-failure: true
 
       - name: 安装 cmake
-        run: brew install cmake
+        run: |
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          if ! command -v cmake >/dev/null 2>&1; then
+            brew install cmake
+          else
+            cmake --version | head -1
+          fi
 
       # bundle-mac 内部用 npm 的 dmg-license 为 DMG 添加许可协议
       - name: 安装 Node
