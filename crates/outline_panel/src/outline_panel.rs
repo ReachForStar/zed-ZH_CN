@@ -2938,16 +2938,20 @@ impl OutlinePanel {
         h_flex()
             .id("expand-collapse")
             .role(gpui::Role::Button)
-            .aria_label(if is_expanded { "Collapse" } else { "Expand" })
+            .aria_label(if is_expanded {
+                t!("outline_panel.aria.collapse")
+            } else {
+                t!("outline_panel.aria.expand")
+            })
             .aria_expanded(is_expanded)
             .flex_none()
             .cursor_pointer()
             .rounded_sm()
             .hover(|style| style.bg(cx.theme().colors().ghost_element_hover))
             .tooltip(Tooltip::text(if is_expanded {
-                "Collapse"
+                t!("outline_panel.aria.collapse")
             } else {
-                "Expand"
+                t!("outline_panel.aria.expand")
             }))
             .on_click(
                 cx.listener(move |panel, event: &gpui::ClickEvent, window, cx| {

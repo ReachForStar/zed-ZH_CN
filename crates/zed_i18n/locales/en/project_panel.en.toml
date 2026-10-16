@@ -37,6 +37,9 @@ collapse_all = "Collapse All"
 refresh_directory = "Refresh Directory"
 
 # 新建/重命名校验提示 / entry name validation messages
+open_svg_preview = "Open SVG Preview"
+open_file_permalink = "Open File Permalink"
+copy_file_permalink = "Copy File Permalink"
 [project_panel.validation]
 empty_name = "File or directory name cannot be empty."
 whitespace = "File or directory name contains leading or trailing whitespace."
@@ -84,3 +87,6 @@ entries = "%{count} entries"
 bug_report = "this is a bug in the manage_undo_and_redo task please report"
 undo_failed = "Undo failed"
 redo_failed = "Redo failed"
+
+[project_panel.empty_state]
+title = "Project Panel"

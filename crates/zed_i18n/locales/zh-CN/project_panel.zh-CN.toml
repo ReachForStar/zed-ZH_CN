@@ -37,6 +37,9 @@ collapse_all = "全部折叠"
 refresh_directory = "刷新目录"
 
 # 新建/重命名校验提示 / entry name validation messages
+open_svg_preview = "打开 SVG 预览"
+open_file_permalink = "打开文件永久链接"
+copy_file_permalink = "复制文件永久链接"
 [project_panel.validation]
 empty_name = "文件或目录名不能为空。"
 whitespace = "文件或目录名包含前导或尾随空格。"
@@ -84,3 +87,6 @@ entries = "%{count} 个条目"
 bug_report = "这是 manage_undo_and_redo 任务中的错误，请提交报告"
 undo_failed = "撤销失败"
 redo_failed = "重做失败"
+
+[project_panel.empty_state]
+title = "项目面板"

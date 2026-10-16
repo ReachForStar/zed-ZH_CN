@@ -19,6 +19,7 @@ use ui_input::ErasedEditorEvent;
 use util::ResultExt;
 use workspace::ModalView;
 use zed_actions::editor::{MoveDown, MoveUp};
+use zed_i18n::t;
 
 mod footer;
 mod head;
@@ -1401,14 +1402,14 @@ impl<D: PickerDelegate> Picker<D> {
                                     &focus_handle,
                                     cx,
                                 ))
-                                .child(Label::new("Select")),
+                                .child(Label::new(t!("picker.multi_select_footer.select"))),
                         )
                         .child(Divider::vertical())
                         .child(
                             h_flex()
                                 .gap_1()
                                 .child(KeyBinding::for_action_in(&menu::Confirm, &focus_handle, cx))
-                                .child(Label::new("Open")),
+                                .child(Label::new(t!("picker.multi_select_footer.open"))),
                         )
                         .into_any_element()
                 }))

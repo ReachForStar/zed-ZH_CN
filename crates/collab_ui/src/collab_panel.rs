@@ -166,7 +166,7 @@ pub fn init(cx: &mut App) {
                         workspace.show_toast(
                             workspace::Toast::new(
                                 NotificationId::unique::<RoomIdCopiedToast>(),
-                                "Room ID copied to clipboard",
+                                t!("collab_ui.collab_panel.room_id_copied"),
                             )
                             .autohide(),
                             cx,
@@ -2735,9 +2735,9 @@ impl CollabPanel {
             .size_full()
             .text_center()
             .justify_center()
-            .child(Label::new(
-                "Collaboration is disabled for this organization.",
-            ))
+            .child(Label::new(t!(
+                "collab_ui.collab_panel.collaboration_disabled_for_organization"
+            )))
     }
 
     fn render_signed_out(&mut self, cx: &mut Context<Self>) -> Div {

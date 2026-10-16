@@ -31,3 +31,7 @@ pin = "Pin Active Outline"
 [outline_panel.entry]
 untitled = "Untitled"
 unknown_buffer = "Unknown buffer"
+
+[outline_panel.aria]
+collapse = "Collapse"
+expand = "Expand"

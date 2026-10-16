@@ -1,0 +1,8 @@
+_version = 1
+
+[picker.multi_select_footer]
+select = "Select"
+open = "Open"
+
+[picker.footer]
+preview = "Preview"

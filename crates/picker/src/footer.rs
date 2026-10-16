@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use zed_i18n::t;
 
 use gpui::{Action, FocusHandle, Focusable};
 use ui::{ContextMenu, Divider, FluentBuilder, KeyBinding, PopoverMenu, Tooltip, prelude::*};
@@ -141,7 +142,7 @@ impl<D: PickerDelegate> Picker<D> {
 
         h_flex()
             .child(
-                Button::new("picker-preview-toggle", "Preview")
+                Button::new("picker-preview-toggle", t!("picker.footer.preview"))
                     .when(preview_visible, |this| this.color(Color::Accent))
                     .key_binding(
                         KeyBinding::for_action_in(&TogglePreview, &focus_handle, cx)

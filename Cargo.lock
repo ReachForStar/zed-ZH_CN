@@ -166,6 +166,7 @@ dependencies = [
  "ui",
  "util",
  "workspace",
+ "zed_i18n",
 ]
 
 [[package]]
@@ -424,6 +425,7 @@ dependencies = [
  "uuid",
  "watch",
  "zed_credentials_provider",
+ "zed_i18n",
 ]
 
 [[package]]
@@ -1438,6 +1440,7 @@ dependencies = [
  "util",
  "which",
  "workspace",
+ "zed_i18n",
  "zlog",
 ]
 
@@ -2742,6 +2745,7 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
+ "zed_i18n",
 ]
 
 [[package]]
@@ -10658,6 +10662,7 @@ dependencies = [
  "ui",
  "util",
  "workspace",
+ "zed_i18n",
  "zlog",
 ]
 
@@ -11260,6 +11265,7 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
+ "zed_i18n",
 ]
 
 [[package]]
@@ -13805,6 +13811,7 @@ dependencies = [
  "util",
  "workspace",
  "zed_actions",
+ "zed_i18n",
 ]
 
 [[package]]
@@ -15528,6 +15535,7 @@ dependencies = [
  "ui",
  "ui_input",
  "workspace",
+ "zed_i18n",
 ]
 
 [[package]]

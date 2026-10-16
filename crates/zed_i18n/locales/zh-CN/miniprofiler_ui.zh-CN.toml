@@ -1,0 +1,7 @@
+_version = 1
+
+[miniprofiler_ui]
+resume = "继续"
+pause = "暂停"
+save = "保存"
+include_profiler_timings = "包含性能分析计时"

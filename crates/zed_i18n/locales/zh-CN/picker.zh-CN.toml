@@ -1,0 +1,8 @@
+_version = 1
+
+[picker.multi_select_footer]
+select = "选择"
+open = "打开"
+
+[picker.footer]
+preview = "预览"

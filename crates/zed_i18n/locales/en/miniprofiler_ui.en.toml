@@ -1,0 +1,7 @@
+_version = 1
+
+[miniprofiler_ui]
+resume = "Resume"
+pause = "Pause"
+save = "Save"
+include_profiler_timings = "Include profiler timings"

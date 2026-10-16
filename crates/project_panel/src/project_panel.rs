@@ -1220,7 +1220,10 @@ impl ProjectPanel {
                             )
                         })
                         .when(is_svg, |menu| {
-                            menu.action("Open SVG Preview", Box::new(OpenSvgPreview))
+                            menu.action(
+                                t!("project_panel.context_menu.open_svg_preview"),
+                                Box::new(OpenSvgPreview),
+                            )
                         })
                         .when(is_dir, |menu| {
                             menu.action(
@@ -1258,7 +1261,10 @@ impl ProjectPanel {
                                 )
                             })
                             .when(is_svg, |menu| {
-                                menu.action("Open SVG Preview", Box::new(OpenSvgPreview))
+                                menu.action(
+                                    t!("project_panel.context_menu.open_svg_preview"),
+                                    Box::new(OpenSvgPreview),
+                                )
                             })
                             .when(is_dir, |menu| {
                                 menu.separator()
@@ -1355,11 +1361,11 @@ impl ProjectPanel {
                                     })
                                     .when(!is_dir, |menu| {
                                         menu.action(
-                                            "Open File Permalink",
+                                            t!("project_panel.context_menu.open_file_permalink"),
                                             git::OpenFilePermalink.boxed_clone(),
                                         )
                                         .action(
-                                            "Copy File Permalink",
+                                            t!("project_panel.context_menu.copy_file_permalink"),
                                             git::CopyFilePermalink.boxed_clone(),
                                         )
                                     })
@@ -8249,7 +8255,7 @@ impl Render for ProjectPanel {
                 .size_full()
                 .child(
                     ProjectEmptyState::new(
-                        "Project Panel",
+                        t!("project_panel.empty_state.title"),
                         focus_handle.clone(),
                         KeyBinding::for_action_in(&workspace::Open::default(), &focus_handle, cx),
                     )

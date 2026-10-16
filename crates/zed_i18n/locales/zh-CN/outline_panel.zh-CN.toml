@@ -31,3 +31,7 @@ pin = "固定当前大纲"
 [outline_panel.entry]
 untitled = "未命名"
 unknown_buffer = "未知缓冲区"
+
+[outline_panel.aria]
+collapse = "折叠"
+expand = "展开"
