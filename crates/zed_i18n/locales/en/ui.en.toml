@@ -25,6 +25,7 @@ failed_to_update = "Failed to Update"
 update_to_version = "Update to Version: %{version}"
 percent_downloaded = "%{message} (%{percent}% downloaded)"
 dismiss = "Dismiss"
+up_to_date = "Up to Date"
 
 [ui.alert_modal]
 ok = "OK"

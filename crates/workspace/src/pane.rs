@@ -34,6 +34,7 @@ use serde::Deserialize;
 use settings::{Settings, SettingsStore};
 use std::{
     any::Any,
+    borrow::Cow,
     cmp, fmt, mem,
     num::NonZeroUsize,
     path::PathBuf,
@@ -3026,10 +3027,10 @@ impl Pane {
             .start_slot::<Indicator>(indicator)
             .map(|this| {
                 let end_slot_action: &'static dyn Action;
-                let end_slot_tooltip_text: &'static str;
+                let end_slot_tooltip_text: Cow<'static, str>;
                 let end_slot = if is_pinned {
                     end_slot_action = &TogglePinTab;
-                    end_slot_tooltip_text = "Unpin Tab";
+                    end_slot_tooltip_text = t!("workspace.pane.unpin_tab");
                     IconButton::new("unpin tab", IconName::Pin)
                         .shape(IconButtonShape::Square)
                         .icon_color(Color::Muted)
@@ -3043,7 +3044,7 @@ impl Pane {
                         save_intent: None,
                         close_pinned: false,
                     };
-                    end_slot_tooltip_text = "Close Tab";
+                    end_slot_tooltip_text = t!("workspace.pane.close_tab");
                     match show_close_button {
                         ShowCloseButton::Always => IconButton::new("close tab", IconName::Close),
                         ShowCloseButton::Hover => {
@@ -3065,7 +3066,7 @@ impl Pane {
                         let focus_handle = focus_handle.clone();
                         this.tooltip(move |window, cx| {
                             Tooltip::for_action_in(
-                                end_slot_tooltip_text,
+                                end_slot_tooltip_text.clone(),
                                 end_slot_action,
                                 &window.focused(cx).unwrap_or_else(|| focus_handle.clone()),
                                 cx,
@@ -3251,7 +3252,7 @@ impl Pane {
                                     })),
                             ))
                             .entry(
-                                "Close All",
+                                t!("workspace.pane.close_all"),
                                 Some(Box::new(close_all_items_action.clone())),
                                 window.handler_for(&pane, move |pane, window, cx| {
                                     pane.close_all_items(&close_all_items_action, window, cx)
@@ -3263,7 +3264,7 @@ impl Pane {
                             menu.separator().map(|this| {
                                 if is_pinned {
                                     this.entry(
-                                        "Unpin Tab",
+                                        t!("workspace.pane.unpin_tab"),
                                         Some(TogglePinTab.boxed_clone()),
                                         window.handler_for(&pane, move |pane, window, cx| {
                                             pane.unpin_tab_at(ix, window, cx);
@@ -3271,7 +3272,7 @@ impl Pane {
                                     )
                                 } else {
                                     this.entry(
-                                        "Pin Tab",
+                                        t!("workspace.pane.pin_tab"),
                                         Some(TogglePinTab.boxed_clone()),
                                         window.handler_for(&pane, move |pane, window, cx| {
                                             pane.pin_tab_at(ix, window, cx);
@@ -3355,7 +3356,7 @@ impl Pane {
                                 .separator()
                                 .when_some(entry_abs_path, |menu, abs_path| {
                                     menu.entry(
-                                        "Copy Path",
+                                        t!("workspace.pane.copy_path"),
                                         Some(Box::new(zed_actions::workspace::CopyPath)),
                                         window.handler_for(&pane, move |_, _, cx| {
                                             cx.write_to_clipboard(ClipboardItem::new_string(
@@ -3366,7 +3367,7 @@ impl Pane {
                                 })
                                 .when_some(relative_path, |menu, relative_path| {
                                     menu.entry(
-                                        "Copy Relative Path",
+                                        t!("workspace.pane.copy_relative_path"),
                                         Some(Box::new(zed_actions::workspace::CopyRelativePath)),
                                         window.handler_for(&pane, move |this, _, cx| {
                                             let Some(project) = this.project.upgrade() else {
@@ -3385,7 +3386,7 @@ impl Pane {
                                         project_path.clone(),
                                         |menu, project_path| {
                                             menu.entry(
-                                                "Open File Permalink",
+                                                t!("workspace.pane.open_file_permalink"),
                                                 Some(OpenFilePermalink.boxed_clone()),
                                                 window.handler_for(&pane, {
                                                     let project_path = project_path.clone();
@@ -3405,7 +3406,7 @@ impl Pane {
                                                 }),
                                             )
                                             .entry(
-                                                "Copy File Permalink",
+                                                t!("workspace.pane.copy_file_permalink"),
                                                 Some(CopyFilePermalink.boxed_clone()),
                                                 window.handler_for(
                                                     &pane,
@@ -3449,7 +3450,7 @@ impl Pane {
                                 .map(pin_tab_entries)
                                 .when(visible_in_project_panel, |menu| {
                                     menu.entry(
-                                        "Reveal In Project Panel",
+                                        t!("workspace.pane.reveal_in_project_panel"),
                                         Some(Box::new(RevealInProjectPanel::default())),
                                         window.handler_for(&pane, move |pane, _, cx| {
                                             pane.project
@@ -3464,7 +3465,7 @@ impl Pane {
                                 })
                                 .when_some(parent_abs_path, |menu, parent_abs_path| {
                                     menu.entry(
-                                        "Open in Terminal",
+                                        t!("workspace.pane.open_in_terminal"),
                                         Some(Box::new(OpenInTerminal)),
                                         window.handler_for(&pane, move |_, window, cx| {
                                             window.dispatch_action(

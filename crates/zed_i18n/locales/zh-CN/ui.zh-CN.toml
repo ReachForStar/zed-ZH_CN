@@ -25,6 +25,7 @@ failed_to_update = "更新失败"
 update_to_version = "更新到版本：%{version}"
 percent_downloaded = "%{message}（已下载 %{percent}%）"
 dismiss = "关闭"
+up_to_date = "已是最新"
 
 [ui.alert_modal]
 ok = "确定"

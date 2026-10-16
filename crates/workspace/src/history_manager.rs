@@ -1,4 +1,5 @@
 use std::{path::PathBuf, sync::Arc};
+use zed_i18n::t;
 
 use fs::Fs;
 use gpui::{AppContext, Entity, Global, MenuItem};
@@ -99,7 +100,10 @@ impl HistoryManager {
     }
 
     fn update_jump_list(&mut self, cx: &mut Context<'_, HistoryManager>) {
-        let menus = vec![MenuItem::action("New Window", NewWindow)];
+        let menus = vec![MenuItem::action(
+            t!("workspace.history_manager.new_window"),
+            NewWindow,
+        )];
         let entries = self
             .history
             .iter()

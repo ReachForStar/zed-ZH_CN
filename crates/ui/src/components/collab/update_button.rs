@@ -120,7 +120,7 @@ impl UpdateButton {
     }
 
     pub fn up_to_date() -> Self {
-        Self::new(IconName::Check, "Up to Date").disabled(true)
+        Self::new(IconName::Check, t!("ui.update_button.up_to_date")).disabled(true)
     }
 
     pub fn updated(version: impl Into<SharedString>) -> Self {
