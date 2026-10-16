@@ -13,3 +13,23 @@ view_message = "查看消息"
 no_language = "当前编辑器没有关联的语言"
 focus_editor = "聚焦编辑器以显示新的树视图"
 not_attached = "未关联编辑器"
+
+[language_tools.highlights_tree_view]
+all_filtered_out = "所有高亮均已过滤"
+enable_hints = "在工具栏中启用文本、语法或语义高亮"
+focus_editor = "聚焦编辑器以显示高亮"
+no_highlights = "未找到高亮"
+no_token_highlights = "编辑器没有文本、语法或语义 Token 高亮"
+not_attached = "未关联编辑器"
+settings_tooltip = "高亮设置"
+
+[language_tools.key_context_view]
+current_context_stack = "当前上下文序列"
+edit_keymap_file = "编辑键位映射文件"
+key_equivalents = "按键等价形式"
+keyboard_context = "键盘上下文"
+last_keystroke = "最近按键"
+open_documentation = "打开文档"
+remapped_note = "使用某些字符定义的快捷键已被重新映射，以便无需按住 Option 即可键入。"
+view_default_keymap = "查看默认键位映射"
+view_description = "此视图用于确定创建自定义键位绑定时的当前上下文序列。触发快捷键时，它还会列出所有可能命中的上下文以及实际匹配的那一个。"

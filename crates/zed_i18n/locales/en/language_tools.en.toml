@@ -13,3 +13,23 @@ view_message = "View Message"
 no_language = "Current editor has no associated language"
 focus_editor = "Focus an editor to show a new tree view"
 not_attached = "Not attached to an editor"
+
+[language_tools.highlights_tree_view]
+all_filtered_out = "All highlights are filtered out"
+enable_hints = "Enable text, syntax, or semantic highlights in the toolbar"
+focus_editor = "Focus an editor to show highlights"
+no_highlights = "No highlights found"
+no_token_highlights = "The editor has no text, syntax, or semantic token highlights"
+not_attached = "Not attached to an editor"
+settings_tooltip = "Highlights Settings"
+
+[language_tools.key_context_view]
+current_context_stack = "Current Context Stack"
+edit_keymap_file = "Edit Keymap File"
+key_equivalents = "Key Equivalents"
+keyboard_context = "Keyboard Context"
+last_keystroke = "Last Keystroke"
+open_documentation = "Open Documentation"
+remapped_note = "Shortcuts defined using some characters have been remapped so that shortcuts can be typed without holding option."
+view_default_keymap = "View Default Keymap"
+view_description = "This view lets you determine the current context stack for creating custom key bindings in Zed. When a keyboard shortcut is triggered, it also shows all the possible contexts it could have triggered in, and which one matched."
