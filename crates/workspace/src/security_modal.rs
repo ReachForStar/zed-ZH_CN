@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use zed_i18n::t;
 
 use collections::{HashMap, HashSet};
 use gpui::{DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, ScrollHandle, WeakEntity};
@@ -200,10 +201,10 @@ impl Render for SecurityModal {
                     )
                     .child(
                         v_flex()
-                            .child(Label::new("Restricted Mode prevents:").color(Color::Muted))
-                            .child(ListBulletItem::new("Project settings from being applied"))
-                            .child(ListBulletItem::new("Language servers from running"))
-                            .child(ListBulletItem::new("MCP Server integrations from installing")),
+                            .child(Label::new(t!("workspace.security_modal.restricted_mode_prevents")).color(Color::Muted))
+                            .child(ListBulletItem::new(t!("workspace.security_modal.project_settings_from_being_applied")))
+                            .child(ListBulletItem::new(t!("workspace.security_modal.language_servers_from_running")))
+                            .child(ListBulletItem::new(t!("workspace.security_modal.mcp_server_integrations_from_installing"))),
                     )
                     .map(|this| {
                         let Some(trust_label) = trust_label else {
@@ -226,7 +227,7 @@ impl Render for SecurityModal {
                                             "trust-parents",
                                             ToggleState::from(self.trust_parents),
                                         )
-                                        .label("Trust all projects in")
+                                        .label(t!("workspace.security_modal.trust_all_projects_in"))
                                         .on_click(cx.listener(
                                             |security_modal, state: &ToggleState, _, cx| {
                                                 let trust_parents = state.selected();
@@ -273,7 +274,7 @@ impl Render for SecurityModal {
                     .gap_1()
                     .justify_end()
                     .child(
-                        Button::new("rm", "Stay in Restricted Mode")
+                        Button::new("rm", t!("workspace.security_modal.stay_in_restricted_mode"))
                             .key_binding(
                                 KeyBinding::for_action(
                                     &ToggleWorktreeSecurity,
@@ -288,7 +289,7 @@ impl Render for SecurityModal {
                             })),
                     )
                     .child(
-                        Button::new("tc", "Trust and Continue")
+                        Button::new("tc", t!("workspace.security_modal.trust_and_continue"))
                             .style(ButtonStyle::Filled)
                             .layer(ui::ElevationIndex::ModalSurface)
                             .key_binding(
@@ -312,7 +313,8 @@ impl SecurityModal {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let trust_path_input = cx.new(|cx| InputField::new(window, cx, "Folder to trust"));
+        let trust_path_input = cx
+            .new(|cx| InputField::new(window, cx, &t!("workspace.security_modal.folder_to_trust")));
         let mut this = Self {
             worktree_store,
             remote_host: remote_host.map(|host| host.into()),

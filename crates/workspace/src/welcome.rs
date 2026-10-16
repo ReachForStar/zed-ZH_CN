@@ -12,6 +12,7 @@ use gpui::{
 };
 use gpui::{WeakEntity, linear_color_stop, linear_gradient};
 use menu::{SelectNext, SelectPrevious};
+use zed_i18n::t;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -351,7 +352,7 @@ impl WelcomePage {
                             .color(Color::Muted)
                             .size(IconSize::Small),
                     )
-                    .child(Label::new("Collaborate with Agents")),
+                    .child(Label::new(t!("workspace.welcome.collaborate_with_agents"))),
             )
             .child(
                 Label::new(description)
@@ -360,7 +361,7 @@ impl WelcomePage {
                     .mb_2(),
             )
             .child(
-                Button::new("open-agent", "Open Agent Panel")
+                Button::new("open-agent", t!("workspace.welcome.open_agent_panel"))
                     .full_width()
                     .tab_index(tab_index as isize)
                     .style(ButtonStyle::Outlined)
@@ -381,7 +382,7 @@ impl WelcomePage {
     ) -> impl IntoElement {
         v_flex()
             .w_full()
-            .child(SectionHeader::new("Recent Projects"))
+            .child(SectionHeader::new(t!("workspace.welcome.recent_projects")))
             .children(recent_projects)
     }
 
@@ -480,7 +481,7 @@ impl Render for WelcomePage {
                             .child(Vector::square(VectorName::ZedLogo, rems_from_px(45_f32)))
                             .child(
                                 v_flex().child(Headline::new(welcome_label)).child(
-                                    Label::new("The editor for what's next")
+                                    Label::new(t!("workspace.welcome.tagline"))
                                         .size(LabelSize::Small)
                                         .color(Color::Muted)
                                         .italic(),
@@ -497,13 +498,16 @@ impl Render for WelcomePage {
                     .when(!self.fallback_to_recent_projects, |this| {
                         this.child(
                             v_flex().gap_4().child(Divider::horizontal()).child(
-                                Button::new("welcome-exit", "Return to Onboarding")
-                                    .tab_index(next_tab_index as isize)
-                                    .full_width()
-                                    .label_size(LabelSize::XSmall)
-                                    .on_click(|_, window, cx| {
-                                        window.dispatch_action(OpenOnboarding.boxed_clone(), cx);
-                                    }),
+                                Button::new(
+                                    "welcome-exit",
+                                    t!("workspace.welcome.return_to_onboarding"),
+                                )
+                                .tab_index(next_tab_index as isize)
+                                .full_width()
+                                .label_size(LabelSize::XSmall)
+                                .on_click(|_, window, cx| {
+                                    window.dispatch_action(OpenOnboarding.boxed_clone(), cx);
+                                }),
                             ),
                         )
                     }),

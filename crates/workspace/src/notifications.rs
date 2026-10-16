@@ -857,7 +857,7 @@ pub mod simple_message_notification {
                     )
                     .icon_size(IconSize::XSmall)
                     .icon_color(Color::Muted),
-                    Tooltip::text("More Options"),
+                    Tooltip::text(t!("workspace.notifications.more_options")),
                 )
                 .menu(move |window, cx| {
                     let entries = entries.clone();

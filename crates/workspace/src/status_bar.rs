@@ -128,7 +128,7 @@ impl Render for StatusBar {
             // steps through them, and arrow keys move between them once focus is
             // inside.
             .role(Role::Toolbar)
-            .aria_label("Status bar")
+            .aria_label(t!("workspace.status_bar.aria_label"))
             .tab_group()
             .on_key_down(
                 cx.listener(|status_bar, event: &gpui::KeyDownEvent, window, cx| {
