@@ -39,3 +39,5 @@
 ## [2026-10-16] fix | 合并后逐 hunk 审计发现静默丢失：thread_view.rs 的 sandbox_confusable_findings 该扫 requested 与 canonical_or_requested 两条路径（上游 953ac75529 已改），合并结果退回只扫 requested；恢复上游实现并推送 e26a09420f
 
 ## [2026-10-16] chore | run_tests 改为手动触发（workflow_dispatch），去掉 push/PR 自动运行，避免每次文案提交拉起全量 clippy；check_style 新增汉化键完整性检查（scripts/i18n/check-missing-keys.py，比对代码静态 t! 引用与 en/zh-CN 键集合）
+
+## [2026-10-16] feat | 二次合并 upstream/main（28d0a3547f，8 提交 / 39 文件，零冲突）：合并提交 30e413d270，逐个复核 39 文件 t! 计数无下降；补译上游新增 2 条可恢复消息状态文案，并补齐此前漏译的整块「可恢复消息」界面（状态文案 / Copy、Restore、Discard 按钮 / tooltip / 附件占位符，共 14 键，提交 b3fdd26c6d）；fmt --check 与全量 clippy 通过，CI 手动触发 run 38851778563

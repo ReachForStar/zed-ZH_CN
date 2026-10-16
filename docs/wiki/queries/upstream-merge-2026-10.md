@@ -60,6 +60,17 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 
 审计方法（可复用）：`git diff --numstat 953ac75529 HEAD -- '*.rs'` 取改动行数较少的文件（本轮取 ≤20 与 21–60 两档，共 186 个），再逐 hunk 过滤掉含 `t!(`、`zed_i18n`、`locales/` 的汉化 hunk，人工判读剩余 hunk 是 fork 自有改动还是上游删除。fork 的 markdown 内联图表（`render_embedded_diagrams` 与上游 `render_mermaid_diagrams` 并存）、`is_native`、`icon_size`、`office_preview`/`sqlite_viewer` 等均为有意保留，非丢失。
 
+## 二次合并（2026-10-16，`28d0a3547f`）
+
+上游在上次合并后推进 8 个提交（39 文件，+3447/−531），merge-base 仍是 `953ac75529`。合并提交 `30e413d270`，**零冲突**：fork 的汉化 hunk 与上游改动没有重叠行。
+
+- 上游改动集中在 ACP v2 收据提交链（`acp_thread/*`、`agent_servers/src/acp/v2.rs` 增 2267 行）、`language`/`language_core` 高亮缓存、`languages/*` 的 LSP 适配、`gpui_wgpu` 的 wgpu 升级、`gpui_ios` 示例改为 Cargo example 目标。
+- 零冲突下 git 保留全部 fork hunk；复核方式：逐个比较合并前后（`cb92917008` 与合并结果）39 个文件的 `t!(` 出现次数，无下降。
+- 上游新增界面文案 2 条（`Message accepted; agent connection lost`、`Connection lost; message acceptance is unknown`）按约定补 en/zh-CN 键并改为 `t!`，提交 `b3fdd26c6d`。
+- 同一提交顺带补上此前漏译的整块「可恢复消息」界面（状态文案、Copy/Restore/Discard 按钮、tooltip、附件占位符），详见 [汉化口径与批量替换工作流](../concepts/i18n-localization-workflow.md)。
+- 门禁：`cargo fmt --all -- --check` 通过；`cargo clippy --workspace --all-targets -- --deny warnings` 退出 0。
+- 本轮起 `run_tests` 改为仅 `workflow_dispatch`（推送不再自动拉起全量 clippy），验证靠手动触发，见 [汉化工作流页](../concepts/i18n-localization-workflow.md) 的验证小节。
+
 ## 涉及模块
 
 - `crates/settings_ui`、`crates/git_ui`、`crates/markdown`、`crates/markdown_preview`、`crates/acp_thread`、`crates/agent_ui`、`crates/tabular_data_preview`、`crates/extensions_ui`、`crates/gpui_*`、`.github/workflows/`。
@@ -68,7 +79,7 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 
 1. 合并后必须跑全量 clippy（`--all-targets --deny warnings`）与 `cargo fmt --all -- --check`；只跑 `cargo check` 查不出 test 目标与 clippy lint（历史上多次由 `cargo test`/clippy 才暴露）。
 2. 对上一步改动文件做「上游有 / HEAD 无 / 合并结果无」三方符号比对，识别 git 静默接受的 fork 侧删除；注意改名产生的假阳性。
-3. 上游把字符串写死的位置，若 fork 同类位置是 `t!`，先看 locale 里键是否还在；本仓库约定为新上游文案补键并同步 `zh-CN`（本次新增键的 en/zh-CN 均已补齐，遗留 3 个缺失键为 fork HEAD 既有问题：`agent_ui.thread_view.copy`、`settings_ui.page_data.agent_prevent_idle_sleep_title`、`..._description`）。
+3. 上游把字符串写死的位置，若 fork 同类位置是 `t!`，先看 locale 里键是否还在；本仓库约定为新上游文案补键并同步 `zh-CN`（该批 20 个缺失键已由 `f3f9b80f2d` 全部补齐，见 [汉化工作流页](../concepts/i18n-localization-workflow.md)）。
 4. 推送时本机 `gh` 为 2.4.0，无 `gh auth token` 子命令；token 从 `~/.config/gh/hosts.yml` 的 `oauth_token` 读取，push 走 HTTPS + `https_proxy` + 临时 `-c credential.helper`（不写入任何配置文件）。
 
 ## 关联页面

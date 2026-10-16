@@ -43,6 +43,7 @@ status: active
 - `let` 声明了 `&'static str` 再在两个分支赋值的写法：改成 `Cow<'static, str>`。
 - 弹窗按钮不能写 `&[t!("key")]`（`&[Cow]` 不满足签名），要写 `&[gpui::PromptButton::new(t!("key"))]`。
 - 含插值的 `format!` 文案改 `t!("key", 参数 = 值)`，locale 里写 `%{参数}`，例如 `git_action_failed = "git %{action} 失败"`。
+- 返回 `impl Iterator<Item = &str>` 的辅助函数（拼接消息片段一类）改为 `Item = Cow<'_, str>`，借用分支写 `Cow::Borrowed(..)`、兜底分支直接给 `t!`（`Cow<'static, str>` 因协变可收窄）；原先 `Itertools::intersperse(.., "\n").flat_map(str::chars)` 的取值方式要改成 `.map(Cow::into_owned).collect::<Vec<_>>().join("\n").chars()`，否则分隔符与 `str::chars` 都对不上类型。
 
 ## 验证
 
@@ -64,6 +65,14 @@ status: active
 
 - `agent_ui.thread_view.copy`（上下文菜单「复制」）、`debugger_ui.panel.continue_thread`（en 侧缺，上游原文 "Continue Thread"）、`settings_ui.page_data.agent_prevent_idle_sleep_title` / `_description`（上游原文 "Prevent Idle Sleep" / "Whether to keep the system awake while agent threads are running."）。
 - `language_tools.highlights_tree_view.*` 7 个与 `language_tools.key_context_view.*` 9 个（两张表整体缺失，来自批次 4 的手工改造）。
+
+## 二次合并补译（2026-10-16，`28d0a3547f`）
+
+上游二次合并（提交 `30e413d270`）带来 2 条新界面文案，同时暴露出上轮合并引入却始终未汉化的整块界面：
+
+- 上游新增：`agent_ui.thread_view.submission_status_accepted_connection_lost`（原文 "Message accepted; agent connection lost"）、`submission_status_connection_lost_unknown`（"Connection lost; message acceptance is unknown"）——消息因连接断开而状态未知时显示的可恢复消息状态。
+- 上轮漏译的「可恢复消息」整块（同函数 `render_recoverable_submissions` / `submission_text_parts`）：`submission_status_sending`（"Sending message…"）、`submission_status_waiting`（"Waiting for message to appear…"）、`submission_failed_to_send`（"Message failed to send: %{error}"）、`submission_status_cancelled`（"Message cancelled"）、`submission_status_fallback`（"Message"）、按钮 `submission_restore` / `submission_discard`（"Restore" / "Discard"）、`submission_restore_tooltip`，以及附件占位符 `submission_attachment_resource` / `_image` / `_audio` / `_unsupported`（`[Resource attachment]` 等）。全部键已补 en/zh-CN，提交 `b3fdd26c6d`。
+- 该块里 `handle_thread_error(anyhow!(..))` 的错误消息按既有口径保持英文（同文件另有 4 处同类消息，均未汉化，改动会破坏口径一致性）。
 
 ## 关联页面
 
