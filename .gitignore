@@ -72,3 +72,10 @@ tmp/
 
 # 本地 ffmpeg 开发库（各平台构建产物，不入库）
 /ffmpeg-dev/
+
+# 本地工具与调试产物（不入库）
+.dsh/
+.playwright-mcp/
+.qmd/
+Microsoft.Windows.Console.ConPTY.*.nupkg
+example.com.png
