@@ -54,6 +54,12 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 2. **typos 无本地二进制**：CI 用 `crate-ci/typos` action（固定提交 `2d0ce569feab`，对应版本 1.40.0）。本地从 release 页下载 `typos-v1.40.0-x86_64-unknown-linux-musl` 解压到 `tmp/typos/` 后按 `--config .config/typos.toml` 运行。
 3. **rustfmt 会改写行尾**：`cargo fmt --all` 重排过的文件被写成 LF，提交前需把本次编辑过的文件统一回 CRLF（工作区约定 CRLF、Git 存储 LF），否则 `git add` 报「LF 将被 CRLF 替换」并留下行尾混用。
 
+## 合并后逐 hunk 丢失审计（2026-10-16）
+
+汉化补齐过程中发现一处合并静默丢失：`crates/agent_ui/src/conversation_view/thread_view.rs` 的 `sandbox_confusable_findings`，上游 `953ac75529` 已改为同时扫描 `requested` 与 `canonical_or_requested()` 两条路径（`BTreeSet` 去重），合并结果却保留了 fork 旧版（只扫 `requested`），导致混淆字符出现在解析后真实写入目标时不报警。修复提交 `e26a09420f`。
+
+审计方法（可复用）：`git diff --numstat 953ac75529 HEAD -- '*.rs'` 取改动行数较少的文件（本轮取 ≤20 与 21–60 两档，共 186 个），再逐 hunk 过滤掉含 `t!(`、`zed_i18n`、`locales/` 的汉化 hunk，人工判读剩余 hunk 是 fork 自有改动还是上游删除。fork 的 markdown 内联图表（`render_embedded_diagrams` 与上游 `render_mermaid_diagrams` 并存）、`is_native`、`icon_size`、`office_preview`/`sqlite_viewer` 等均为有意保留，非丢失。
+
 ## 涉及模块
 
 - `crates/settings_ui`、`crates/git_ui`、`crates/markdown`、`crates/markdown_preview`、`crates/acp_thread`、`crates/agent_ui`、`crates/tabular_data_preview`、`crates/extensions_ui`、`crates/gpui_*`、`.github/workflows/`。
@@ -68,6 +74,7 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 ## 关联页面
 
 - [汉化 fork 同步 upstream 的合并模式与特性保留清单](../concepts/fork-upstream-sync.md)
+- [汉化口径与批量替换工作流](../concepts/i18n-localization-workflow.md)
 - [fork 发布 release 的流程与版本号策略](../concepts/fork-release-publishing.md)
 - [run_tests Clippy 失败链](run-tests-clippy-failure-chain.md)
 - [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)

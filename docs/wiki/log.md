@@ -33,3 +33,7 @@
 ## [2026-09-28] query | 修正 git-proxy 页与脚本现状不符——grep 实测 scripts/git-proxy.ps1 无 OutputEncoding 设置行，改记 iconv 补救为现行方案；SKILL.md 已补探针/瞬断/非 git 进程边界说明
 
 ## [2026-10-16] feat | 合并 upstream/main（953ac75529，297 提交）并保留 fork 汉化与特性：冲突消解取上游新 API/新结构与 acp_v1 拆分、恢复 image_resolver 两参数 API、tabular_data_preview 面板迁 TableView、补回 git_panel.starts_open 等三项丢失设置；本地全量 clippy/fmt/typos/check-todos/check-keymaps 通过，合并提交 80851bcbbc 已推送 fork main；沉淀 upstream-merge-2026-10 查询页与 fork-upstream-sync 要点
+
+## [2026-10-16] feat | 合并后汉化补齐：分 8 批处理 30+ crate 界面文案（workspace/ui/editor/language_models/edit_prediction_ui/agent_ui/copilot_ui/language_tools/git_ui/debugger_ui/settings_ui/onboarding/recent_projects/extensions_ui/dev_container/vim/zed/project_panel/picker/outline_panel/collab_ui/command_palette/miniprofiler_ui/acp_tools/auto_update/remote_connection/call_hierarchy/lsp_command_selector/git_ui_core/markdown_preview/agent_servers），en 与 zh-CN 双侧补键；判定整体跳过 project/git_hosting_providers/which_key/languages/gpui 平台 crate 与 component preview、dev-tools 面板；批量脚本落 `scripts/i18n/`，沉淀 concepts/i18n-localization-workflow 页
+## [2026-10-16] fix | 修复汉化引入的 clippy redundant_clone（edit_prediction_button.rs 命名参数 t! 后又 to_string），本地全量 clippy 过、批次 6 起 CI 转 success
+## [2026-10-16] fix | 合并后逐 hunk 审计发现静默丢失：thread_view.rs 的 sandbox_confusable_findings 该扫 requested 与 canonical_or_requested 两条路径（上游 953ac75529 已改），合并结果退回只扫 requested；恢复上游实现并推送 e26a09420f

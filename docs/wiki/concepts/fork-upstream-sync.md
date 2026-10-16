@@ -40,5 +40,6 @@ status: active
 ## 关联页面
 
 - [2026-10 合并上游 main：冲突消解决策与编译失败链](../queries/upstream-merge-2026-10.md) — 本轮合并的决策、clippy 失败链、历史丢失去向与本地校验清单。
+- [汉化口径与批量替换工作流](i18n-localization-workflow.md) — 合并后补齐汉化的口径、批量脚本与 `t!` 类型适配。
 - [msvc_spectre_libs 构建失败](../queries/msvc-spectre-libs-build-failure.md) — 本地编译 repl/zed 的环境前置。
 - [ACP 面板自动压缩上下文不生效](../queries/acp-auto-compact-external-agents.md) — fork 在 acp_thread 层的自有特性；同批修复 fs `watched_paths` merge 遗留。
