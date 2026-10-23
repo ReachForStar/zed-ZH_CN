@@ -3,7 +3,7 @@ title: 汉化口径与批量替换工作流
 type: concept
 tags: [i18n, 汉化, rust-i18n, locale, workflow]
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-23
 status: active
 ---
 
@@ -82,6 +82,15 @@ status: active
 - **改模板的既有键**：`git_ui.git_panel.discard_changes_confirm` 加 `%{changes}` 插值、`git_ui.git_panel.discard_trash_count_files` 加 `%{changes}` 插值、`settings_ui.page_data.on_new_window_description` 换成上游新文案；en 与 zh-CN 两侧模板同步改。
 - **文案随模块迁移**：上游把子智能体卡片文案迁到 `agent_ui/src/conversation_view/subagent_card.rs`（`SubagentCardState::title`），汉化键随之迁到该文件；`title()` 返回 `SharedString`，`t!` 结果用 `.into()` 转换。
 - **枚举值也要汉化**：上游 git 面板用 `file` / `files` 两个新键替代硬编码的 `"File"` / `"Files"`，`file_label` 改为 `t!` 结果后传给 `stage_count_files` / `restore_count_files` 等既有键的 `%{files}` 占位符。
+
+## 四次合并补译（2026-10-23，`604a0ff023`）
+
+上游新增 ACP 会话间消息（父子会话委派）的 transcript 行，引入 6 处界面文案：
+
+- **新增键**（`agent_ui.thread_view` 分节）：`session_message_to`（"To"）、`session_message_from`（"From"）、`session_message_between_sessions`（"Message between sessions"）、`open_session`（"Open Session"，参与者按钮 tooltip）、`unavailable_session`（"Unavailable Session"，会话未知时的占位标签）、`main_agent`（"Main Agent"，根会话在其它会话视图中的名称）。
+- **译文口径**：`To` / `From` 作为方向标签译作「发送至」/「来自」（保留单字风格，与界面配合）；`Main Agent` 沿用既有 `subagent_output_tooltip` 里的「主智能体」叫法。
+- **顺带补上漏译**：`subagent_label` 的兜底 `"Subagent"` 改为 `t!("agent_ui.thread_view.subagent")`（键早已存在）。
+- **单测下的 locale 行为**：测试不调 `zed_i18n::init()`，`t!` 回退链命中 en，因此按英文匹配的用例（如 `Some("Main Agent")`）不受汉化影响——前提是 `zed_i18n` 已按新 locale 重新编译（改 locale 后增量编译不重建 `zed_i18n` 时，`t!` 会回退为键名，表现为断言拿到 `agent_ui.thread_view.main_agent`；`touch crates/zed_i18n/src/zed_i18n.rs` 强制重建即可）。
 
 ## 关联页面
 

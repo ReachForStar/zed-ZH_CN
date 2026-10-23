@@ -98,7 +98,7 @@ pub(super) fn subagent_label(thread: &AcpThread) -> SharedString {
         .subagent_association()
         .and_then(|association| association.title.clone())
         .or_else(|| thread.title())
-        .unwrap_or_else(|| "Subagent".into())
+        .unwrap_or_else(|| t!("agent_ui.thread_view.subagent").into())
 }
 
 const DATA_RETENTION_LEARN_MORE_URL: &str = "https://support.claude.com/en/articles/15425996-data-retention-practices-for-mythos-class-models";
@@ -9091,9 +9091,21 @@ impl ThreadView {
     ) -> Div {
         let own_session_id = self.thread.read(cx).session_id().clone();
         let (icon, direction, participant) = match session_message_side(message, &own_session_id) {
-            SessionMessageSide::Outgoing { recipient } => (IconName::Send, "To", recipient),
-            SessionMessageSide::Incoming { sender } => (IconName::Envelope, "From", sender),
-            SessionMessageSide::Unknown => (IconName::Envelope, "Message between sessions", None),
+            SessionMessageSide::Outgoing { recipient } => (
+                IconName::Send,
+                t!("agent_ui.thread_view.session_message_to"),
+                recipient,
+            ),
+            SessionMessageSide::Incoming { sender } => (
+                IconName::Envelope,
+                t!("agent_ui.thread_view.session_message_from"),
+                sender,
+            ),
+            SessionMessageSide::Unknown => (
+                IconName::Envelope,
+                t!("agent_ui.thread_view.session_message_between_sessions"),
+                None,
+            ),
         };
         let participant = participant.map(|session_id| {
             match self.session_participant_label(session_id, cx) {
@@ -9102,7 +9114,7 @@ impl ThreadView {
                     .child(
                         Button::new(("session-message-participant", entry_ix), label)
                             .label_size(LabelSize::Small)
-                            .tooltip(Tooltip::text("Open Session"))
+                            .tooltip(Tooltip::text(t!("agent_ui.thread_view.open_session")))
                             .on_click(cx.listener({
                                 let session_id = session_id.clone();
                                 move |this, _, window, cx| {
@@ -9116,7 +9128,7 @@ impl ThreadView {
                     )
                     .into_any_element(),
                 // The RFD allows messages naming a session this conversation never learned about.
-                None => Label::new("Unavailable Session")
+                None => Label::new(t!("agent_ui.thread_view.unavailable_session"))
                     .size(LabelSize::Small)
                     .color(Color::Muted)
                     .into_any_element(),
@@ -9160,7 +9172,7 @@ impl ThreadView {
         let thread_view = server_view.read(cx).thread_view(session_id)?;
         let thread = thread_view.read(cx).thread.read(cx);
         Some(if thread.parent_session_id().is_none() {
-            "Main Agent".into()
+            t!("agent_ui.thread_view.main_agent").into()
         } else {
             subagent_label(thread)
         })

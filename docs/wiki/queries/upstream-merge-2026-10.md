@@ -3,7 +3,7 @@ title: 2026-10 合并上游 main：冲突消解决策与编译失败链
 type: query
 tags: [fork, upstream, merge, clippy, i18n]
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-23
 status: active
 ---
 
@@ -103,6 +103,18 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 2. **clippy::unnecessary_filter_map（`fs` crate）**：孤儿收集改用 `path_state.path` 后 `filter_map` 恒返回 `Some`，改为 `.map()`。
 3. **E0252 + unused import（`agent_ui` crate）**：上游已自动合入 `use crate::model_search;`，手工再补一次导致重复导入，删掉手工补的那行。
 4. **单测失败 `fs_watcher::tests::watcher_retains_scheduler_until_teardown`**：上游给 `OsWatcher` 加了 `_executor` 字段并新增用例，要求 watcher 释放后调度器随之释放。fork 的健康检查线程用 `Arc` 强引用持有 watcher（且线程永不退出），把 `OsWatcher` 与其 `BackgroundExecutor` 一直钉住。解法=健康检查线程改用 `Weak<OsWatcher>`，每次 tick `upgrade()`，失败即退出线程。
+
+## 四次合并（2026-10-23，`604a0ff023`）
+
+上游在上次合并后推进 2 个提交（15 文件，+910/−60），merge-base 仍是 `91d3b962ae3`。合并提交 `27a6d33479`，**零冲突**：fork 的汉化 hunk 与上游改动没有重叠行。
+
+- **上游内容**：`e96ffb0fd3` 给 `acp_thread` 新增 `AgentThreadEntry::SessionMessage`（父子会话间消息的 transcript 行，v1 仅在客户端公布 `subagents` 能力时生效），`agent_ui` 新增 `render_session_message` 与 `session_participant_label`；`604a0ff023` 把 open_ai 流式传输错误类型化（`LanguageModelCompletionError` 取代 `anyhow` 装箱），各 provider 的 `stream_completion` 返回类型跟着改。
+- **零冲突复核**：`git merge-tree` 预演 0 冲突标记；合并后逐个比较 15 个文件的 `t!(` 计数，与 fork HEAD 持平（`acp_thread.rs` 的 5 条差值全是上游新增的 `format!` markdown 标题与 `assert!`，不是汉化点）。
+- **上游新增 markdown 标题不进 locale**：`SessionMessage::to_markdown` 的 `## Message from \`{sender}\`` 等标题与同文件的 `## User`、`## Assistant`、`## Input Requested` 一致，按既有口径保持英文。
+- **汉化补齐 6 键**（`agent_ui.thread_view`）：`session_message_to`（"To"）、`session_message_from`（"From"）、`session_message_between_sessions`（"Message between sessions"）、`open_session`（"Open Session"）、`unavailable_session`（"Unavailable Session"）、`main_agent`（"Main Agent"）；en/zh-CN 双侧同补。
+- **顺带补上一处漏译**：`subagent_label` 的兜底字面量 `"Subagent"` 改为 `t!("agent_ui.thread_view.subagent")`（该键早已存在于 locale，只是此前没接上）。
+- **门禁**：`cargo fmt --all -- --check`、全量 `cargo clippy --workspace --all-targets -- --deny warnings`、typos、check-todos/check-keymaps、`check-missing-keys.py`（3914 引用键 / 3972 键，0 问题）全过；`agent_ui`/`acp_thread`/`open_ai`/`language_models`/`x_ai_subscribed` 相关测试通过。
+- **既有失败（非本次引入）**：`agent_servers` 的 `test_load_session_replays_notifications_sent_before_response` 与 `v2_compaction_sdk_chunks_snapshots_and_historical_targeting` 失败。回退到合并前 HEAD（`ed4d8b85c3`）复现同样失败，属二次合并带入的上游 2026-10-14 测试（`3e145061d86`）与 fork 的 `drop_compacted_entries` 内存回收特性之间的语义分歧：测试期望压缩完成后旧条目仍在，fork 特性按设计把它们丢弃。待用户决定取舍，见 [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)。
 
 ## 涉及模块
 

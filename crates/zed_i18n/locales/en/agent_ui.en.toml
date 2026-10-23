@@ -631,6 +631,12 @@ submission_attachment_resource = "[Resource attachment]"
 submission_attachment_image = "[Image attachment]"
 submission_attachment_audio = "[Audio attachment]"
 submission_attachment_unsupported = "[Unsupported attachment]"
+session_message_to = "To"
+session_message_from = "From"
+session_message_between_sessions = "Message between sessions"
+open_session = "Open Session"
+unavailable_session = "Unavailable Session"
+main_agent = "Main Agent"
 
 [agent_ui.session_notice]
 dismiss_notice = "Dismiss Notice"

@@ -631,6 +631,12 @@ submission_attachment_resource = "[资源附件]"
 submission_attachment_image = "[图片附件]"
 submission_attachment_audio = "[音频附件]"
 submission_attachment_unsupported = "[不支持的附件]"
+session_message_to = "发送至"
+session_message_from = "来自"
+session_message_between_sessions = "会话之间的消息"
+open_session = "打开会话"
+unavailable_session = "不可用的会话"
+main_agent = "主智能体"
 
 [agent_ui.session_notice]
 dismiss_notice = "关闭通知"

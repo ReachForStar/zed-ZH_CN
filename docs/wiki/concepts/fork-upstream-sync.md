@@ -3,7 +3,7 @@ title: 汉化 fork 同步 upstream 的合并模式与特性保留清单
 type: concept
 tags: [fork, upstream, merge, i18n, workflow]
 created: 2026-09-26
-updated: 2026-10-16
+updated: 2026-10-23
 status: active
 ---
 
@@ -35,6 +35,7 @@ status: active
 - **上游 git 依赖 rev 前进**：上游把 `lsp-types` rev 从 `f1783e63a7f4…` 前进到 `82d7fc66ebdf…`（dynamic registrations 需要新 API），fork 必须跟进新 rev，不能保留旧 rev，否则编译期缺 API。
 - **fork 早期手工 backport × 上游后来正式实现 → 合并时静默丢失**：fork 曾手工 backport `markdown` 的 `pending_heading_scroll` 机制（提交 `fb319c54010`），上游后来正式实现并加入 `defer_parsing`。两套实现并存时 merge 把上游在 `reset()`/`parse()` 里的清理逻辑判成冲突并丢弃，fork HEAD 因此长期缺上游的 pending 清理。本轮按上游恢复（`reset()` 重新应用 pending 滚动、`parse()` 空源时清 pending）。
 - **合并两侧新增 `use` 要按字母序**：rustfmt 默认开启 `reorder_imports`，两侧各加一个 `use` 时直接并排会触发 `cargo fmt --check` 失败；按字母序放置（如 `use ui_input::InputField;` → `use util::ResultExt;` → `use zed_i18n::t;`）。
+- **上游新增测试与 fork 特性语义分歧 → 合并后测试失败**：二次合并带入的上游 `agent_servers` 测试（`test_load_session_replays_notifications_sent_before_response`、`v2_compaction_sdk_chunks_snapshots_and_historical_targeting`）期望上下文压缩完成后旧条目仍在，而 fork 的 `drop_compacted_entries`（内存回收特性）在 `Completed` 时丢弃被压缩区间，两者直接冲突。判定方法：回退到合并前 HEAD 复现同样失败 → 非本次合并引入；再 `git merge-base --is-ancestor <测试提交> <上次合并结果>` 定位带入轮次。此类失败不阻塞合并，但每次合并后跑 `cargo test -p agent_servers` 可见。
 
 ## 特性保留清单（每次合并后逐项核对）
 
