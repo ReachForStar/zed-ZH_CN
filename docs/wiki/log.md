@@ -41,3 +41,5 @@
 ## [2026-10-16] chore | run_tests 改为手动触发（workflow_dispatch），去掉 push/PR 自动运行，避免每次文案提交拉起全量 clippy；check_style 新增汉化键完整性检查（scripts/i18n/check-missing-keys.py，比对代码静态 t! 引用与 en/zh-CN 键集合）
 
 ## [2026-10-16] feat | 二次合并 upstream/main（28d0a3547f，8 提交 / 39 文件，零冲突）：合并提交 30e413d270，逐个复核 39 文件 t! 计数无下降；补译上游新增 2 条可恢复消息状态文案，并补齐此前漏译的整块「可恢复消息」界面（状态文案 / Copy、Restore、Discard 按钮 / tooltip / 附件占位符，共 14 键，提交 b3fdd26c6d）；fmt --check 与全量 clippy 通过，CI 手动触发 run 38851778563
+
+## [2026-10-23] feat | 三次合并 upstream/main（91d3b962ae3，120 提交 / 360 文件）：17 处冲突消解（workflow 取删除、lsp-types 跟进上游新 rev、版本号取 fork 侧 1.24.2）；markdown 按上游恢复 pending 滚动清理、子智能体卡片文案迁到 subagent_card.rs、git 面板确认框文案带 %{changes} 插值、fs 健康检查按新 coverage 模型重写并改用 Weak 持有 watcher；补上游新增 11 处界面文案汉化（en/zh-CN 双侧）；fmt/clippy/typos/check-todos/check-keymaps/check-missing-keys 全过，fs 单测 33 项全过

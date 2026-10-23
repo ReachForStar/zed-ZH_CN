@@ -41,5 +41,12 @@ copy_diagnostic = "复制诊断信息"
 [editor.bookmarks]
 buffer_title = "书签"
 
+[editor.debugger_hover]
+copy_value = "复制值"
+copy_as_expression = "复制为表达式"
+add_to_watch = "添加到监视"
+value_actions = "值操作"
+session_not_paused = "调试会话已不再处于暂停状态"
+
 [editor.split]
 unified = "统一视图"

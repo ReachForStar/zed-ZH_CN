@@ -681,11 +681,11 @@ impl PickerDelegate for TasksModalDelegate {
                     if (current_modifiers.alt || self.matches.is_empty()) && !self.prompt.is_empty()
                     {
                         let action = picker::ConfirmInput {
-                            secondary: current_modifiers.secondary(),
+                            secondary: current_modifiers.secondary(cx),
                         }
                         .boxed_clone();
                         this.child({
-                            let spawn_oneshot_label = if current_modifiers.secondary() {
+                            let spawn_oneshot_label = if current_modifiers.secondary(cx) {
                                 t!("tasks_ui.spawn_oneshot_without_history")
                             } else {
                                 t!("tasks_ui.spawn_oneshot")
@@ -697,7 +697,7 @@ impl PickerDelegate for TasksModalDelegate {
                                     window.dispatch_action(action.boxed_clone(), cx)
                                 })
                         })
-                    } else if current_modifiers.secondary() {
+                    } else if current_modifiers.secondary(cx) {
                         this.child({
                             let label = if is_recent_selected {
                                 t!("tasks_ui.rerun_without_history")

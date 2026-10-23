@@ -41,5 +41,12 @@ copy_diagnostic = "Copy Diagnostic"
 [editor.bookmarks]
 buffer_title = "Bookmarks"
 
+[editor.debugger_hover]
+copy_value = "Copy Value"
+copy_as_expression = "Copy as Expression"
+add_to_watch = "Add to Watch"
+value_actions = "Value Actions"
+session_not_paused = "The debug session is no longer paused here"
+
 [editor.split]
 unified = "Unified"

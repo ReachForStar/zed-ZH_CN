@@ -312,16 +312,19 @@ fn language_model(model: &deepseek::Model) -> LanguageModel {
                     name: "Low".into(),
                     value: "low".into(),
                     is_default: false,
+                    supports_disabling_thinking: None,
                 },
                 LanguageModelEffortLevel {
                     name: t!("language_models.deepseek.reasoning_effort_high").into(),
                     value: "high".into(),
                     is_default: true,
+                    supports_disabling_thinking: None,
                 },
                 LanguageModelEffortLevel {
                     name: "Max".into(),
                     value: "max".into(),
                     is_default: false,
+                    supports_disabling_thinking: None,
                 },
             ])
         } else {

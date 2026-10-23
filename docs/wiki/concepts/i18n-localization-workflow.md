@@ -74,6 +74,15 @@ status: active
 - 上轮漏译的「可恢复消息」整块（同函数 `render_recoverable_submissions` / `submission_text_parts`）：`submission_status_sending`（"Sending message…"）、`submission_status_waiting`（"Waiting for message to appear…"）、`submission_failed_to_send`（"Message failed to send: %{error}"）、`submission_status_cancelled`（"Message cancelled"）、`submission_status_fallback`（"Message"）、按钮 `submission_restore` / `submission_discard`（"Restore" / "Discard"）、`submission_restore_tooltip`，以及附件占位符 `submission_attachment_resource` / `_image` / `_audio` / `_unsupported`（`[Resource attachment]` 等）。全部键已补 en/zh-CN，提交 `b3fdd26c6d`。
 - 该块里 `handle_thread_error(anyhow!(..))` 的错误消息按既有口径保持英文（同文件另有 4 处同类消息，均未汉化，改动会破坏口径一致性）。
 
+## 三次合并补译（2026-10-23，`91d3b962ae3`）
+
+上游三次合并（120 提交）带来 11 处新的界面文案，并改写了 git 面板确认框的消息结构：
+
+- **新增键**：`sidebar.thread.stop_generation_activity_unconfirmed`、`agent_ui.thread_view.stop_generation_activity_unconfirmed`、`agent_ui.thread_view.activity_unconfirmed` / `activity_unconfirmed_tooltip` / `activity_unknown` / `activity_unknown_tooltip` / `thinking_always_on_at_effort`、`agent_ui.conversation_view.copy_saved_input` / `copy_saved_input_tooltip` / `discard_saved_submissions` / `discard_saved_submissions_tooltip`、`editor.debugger_hover.copy_value` / `copy_as_expression` / `add_to_watch` / `value_actions` / `session_not_paused`、`settings_ui.page_data.display_p3_title` / `display_p3_description`、`git_ui.git_panel.changes` / `unstaged_changes` / `discard_changes_to_count_files` / `trash_untracked_count_files` / `file` / `files`。
+- **改模板的既有键**：`git_ui.git_panel.discard_changes_confirm` 加 `%{changes}` 插值、`git_ui.git_panel.discard_trash_count_files` 加 `%{changes}` 插值、`settings_ui.page_data.on_new_window_description` 换成上游新文案；en 与 zh-CN 两侧模板同步改。
+- **文案随模块迁移**：上游把子智能体卡片文案迁到 `agent_ui/src/conversation_view/subagent_card.rs`（`SubagentCardState::title`），汉化键随之迁到该文件；`title()` 返回 `SharedString`，`t!` 结果用 `.into()` 转换。
+- **枚举值也要汉化**：上游 git 面板用 `file` / `files` 两个新键替代硬编码的 `"File"` / `"Files"`，`file_label` 改为 `t!` 结果后传给 `stage_count_files` / `restore_count_files` 等既有键的 `%{files}` 占位符。
+
 ## 关联页面
 
 - [汉化 fork 同步 upstream 的合并模式与特性保留清单](fork-upstream-sync.md) — 合并期 `t!` × 上游重构冲突的解法与特性保留清单。

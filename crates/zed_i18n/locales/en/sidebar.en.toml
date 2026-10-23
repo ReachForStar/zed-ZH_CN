@@ -28,6 +28,7 @@ sidebar.project_menu.remove = "Remove"
 
 sidebar.thread.rename_tooltip = "Rename Thread"
 sidebar.thread.stop_generation = "Stop Generation"
+sidebar.thread.stop_generation_activity_unconfirmed = "Request Stop (Activity Unconfirmed)"
 sidebar.thread.discard_draft = "Discard Draft"
 sidebar.thread.archive = "Archive Thread"
 sidebar.thread.rename_title = "Rename Title"

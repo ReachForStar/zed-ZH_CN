@@ -717,7 +717,8 @@ mod tests {
                 keystroke_input.to_string()
             };
 
-            let mut keystroke = Keystroke::parse(&keystroke_str)
+            let os = self.cx.read(|cx| cx.platform_info().os);
+            let mut keystroke = Keystroke::parse_with_os(&keystroke_str, os)
                 .unwrap_or_else(|_| panic!("Invalid keystroke: {}", keystroke_input));
 
             // Remove the dummy key if we added it for modifier-only keystrokes
@@ -793,7 +794,8 @@ mod tests {
                         s.to_string()
                     };
 
-                    let mut keystroke = Keystroke::parse(&keystroke_str)?;
+                    let mut keystroke =
+                        Keystroke::parse_with_os(&keystroke_str, gpui::OperatingSystem::Mac)?;
 
                     // Remove the dummy key if we added it for modifier-only keystrokes
                     if s.ends_with('-') && keystroke_str.ends_with("_") {
@@ -813,20 +815,23 @@ mod tests {
                 "Keystroke count mismatch. Expected: {:?}, Actual: {:?}",
                 expected_keystrokes
                     .iter()
-                    .map(|k| k.unparse())
+                    .map(|k| k.unparse(gpui::OperatingSystem::Mac))
                     .collect::<Vec<_>>(),
-                actual.iter().map(|k| k.unparse()).collect::<Vec<_>>()
+                actual
+                    .iter()
+                    .map(|k| k.unparse(gpui::OperatingSystem::Mac))
+                    .collect::<Vec<_>>()
             );
 
             for (i, (actual, expected)) in actual.iter().zip(expected_keystrokes.iter()).enumerate()
             {
                 assert_eq!(
-                    actual.unparse(),
-                    expected.unparse(),
+                    actual.unparse(gpui::OperatingSystem::Mac),
+                    expected.unparse(gpui::OperatingSystem::Mac),
                     "Keystroke {} mismatch. Expected: '{}', Actual: '{}'",
                     i,
-                    expected.unparse(),
-                    actual.unparse()
+                    expected.unparse(gpui::OperatingSystem::Mac),
+                    actual.unparse(gpui::OperatingSystem::Mac)
                 );
             }
         }
@@ -1120,7 +1125,9 @@ mod tests {
             }
 
             fn keystrokes_str(ks: &[KeybindingKeystroke]) -> String {
-                ks.iter().map(|ks| ks.inner().unparse()).join(" ")
+                ks.iter()
+                    .map(|ks| ks.inner().unparse(gpui::OperatingSystem::Mac))
+                    .join(" ")
             }
         }
     }
@@ -1140,7 +1147,10 @@ mod tests {
         KeystrokeInputTestHelper::new(cx)
     }
 
-    fn init_dispatch_test(cx: &mut TestAppContext, binding: &str) -> KeystrokeInputTestHelper {
+    fn init_dispatch_test(
+        cx: &mut TestAppContext,
+        binding: &'static str,
+    ) -> KeystrokeInputTestHelper {
         cx.update(|cx| {
             let settings_store = SettingsStore::test(cx);
             cx.set_global(settings_store);

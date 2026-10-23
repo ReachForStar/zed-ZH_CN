@@ -71,6 +71,39 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 - 门禁：`cargo fmt --all -- --check` 通过；`cargo clippy --workspace --all-targets -- --deny warnings` 退出 0。
 - 本轮起 `run_tests` 改为仅 `workflow_dispatch`（推送不再自动拉起全量 clippy），验证靠手动触发，见 [汉化工作流页](../concepts/i18n-localization-workflow.md) 的验证小节。
 
+## 三次合并（2026-10-23，`91d3b962ae3`）
+
+上游在上次合并后推进 120 个提交（360 文件，+39818/−14859），merge-base 仍是 `28d0a3547f`。本轮产生 17 处冲突，集中在 `markdown`、`thread_view`、`git_panel`、`security_modal`、`fs_watcher`、`acp_thread`、`page_data`。
+
+### 冲突消解
+
+- **workflow**：`community_pr_cleanup.yml` 与 `deploy_collab.yml` 是 delete/modify 冲突（fork 已删、上游改过），取删除；`.github/workflows/` 仍只有 `release.yml` + `run_tests.yml`。
+- **依赖**：保留 fork 的 `rusqlite = "0.32"`（SQLite 预览）与 `notify` 的 `path = "third_party/notify/notify"` vendor；`lsp-types` 取上游新 rev `82d7fc66ebdfabcfeb26ba16bbed9f3d26211fc3`（旧 rev 缺 dynamic registrations API）。
+- **版本号**：`crates/zed/Cargo.toml` 取 fork 侧 `1.24.2`（上游预升到 1.27.0）。
+- **`markdown`**：上游引入 `defer_parsing` 并把 `scroll_to_heading_when_parsed` 前置到 `scroll_to_heading` 之前。合并结果保留一个函数（含 `defer_parsing` 判定），并按上游恢复 `reset()` 里「源未变时重新应用 pending 滚动」与 `parse()` 空源时清 `pending_heading_scroll`/`pending_autoscroll`——这两段是 fork 早期手工 backport 与上游正式实现并存时被 merge 丢弃的上游逻辑。
+- **`thread_view`**：上游把子智能体卡片重构为 `SubagentCardState`（新文件 `subagent_card.rs`），标题与状态文案随之迁移。合并结果取上游结构，汉化键迁到 `subagent_card.rs` 的 `title()`；停止按钮改用上游 `this.cancel_thread(&thread, cx)`；思考模式开关的上游新增「该强度下不可关闭」分支补新键 `agent_ui.thread_view.thinking_always_on_at_effort`。
+- **`git_panel`**：上游把「丢弃/移入回收站」确认框按 tracked/untracked 分流，消息区分 `changes` / `unstaged changes`。既有键 `discard_changes_confirm` 改为带 `%{changes}` 插值，新增 `git_ui.git_panel.changes`、`unstaged_changes`、`discard_changes_to_count_files`、`trash_untracked_count_files`、`file`、`files`；`restore_title` 的判定变量由 `all_created` 改为上游的 `all_trashed`。
+- **`security_modal`**：上游把路径处理改成 `PathStyle` 版并新增 `home_dir` 异步任务。该文件 fork 侧改动只是汉化与格式，直接取上游整文件再补回 11 处 `t!`。
+- **`fs_watcher`**：上游把 `PathRegistrationState.has_os_watcher` 换成 `coverage: Coverage::Watched { covered } | CoveredBy(ancestor)`，并从 `WatcherRegistrationState` 去掉 `path`。fork 的 `check_watch_health` 改按新模型判定孤儿：只有 `Coverage::Watched` 的注册才可能被后端静默撤销，路径改从 `path_state.path` 取。
+- **`acp_thread`**：上游把 `AcpThreadEvent::TokenUsageUpdated` 改为携带 `OutputTokensUpdate`，并给 `apply_update` 加 `metadata` 形参。fork 的「外部智能体自动压缩」钩子改为在 `TokenUsageUpdated(OutputTokensUpdate::Unchanged)` 之后调用；`upsert_context_compaction_update_inner` 保留 fork 的 `drop_compacted_entries` 调用（改用上游的 `iter()` + 下标取法，以免与 `&mut self` 借用冲突）。
+- **`settings_ui`**：`on_new_window` 描述取上游新文案（en/zh-CN 模板同步改），新增上游的 `Display P3` 设置项（数组长度 2→3）并补两个新键。
+- **Cargo.lock**：四段冲突（`cocoa-foundation 0.2.0` + `codepage`、`zed_i18n`/`zed_credentials_provider`、`project_panel`/`release_channel`+`remote`+`remote_server`、`zed` 版本）取并集后交给 `cargo metadata` 重新裁剪。
+
+### 汉化补齐
+
+上游新增界面文案 11 处，补 en/zh-CN 键：`sidebar.thread.stop_generation_activity_unconfirmed`、`agent_ui.thread_view.stop_generation_activity_unconfirmed`、`agent_ui.thread_view.activity_unconfirmed(_tooltip)`、`activity_unknown(_tooltip)`、`thinking_always_on_at_effort`、`agent_ui.conversation_view.copy_saved_input(_tooltip)`、`discard_saved_submissions(_tooltip)`、`editor.debugger_hover.copy_value`/`copy_as_expression`/`add_to_watch`/`value_actions`/`session_not_paused`、`settings_ui.page_data.display_p3_title`/`_description`、`git_ui.git_panel.*` 六个新键与三个改模板的键。
+
+### 静默丢失审计
+
+用三方符号比对脚本（上游有、合并结果无、fork 合并前也没有的 `fn` 名）扫本次改动的 rs 文件，命中 6 处，全部是既有的 fork 改名/等价实现（`invalidate_mermaid_caches`→`invalidate_embedded_diagrams_caches`、`apply_heading_style`/`heading_level_style`→`heading_text_style`、`build_removal_prompt`→内联删除确认），无新增丢失。
+
+### 编译失败链
+
+1. **E0609 ×2（`fs` crate）**：`check_watch_health` 读 `path_state.has_os_watcher` 与 `registration.path`，上游已删除这两个字段（见上文 fs_watcher 决策）。
+2. **clippy::unnecessary_filter_map（`fs` crate）**：孤儿收集改用 `path_state.path` 后 `filter_map` 恒返回 `Some`，改为 `.map()`。
+3. **E0252 + unused import（`agent_ui` crate）**：上游已自动合入 `use crate::model_search;`，手工再补一次导致重复导入，删掉手工补的那行。
+4. **单测失败 `fs_watcher::tests::watcher_retains_scheduler_until_teardown`**：上游给 `OsWatcher` 加了 `_executor` 字段并新增用例，要求 watcher 释放后调度器随之释放。fork 的健康检查线程用 `Arc` 强引用持有 watcher（且线程永不退出），把 `OsWatcher` 与其 `BackgroundExecutor` 一直钉住。解法=健康检查线程改用 `Weak<OsWatcher>`，每次 tick `upgrade()`，失败即退出线程。
+
 ## 涉及模块
 
 - `crates/settings_ui`、`crates/git_ui`、`crates/markdown`、`crates/markdown_preview`、`crates/acp_thread`、`crates/agent_ui`、`crates/tabular_data_preview`、`crates/extensions_ui`、`crates/gpui_*`、`.github/workflows/`。

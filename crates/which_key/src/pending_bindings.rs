@@ -331,7 +331,8 @@ mod tests {
             .split_whitespace()
             .map(|keystroke| {
                 KeybindingKeystroke::from_keystroke(
-                    Keystroke::parse(keystroke).expect("valid test keystroke"),
+                    Keystroke::parse_with_os(keystroke, gpui::OperatingSystem::Mac)
+                        .expect("valid test keystroke"),
                 )
             })
             .collect()
@@ -356,7 +357,7 @@ mod tests {
         binding
             .keystrokes
             .iter()
-            .map(|keystroke| keystroke.inner().unparse())
+            .map(|keystroke| keystroke.inner().unparse(gpui::OperatingSystem::Mac))
             .collect()
     }
 
@@ -484,7 +485,7 @@ mod tests {
                     ),
                     true,
                     None,
-                    cx.keyboard_mapper().as_ref(),
+                    cx,
                 )
                 .expect("user binding with key equivalents")
                 .with_meta(KeybindSource::User.meta()),

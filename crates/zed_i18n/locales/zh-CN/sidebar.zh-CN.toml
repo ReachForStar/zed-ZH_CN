@@ -28,6 +28,7 @@ sidebar.project_menu.remove = "移除"
 
 sidebar.thread.rename_tooltip = "重命名对话"
 sidebar.thread.stop_generation = "停止生成"
+sidebar.thread.stop_generation_activity_unconfirmed = "请求停止（活动未确认）"
 sidebar.thread.discard_draft = "丢弃草稿"
 sidebar.thread.archive = "归档对话"
 sidebar.thread.rename_title = "重命名标题"

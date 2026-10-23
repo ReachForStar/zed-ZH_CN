@@ -27,14 +27,22 @@ status: active
 - **类型分歧：运行期本地化的 `SharedString` × 上游全静态字面量**。fork 把设置 UI 的标题/描述（`SettingItem.title/description`、`add_basic_renderer` 形参）与部分设置项类型改成运行期本地化的 `SharedString`；上游仍是 `&'static str`。取上游新代码后，裸字面量必须补 `.into()`，上游新增测试里 `HashMap::<&'static str, _>` 之类的键要改 `String`，否则报 E0308 / E0521（见 [2026-10 合并记录](../queries/upstream-merge-2026-10.md)）。
 - **`t!` 返回类型分歧**：带参数返回 `String`、不带参数返回 `Cow<'_, str>`（fork 的「t! 返回 Cow 消除翻译分配」提交）。同一 `if`/`else` 或 `match` 分支混用两者即 E0308，需显式统一类型；反过来给 `String` 再加 `.to_string()` 会触发 `clippy::redundant_clone`（`-D warnings` 下编译失败）。
 - **本地校验要过行尾关**：`cargo fmt --all` 重排过的文件被 rustfmt 写成 LF，提交前须把本次编辑过的文件还原 CRLF（工作区约定 CRLF、Git 存储 LF）；CRLF 工作区里 `script/check-todos`、`script/check-keymaps` 直接执行会因 `#!/usr/bin/env bash\r` 失败，用 `git show :script/<名> > tmp/<名>.sh` 取索引中的 LF 版本再跑。
+- **上游重构内部状态模型 × fork 特性直读旧字段**：上游把 watcher 的 `PathRegistrationState.has_os_watcher`（布尔）换成 `coverage: Coverage::Watched { covered } | CoveredBy(ancestor)`，并从 `WatcherRegistrationState` 去掉 `path` 字段。fork 的 `check_watch_health` 直接读这些字段 → E0609。解法=按新模型重写判定：只有 `Coverage::Watched` 的注册才可能有自己的后端 watch 被静默撤销；路径改从 `path_state.path` 取。取上游新结构后要重新核对所有「读内部字段」的 fork 特性。
+- **上游把文案迁到新模块 × 汉化点跟着迁**：上游把子智能体卡片的标题与状态文案从 `agent_ui/conversation_view/thread_view.rs` 迁到新文件 `agent_ui/conversation_view/subagent_card.rs`（`SubagentCardState::title`）。汉化键要跟着迁到新文件，否则新界面回落英文，且旧文件里的键会变成死键。
+- **上游事件枚举改签名 × fork 钩子跟着改**：`AcpThreadEvent::TokenUsageUpdated` 变为携带 `OutputTokensUpdate`（`Unchanged` / `LegacyAdd`）。fork 的「外部智能体自动压缩」钩子挂在 `update_usage` 末尾，需改成 `TokenUsageUpdated(OutputTokensUpdate::Unchanged)` 后再调用钩子。
+- **上游重排确认框文案 × 既有汉化键的占位符要跟着改**：上游把 git 面板「丢弃/移入回收站」确认框按 tracked/untracked 分流，并区分 `changes` / `unstaged changes`。fork 原本的 `discard_changes_confirm` 是固定文案，需改为带 `%{changes}` 插值，并新增 `discard_changes_to_count_files`、`trash_untracked_count_files` 等键；en 与 zh-CN 两侧模板同步改。
+- **上游 lock 文件删条目 ≠ 本地要保留**：合并 `Cargo.lock` 冲突时把两侧条目取并集，交给 `cargo metadata` 重新裁剪（会删掉已无引用的 `cocoa-foundation 0.2.0` 之类条目），不要手工判断条目去留。
+- **上游 git 依赖 rev 前进**：上游把 `lsp-types` rev 从 `f1783e63a7f4…` 前进到 `82d7fc66ebdf…`（dynamic registrations 需要新 API），fork 必须跟进新 rev，不能保留旧 rev，否则编译期缺 API。
+- **fork 早期手工 backport × 上游后来正式实现 → 合并时静默丢失**：fork 曾手工 backport `markdown` 的 `pending_heading_scroll` 机制（提交 `fb319c54010`），上游后来正式实现并加入 `defer_parsing`。两套实现并存时 merge 把上游在 `reset()`/`parse()` 里的清理逻辑判成冲突并丢弃，fork HEAD 因此长期缺上游的 pending 清理。本轮按上游恢复（`reset()` 重新应用 pending 滚动、`parse()` 空源时清 pending）。
+- **合并两侧新增 `use` 要按字母序**：rustfmt 默认开启 `reorder_imports`，两侧各加一个 `use` 时直接并排会触发 `cargo fmt --check` 失败；按字母序放置（如 `use ui_input::InputField;` → `use util::ResultExt;` → `use zed_i18n::t;`）。
 
 ## 特性保留清单（每次合并后逐项核对）
 
 - `crates/zed_i18n/locales/zh-CN/*` 汉化文件齐全。
 - `crates/tabular_data_preview/*`（表格/SQLite 预览）；表内联设置面板的挂载点是上游 `TableView`，勿回落到 `TabularDataPreviewPane`。
 - `crates/settings_ui/*` 的设置项标题/描述为 `SharedString`（运行期本地化）；取上游新代码后补 `.into()`，上游新增设置项要与 `[SettingsPageItem; N]` 数组长度、`terminal_panel_section`/`git_hunks_section` 等分节数组同步。
-- `crates/fs/src/fs_watcher.rs` 的 `check_watch_health`（watch 健康检查）——含 `WatchBackend::watched_paths`；上游新增的 test 后端需补实现（见要点）。
-- `.github/workflows/` 仅 `release.yml` + `run_tests.yml`（精简 CI，禁止 `cargo xtask workflows` 覆盖）。
+- `crates/fs/src/fs_watcher.rs` 的 `check_watch_health`（watch 健康检查）——含 `WatchBackend::watched_paths`；上游新增的 test 后端需补实现（见要点）；上游重构 `PathRegistrationState` 后要按新 `coverage` 模型重写孤儿判定；健康检查线程用 `Weak<OsWatcher>` 持有 watcher，否则会把 `OsWatcher` 及其 `BackgroundExecutor` 永久钉住（上游 `watcher_retains_scheduler_until_teardown` 用例会失败）。
+- `.github/workflows/` 仅 `release.yml` + `run_tests.yml`（精简 CI，禁止 `cargo xtask workflows` 覆盖）；上游删除 workflow 文件与 fork 的删除产生 delete/modify 冲突时取删除。
 - `README.md` 顶部 `> [!IMPORTANT]` 与 `> Remove this line ...` 两行完好（.rules 硬规则，勿删）。
 
 ## 关联页面
