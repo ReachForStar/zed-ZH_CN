@@ -3,7 +3,7 @@ title: ACP 面板自动压缩上下文不生效：外部智能体缺客户端触
 type: query
 tags: [acp, agent, auto-compact, 上下文压缩]
 created: 2026-09-26
-updated: 2026-09-28
+updated: 2026-10-24
 status: active
 ---
 
@@ -84,6 +84,26 @@ ai-acp 面板（基于 `AcpThread` 的智能体面板）中，`agent.auto_compac
 Zed 端无从得知压缩完成、条目不会释放；此类智能体需在 compact 命令回合结束时
 由 Zed 侧自行丢弃（未实现，待观察实际智能体行为）。
 
+## 与上游新增测试的语义分歧（2026-10-24）
+
+二次合并带入的上游测试与上面的回收行为直接冲突，两个用例失败。逐个判定后
+按「保留内存回收」处理，其中一处暴露了特性自身的缺陷：
+
+- **`v2_compaction_sdk_chunks_snapshots_and_historical_targeting`（特性缺陷，已修）**：
+  测试先后建了两个压缩行（`first` 进行中、`first-extra` 完成）。`first-extra` 完成时，
+  原实现把「上一次 Completed 之后」的区间整体丢弃，跨过了仍在 `InProgress` 的 `first`，
+  后续 chunk 又把 `first` 重建成新行，历史顺序错乱。修正：丢弃边界同时把
+  `InProgress` 当作屏障（它还没有摘要，丢弃它等于抹掉进行中的记录）。
+- **`test_load_session_replays_notifications_sent_before_response`（测试期望，已改）**：
+  agent 回放 user + assistant + 一条 `Completed` 压缩。回放与实时收到同一 update 走同一条
+  路径，被摘要覆盖的两条按设计释放，最终只剩压缩行。测试期望从三条改为一条，
+  并在断言消息里说明原因。
+
+取舍理由：fork 的 `drop_compacted_entries` 是为修长会话 50G 内存驻留而加的特性
+（见上），上游测试是按「不删条目」的前提写的；改测试语义代价小，改特性等于放弃内存回收。
+两处改动后 `cargo test -p acp_thread --lib`（304 项）与 `cargo test -p agent_servers --lib`
+（181 项）全绿。
+
 ## 附带修复
 
 同批发现 merge 遗留：上游新增的两处 test-support 后端未实现 fork `WatchBackend`
@@ -99,3 +119,5 @@ trait 新增的 `watched_paths`（fs_watcher 健康检查特性），`cargo test
 - 判断"自动压缩不生效"先分清连接类型：原生看 `Thread` 门槛（模型 max_input_tokens
   是否 >= 80k，参见上游 issue #64256 的 llama.cpp context_window 未保存问题）；
   外部智能体看本页的客户端触发是否命中（智能体须公布 compact/compress 命令并上报 UsageUpdate）。
+- 改 `drop_compacted_entries` 的丢弃区间时，`InProgress` 压缩也是屏障；否则后续
+  chunk/update 会把被丢掉的进行中记录重建成新行，同一用例会在历史顺序上反复出错。

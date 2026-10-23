@@ -5726,14 +5726,18 @@ impl AcpThread {
     /// 驻留内存；摘要条目本身保留，作为模型保留内容的记录。
     fn drop_compacted_entries(&mut self, compaction_ix: usize, cx: &mut Context<Self>) {
         // 每次完成的压缩覆盖上一次完成压缩之后的全部条目；失败或取消的压缩
-        // 条目只是会话记录标记（会被新摘要取代），不是分段边界。
+        // 条目只是会话记录标记（会被新摘要取代），不是分段边界。进行中的压缩
+        // 是边界：它还没有摘要，丢弃它会让后续 chunk/update 重建出重排的历史。
         let start = self.entries[..compaction_ix]
             .iter()
             .enumerate()
             .rev()
             .find_map(|(ix, entry)| match entry {
                 AgentThreadEntry::ContextCompaction(compaction)
-                    if compaction.status == ContextCompactionStatus::Completed =>
+                    if matches!(
+                        compaction.status,
+                        ContextCompactionStatus::Completed | ContextCompactionStatus::InProgress
+                    ) =>
                 {
                     Some(ix + 1)
                 }

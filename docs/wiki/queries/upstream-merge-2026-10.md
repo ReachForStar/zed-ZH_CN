@@ -114,7 +114,7 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 - **汉化补齐 6 键**（`agent_ui.thread_view`）：`session_message_to`（"To"）、`session_message_from`（"From"）、`session_message_between_sessions`（"Message between sessions"）、`open_session`（"Open Session"）、`unavailable_session`（"Unavailable Session"）、`main_agent`（"Main Agent"）；en/zh-CN 双侧同补。
 - **顺带补上一处漏译**：`subagent_label` 的兜底字面量 `"Subagent"` 改为 `t!("agent_ui.thread_view.subagent")`（该键早已存在于 locale，只是此前没接上）。
 - **门禁**：`cargo fmt --all -- --check`、全量 `cargo clippy --workspace --all-targets -- --deny warnings`、typos、check-todos/check-keymaps、`check-missing-keys.py`（3914 引用键 / 3972 键，0 问题）全过；`agent_ui`/`acp_thread`/`open_ai`/`language_models`/`x_ai_subscribed` 相关测试通过。
-- **既有失败（非本次引入）**：`agent_servers` 的 `test_load_session_replays_notifications_sent_before_response` 与 `v2_compaction_sdk_chunks_snapshots_and_historical_targeting` 失败。回退到合并前 HEAD（`ed4d8b85c3`）复现同样失败，属二次合并带入的上游 2026-10-14 测试（`3e145061d86`）与 fork 的 `drop_compacted_entries` 内存回收特性之间的语义分歧：测试期望压缩完成后旧条目仍在，fork 特性按设计把它们丢弃。待用户决定取舍，见 [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)。
+- **既有失败（非本次引入，2026-10-24 已处理）**：`agent_servers` 的 `test_load_session_replays_notifications_sent_before_response` 与 `v2_compaction_sdk_chunks_snapshots_and_historical_targeting` 失败。回退到合并前 HEAD（`ed4d8b85c3`）复现同样失败，属二次合并带入的上游 2026-10-14 测试（`3e145061d86`）与 fork 的 `drop_compacted_entries` 内存回收特性之间的语义分歧。按「保留内存回收」处理：前者改测试期望为只剩压缩行（回放与实时同一路径）；后者是特性缺陷（丢弃区间跨越了仍在 `InProgress` 的压缩行），修正为把 `InProgress` 也当屏障。详见 [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)。
 
 ## 涉及模块
 

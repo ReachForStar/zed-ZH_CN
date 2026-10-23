@@ -8835,8 +8835,9 @@ exit 7
 
         assert_eq!(
             entries,
-            vec!["user", "assistant", "compaction"],
-            "replayed notifications should be applied to the thread"
+            vec!["compaction"],
+            "replayed notifications should be applied to the thread; the replay's completed \
+             compaction frees the entries it summarizes, as the same update does live"
         );
     }
 
