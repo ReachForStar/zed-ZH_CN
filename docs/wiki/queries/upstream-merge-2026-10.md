@@ -52,7 +52,7 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 
 1. **`script/*` 在 CRLF 工作区无法直接执行**：本机工作区是 CRLF，`#!/usr/bin/env bash\r` 会报 `"bash\r": 没有那个文件或目录`；CI 在 Linux 上检出为 LF 所以不受影响。本地用 `git show :script/check-todos > tmp/check-todos.sh` 取索引中的 LF 版本再 `bash` 运行。
 2. **typos 无本地二进制**：CI 用 `crate-ci/typos` action（固定提交 `2d0ce569feab`，对应版本 1.40.0）。本地从 release 页下载 `typos-v1.40.0-x86_64-unknown-linux-musl` 解压到 `tmp/typos/` 后按 `--config .config/typos.toml` 运行。
-3. **rustfmt 会改写行尾**：`cargo fmt --all` 重排过的文件被写成 LF，提交前需把本次编辑过的文件统一回 CRLF（工作区约定 CRLF、Git 存储 LF），否则 `git add` 报「LF 将被 CRLF 替换」并留下行尾混用。
+3. **rustfmt 会改写行尾**：`cargo fmt --all` 重排过的文件被写成 LF，提交前跑 `python3 scripts/normalize-crlf.py` 统一回 CRLF（工作区约定 CRLF、Git 存储 LF），否则 `git add` 报「LF 将被 CRLF 替换」并留下行尾混用。无参数只看 `git diff HEAD` 的 `.rs`；要给目录/其它扩展名就传路径。
 
 ## 合并后逐 hunk 丢失审计（2026-10-16）
 

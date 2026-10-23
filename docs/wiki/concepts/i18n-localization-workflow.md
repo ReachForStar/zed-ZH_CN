@@ -30,7 +30,7 @@ status: active
 2. **写计划表**：`tmp/i18n-in/<批次>.tsv`，每行 `相对路径:行号<TAB>key<TAB>译文[<TAB>次数[<TAB>行限定]]`；`last` 表示取该行最后一个字面量，`<行号>` 表示只替换该行，`allbut:<行号>` 表示排除该行。用 `scripts/i18n/i18n-mkplan.py` 从源码取准确字面量并生成计划表。
 3. **按 crate 拆表并应用**：把批次表按 `crates/<crate>/` 拆成 `tmp/i18n-plan/<crate>.tsv`，再 `python3 scripts/i18n/i18n-apply.py <crate>`。脚本会校验字面量出现次数、替换为 `t!`、补 `use zed_i18n::t;`、给 crate 补 `zed_i18n` 依赖、写两侧 locale 并回读校验。次数不符时整体拒绝写入并一次性报出全部不符项。
 4. **修类型**：按下文「类型适配」逐处修编译错误。
-5. **校验并提交**：`cargo fmt --all` → 还原 CRLF → `cargo clippy --workspace --all-targets -- --deny warnings`（与 CI 同款门禁）→ 只暂存具体文件提交。
+5. **校验并提交**：`cargo fmt --all` → `python3 scripts/normalize-crlf.py` 还原 CRLF → `cargo clippy --workspace --all-targets -- --deny warnings`（与 CI 同款门禁）→ 只暂存具体文件提交。
 
 ## 类型适配
 
