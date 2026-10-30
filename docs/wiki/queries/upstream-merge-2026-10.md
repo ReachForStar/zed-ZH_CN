@@ -123,7 +123,7 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 - **上游内容**：`gpui` 多项行为改造（执行器时钟驱动动画、arena 包 `Rc`、UAX #14 断行、继承透明度重绘）、git 面板新增 Refs 列与自动拉取（5a534d7b5d）、Codeberg PR 支持、ACP SDK 3.6、`livekit-rust-sdks` 升级 zip 9.1（`7f9a39a9c0`）、子智能体卡片重构、移除 agent checkpoints（`eee7501970`）、`http_client` 统一资产下载（删除 `github`/`github_download` 模块）。
 - **workflow 冲突**：`release_nightly.yml`、`run_bundling.yml` 是 delete/modify，取删除；`release.yml` 取 fork 精简版。
 - **Cargo.toml**：`livekit`/`libwebrtc`/`webrtc-sys` 跟进上游新 rev（`fbda05eb27`，zip 9.1 修三项 advisory）；`notify`/`notify-types` 仍是 `third_party/notify` 路径版（上游 notify rev 未变，无需重新同步 vendor）。
-- **Cargo.lock**：取上游后交 cargo 重新裁剪；`name = "zed"` 的版本保持 fork 侧 `1.25.3`（上游 `1.28.0`）。
+- **Cargo.lock**：取上游后交 cargo 重新裁剪；`name = "zed"` 的版本当时保持 fork 侧 `1.25.3`（上游 `1.28.0`），随后由 `78356823b6` 改为跟随上游 `1.28.0`，见 [fork 发布 release 的流程与版本号策略](../concepts/fork-release-publishing.md)。
 - **上游删模块 × fork 引用点**：`http_client::github` 随统一资产下载被删，fork 的 `auto_update`（自建 GitHub Releases 更新通道）改用 `github_releases` crate，并给 `auto_update/Cargo.toml` 加依赖；`github::` 前缀整体换成 `github_releases::`（不用别名导入）。
 - **ACP SDK 3.6 字段改访问器**：`AvailableCommand.name` 变成 `name()`，fork 的自动压缩钩子（按 `/compact`、`/compress` 找命令）跟着改。
 - **上游整块移除功能**：agent checkpoints 被上游整体删除（快照拖慢每条消息发送，大仓库上 Windows 可卡死），`render_recoverable_submissions` 旁的 Restore Checkpoint 按钮取删除，随之删掉 `agent_ui.restore_checkpoint` 两个死键。
