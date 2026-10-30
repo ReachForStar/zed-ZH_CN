@@ -199,8 +199,9 @@ jobs:
   bundle_macos_aarch64:
     name: 构建 macOS aarch64
     needs: verify_version
-    # macos-14 为 Apple Silicon（aarch64）runner，自带 Xcode 与命令行工具
-    runs-on: macos-14
+    # macos-26 为 Apple Silicon（aarch64）runner，默认 Xcode 26（含 macOS 26 SDK）；
+    # 上游已要求 macOS 12 与 SDK 26，macos-14 的 Xcode 16 只带 SDK 15，打包会失败。
+    runs-on: macos-26
     timeout-minutes: 360
     env:
       # 公共 runner 磁盘有限：去掉 release debuginfo（dSYM），避免构建中途磁盘耗尽
@@ -212,35 +213,22 @@ jobs:
       - name: 设置发布通道为 stable
         run: echo stable > crates/zed/RELEASE_CHANNEL
 
-      # Xcode 15.4 自带 libc++ 18 存在 pointer_traits SFINAE 回归：
-      # webrtc-sys 的 cxx 桥接头在 C++20 下无条件 static_assert
-      # std::ranges::contiguous_range<rust::Slice>，15.4 下硬错误编译失败
-      # （cxx 1.0.187 亦如此）。选取除 15.4 外最高可用版本。
-      # 注意：镜像中 Xcode_x.y.0.app 是与 x.y.app 并存的不完整副本（缺 metal 等
-      # 工具链），选版本时若存在同级的 x.y.app 则优先使用不带 .0 的完整版。
-      - name: 选择 Xcode（跳过不兼容的 15.4）
+      # 上游要求 macOS SDK 26 才能打包（bundle-mac 会校验 SDKROOT），显式检查而不是
+      # 假定 runner 自带：SDK 不是 26 及以上时直接失败，提示换用 macos-26。
+      - name: 校验 Xcode 与 macOS SDK 版本
         run: |
-          ls -d /Applications/Xcode*.app
-          ver=$(ls -d /Applications/Xcode_*.app 2>/dev/null \
-            | sed -E 's|.*/Xcode_([0-9.]+)\.app|\1|' \
-            | grep -vE '^15\.4' \
-            | sort -t . -k 1,1n -k 2,2n -k 3,3n | tail -1)
-          # 选中形如 x.y.0 时优先切到同版本 x.y 的完整目录
-          case "$ver" in
-            *.*.0)
-              short="${ver%.0}"
-              if [ -d "/Applications/Xcode_${short}.app" ]; then ver="$short"; fi
-              ;;
-          esac
-          echo "选用 Xcode: $ver"
-          if [ -n "$ver" ]; then
-            sudo xcode-select -s "/Applications/Xcode_${ver}.app/Contents/Developer"
-          fi
           xcodebuild -version
+          sdk_version="$(xcrun --sdk macosx --show-sdk-version)"
+          sdk_path="$(xcrun --sdk macosx --show-sdk-path)"
+          echo "macOS SDK: ${sdk_version} (${sdk_path})"
+          if [ "${sdk_version%%.*}" -lt 26 ]; then
+            echo "需要 macOS SDK 26 或更新，当前为 ${sdk_version}；请改用自带 Xcode 26 的 runner（macos-26）。" >&2
+            exit 1
+          fi
 
-      # 公共 runner 磁盘有限：仅保留当前选中的完整 Xcode（选择步骤已归一化到
-      # 不带 .0 的完整版），删除其余占位副本与模拟器释放空间。删除逻辑以
-      # xcode-select 输出为准，保留的工具链含 metal，不会破坏后续编译。
+      # 公共 runner 磁盘有限：仅保留当前 Xcode（macos-26 镜像带 26.0～26.6 多份副本，
+      # 每份十 GB 量级），删除其余副本与模拟器释放空间。删除逻辑以 xcode-select
+      # 输出为准，保留的工具链含 metal，不会破坏后续编译。
       - name: 释放磁盘空间（仅保留当前 Xcode）
         run: |
           current="$(xcode-select -p | sed 's|/Contents/Developer$||')"
