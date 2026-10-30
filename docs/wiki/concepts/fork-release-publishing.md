@@ -28,7 +28,7 @@ status: active
 
 - 2026-09-26 发布 v1.21.0：标签推送触发 release（三平台构建）与 run_tests；run_tests 的**代码风格检查 job 通过**，确认 typos 配置路径修复生效（此前该 job 均在拼写检查一步 1 分钟内失败，见 [fork-upstream-sync](fork-upstream-sync.md)）。
 - 标签指向的提交随后在 Clippy 阶段连续暴露三层失败（typos 已修 → extensions_ui dead_code → acp_thread redundant_clone），全绿后需删除旧标签、在修复提交上重打 v1.21.0 再触发正式构建；细节见 [run_tests Clippy 失败链](../queries/run-tests-clippy-failure-chain.md)。
-- 2026-10-24 发布 v1.25.3（上游 main 开发号为 1.27.0，取上游 stable 最新版）：发版前补齐了此前的遗留——`script/lib/workspace.ps1` 的 `cargo metadata` 补上 `--format-version=1`（实测去掉该参数会打 `please specify --format-version` 告警，补上后无输出）。
+- 2026-10-24 准备 v1.25.3（上游 main 开发号为 1.27.0，取上游 stable 最新版）：版本号、`README`、`RELEASE_NOTES.md` 与 `script/lib/workspace.ps1` 的 `cargo metadata --format-version=1` 遗留一并写好，**尚未打标签发布**（GitHub Releases 最新仍是 v1.24.2），准备提交为 `110f5c907a`，`v1.25.3` 需在合并上游后另行打标签触发。
 - 残留验证：`script/get-crate-version` 在 CRLF 工作区无法直接执行（`#!/usr/bin/env bash\r`），本地核验版本号用 `git show :script/get-crate-version > tmp/x.sh && bash tmp/x.sh zed`，或直接读 `cargo metadata --no-deps --format-version=1`。
 
 ## 关联页面

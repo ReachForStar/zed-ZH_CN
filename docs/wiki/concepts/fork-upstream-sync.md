@@ -3,7 +3,7 @@ title: 汉化 fork 同步 upstream 的合并模式与特性保留清单
 type: concept
 tags: [fork, upstream, merge, i18n, workflow]
 created: 2026-09-26
-updated: 2026-10-23
+updated: 2026-10-30
 status: active
 ---
 
@@ -35,6 +35,13 @@ status: active
 - **上游 git 依赖 rev 前进**：上游把 `lsp-types` rev 从 `f1783e63a7f4…` 前进到 `82d7fc66ebdf…`（dynamic registrations 需要新 API），fork 必须跟进新 rev，不能保留旧 rev，否则编译期缺 API。
 - **fork 早期手工 backport × 上游后来正式实现 → 合并时静默丢失**：fork 曾手工 backport `markdown` 的 `pending_heading_scroll` 机制（提交 `fb319c54010`），上游后来正式实现并加入 `defer_parsing`。两套实现并存时 merge 把上游在 `reset()`/`parse()` 里的清理逻辑判成冲突并丢弃，fork HEAD 因此长期缺上游的 pending 清理。本轮按上游恢复（`reset()` 重新应用 pending 滚动、`parse()` 空源时清 pending）。
 - **合并两侧新增 `use` 要按字母序**：rustfmt 默认开启 `reorder_imports`，两侧各加一个 `use` 时直接并排会触发 `cargo fmt --check` 失败；按字母序放置（如 `use ui_input::InputField;` → `use util::ResultExt;` → `use zed_i18n::t;`）。
+- **上游删模块 × fork 依赖点**：`http_client` 删除 `github`/`github_download`（统一资产下载）后，fork 的 `auto_update` 自建 GitHub Releases 通道必须改用 `github_releases` crate（`latest_github_release`、`get_release_by_tag_name`、`GithubReleaseAsset` 同名同签名），并补 `Cargo.toml` 依赖；用 `github_releases::` 全路径，别用别名导入。
+- **上游把 struct 字段改成访问器**：ACP SDK 3.6 把 `AvailableCommand.name` 变成 `name()`，直接读字段报 `E0615`；fork 里凡是读 ACP schema 字段的钩子（如自动压缩找 `/compact` 命令）升级依赖后要跟着改。
+- **上游整块删除功能 × fork 的汉化键**：agent checkpoints 被上游整体移除（`eee7501970`），冲突里 Restore Checkpoint 按钮取删除即可；随后要清掉只剩 locale 里引用的死键（`agent_ui.restore_checkpoint*`），否则永久残留。
+- **冲突块跨越多个函数时逐个比对符号**：`subagent_card.rs` 的冲突块里夹着 `fullscreen_entry`，按冲突标记裁剪会把它一起删掉，只有编译报 `no method named ...` 才暴露。合并后对冲突文件做「上游 / fork HEAD / 合并结果」的函数名集合比对。
+- **自己写解析块时容易多带一个闭合分隔符**：`title_bar.rs`、`thread_view.rs` 各出现重复 `};`，报 `unexpected closing delimiter`；`rustfmt --edition 2024 --check <file>` 会直接给出列号，比 `cargo check` 的报错更好定位。
+- **本机 GCC 11 编 webrtc-sys 需 `-fpermissive`**：新 livekit rev 强制重编 C++ 源码，`virtual const Network* Network() const` 报 `changes meaning` 错误；用 `CXXFLAGS=-fpermissive` 构建（不要改仓库文件）。
+- **测试链接缺 `libX11-xcb.so`**：系统只装了 `libX11-xcb.so.1`，`cargo test` 链接 `scap` 时 `-lX11-xcb` 失败；用 `tmp/libshim/libX11-xcb.so → /usr/lib/x86_64-linux-gnu/libX11-xcb.so.1` 加 `LIBRARY_PATH` 即可，不需要改动仓库或安装系统包。
 - **上游新增测试与 fork 特性语义分歧 → 合并后测试失败**：二次合并带入的上游 `agent_servers` 测试（`test_load_session_replays_notifications_sent_before_response`、`v2_compaction_sdk_chunks_snapshots_and_historical_targeting`）期望上下文压缩完成后旧条目仍在，而 fork 的 `drop_compacted_entries`（内存回收特性）在 `Completed` 时丢弃被压缩区间，两者直接冲突。判定方法：回退到合并前 HEAD 复现同样失败 → 非本次合并引入；再 `git merge-base --is-ancestor <测试提交> <上次合并结果>` 定位带入轮次。此类失败不阻塞合并，但每次合并后跑 `cargo test -p agent_servers` 可见。
 
 ## 特性保留清单（每次合并后逐项核对）

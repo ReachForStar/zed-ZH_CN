@@ -3,7 +3,7 @@ title: 2026-10 合并上游 main：冲突消解决策与编译失败链
 type: query
 tags: [fork, upstream, merge, clippy, i18n]
 created: 2026-10-16
-updated: 2026-10-23
+updated: 2026-10-30
 status: active
 ---
 
@@ -115,6 +115,26 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 - **顺带补上一处漏译**：`subagent_label` 的兜底字面量 `"Subagent"` 改为 `t!("agent_ui.thread_view.subagent")`（该键早已存在于 locale，只是此前没接上）。
 - **门禁**：`cargo fmt --all -- --check`、全量 `cargo clippy --workspace --all-targets -- --deny warnings`、typos、check-todos/check-keymaps、`check-missing-keys.py`（3914 引用键 / 3972 键，0 问题）全过；`agent_ui`/`acp_thread`/`open_ai`/`language_models`/`x_ai_subscribed` 相关测试通过。
 - **既有失败（非本次引入，2026-10-24 已处理）**：`agent_servers` 的 `test_load_session_replays_notifications_sent_before_response` 与 `v2_compaction_sdk_chunks_snapshots_and_historical_targeting` 失败。回退到合并前 HEAD（`ed4d8b85c3`）复现同样失败，属二次合并带入的上游 2026-10-14 测试（`3e145061d86`）与 fork 的 `drop_compacted_entries` 内存回收特性之间的语义分歧。按「保留内存回收」处理：前者改测试期望为只剩压缩行（回放与实时同一路径）；后者是特性缺陷（丢弃区间跨越了仍在 `InProgress` 的压缩行），修正为把 `InProgress` 也当屏障。详见 [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)。
+
+## 五次合并（2026-10-30，`422b53cff8`）
+
+上游自上次合并推进 98 个提交（314 文件），合并提交 `1900b573e8`，11 处冲突。
+
+- **上游内容**：`gpui` 多项行为改造（执行器时钟驱动动画、arena 包 `Rc`、UAX #14 断行、继承透明度重绘）、git 面板新增 Refs 列与自动拉取（5a534d7b5d）、Codeberg PR 支持、ACP SDK 3.6、`livekit-rust-sdks` 升级 zip 9.1（`7f9a39a9c0`）、子智能体卡片重构、移除 agent checkpoints（`eee7501970`）、`http_client` 统一资产下载（删除 `github`/`github_download` 模块）。
+- **workflow 冲突**：`release_nightly.yml`、`run_bundling.yml` 是 delete/modify，取删除；`release.yml` 取 fork 精简版。
+- **Cargo.toml**：`livekit`/`libwebrtc`/`webrtc-sys` 跟进上游新 rev（`fbda05eb27`，zip 9.1 修三项 advisory）；`notify`/`notify-types` 仍是 `third_party/notify` 路径版（上游 notify rev 未变，无需重新同步 vendor）。
+- **Cargo.lock**：取上游后交 cargo 重新裁剪；`name = "zed"` 的版本保持 fork 侧 `1.25.3`（上游 `1.28.0`）。
+- **上游删模块 × fork 引用点**：`http_client::github` 随统一资产下载被删，fork 的 `auto_update`（自建 GitHub Releases 更新通道）改用 `github_releases` crate，并给 `auto_update/Cargo.toml` 加依赖；`github::` 前缀整体换成 `github_releases::`（不用别名导入）。
+- **ACP SDK 3.6 字段改访问器**：`AvailableCommand.name` 变成 `name()`，fork 的自动压缩钩子（按 `/compact`、`/compress` 找命令）跟着改。
+- **上游整块移除功能**：agent checkpoints 被上游整体删除（快照拖慢每条消息发送，大仓库上 Windows 可卡死），`render_recoverable_submissions` 旁的 Restore Checkpoint 按钮取删除，随之删掉 `agent_ui.restore_checkpoint` 两个死键。
+- **上游新增设置项**：`settings_ui` 的 Auto Fetch / Auto Fetch Interval 是裸 `&str`，按 fork 的 `SharedString` 约定补 `.into()` 并加 `t!` 键（`git_auto_fetch_*` 4 个）。
+- **git 图新增 Refs 列**：表头与右键菜单标题补 `git_ui.git_graph.column_refs`，`column_visibility` 仍为 4 槽（Refs 与 Graph 共用一列区域）。
+- **恢复被冲突吞掉的方法**：`subagent_card` 的 `fullscreen_entry` 在两个冲突块之间被裁掉，编译期报 `no method named fullscreen_entry` 才发现；冲突块多行时要用函数/字段三方比对，不要只看冲突标记。
+- **冲突残留的重复分隔符**：`title_bar`、`thread_view` 各出现一处 `};` 重复（自己写的解析块尾部多带一个），表现为 `unexpected closing delimiter`，靠 `rustfmt --check` 的指示列定位。
+- **汉化补齐**：`git_ui_core.push_rejected`（推送被拒绝提示）、`column_refs`、`agent_ui.thread_view.subagent_status_unknown`、`submission_detail_waiting`/`_accepted_connection_lost`/`_connection_lost_unknown`（可恢复消息状态行的 tooltip 明细），en/zh-CN 双侧同补。
+- **本机环境（非代码问题）**：新 livekit rev 触发 `webrtc-sys` 重编，GCC 11 下报 `changes meaning of 'Network' [-fpermissive]`，需 `CXXFLAGS=-fpermissive`；测试链接报 `unable to find library -lX11-xcb`（系统只有 `libX11-xcb.so.1`，缺 dev 符号），用 `tmp/libshim/libX11-xcb.so → .so.1` 符号链接 + `LIBRARY_PATH` 链接，不改仓库文件。
+- **已知本地失败**：上游新测试 `git_panel::tests::test_history_tab_focus_border_only_for_keyboard_focus` 本地必失败（断点在「键盘输入后聚焦面板应显示焦点边框」）。该文件与上游仅差汉化字符串、`crates/gpui` 与上游逐字节一致，且 `focus_in` 回调在测试中未被调用，判定为上游测试在本机的环境差异，不作为合并阻塞项；待上游 CI 结果核对。
+- **门禁结果**：`cargo check -p zed`、全量 `cargo clippy --workspace --all-targets -- --deny warnings`（469 crate，0 警告）、`cargo fmt --all --check`、`check-missing-keys.py`（3922 引用键 / 3980 键，0 问题）、check-todos、check-keymaps 通过；acp_thread 308、agent_ui 583、agent_servers 187、git_ui_core 33、title_bar 26、fs 34、settings_ui 76 项测试通过（git_ui 187 通过 + 上述 1 项已知失败）。
 
 ## 涉及模块
 
