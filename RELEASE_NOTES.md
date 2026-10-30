@@ -1,6 +1,6 @@
-本版本把 Zed 汉化版从已发布的 v1.24.2 更新到基于 **Zed v1.28.0**（版本号与上游 `main` 同步），并新增 Ubuntu / Debian 的 `.deb` 安装包。
+本版本发布为 **v1.27.0**，代码基线是 upstream/main 的 `422b53cff8`（上游该提交的 `Cargo.toml` 为 1.28.0，上游正式发布线最新为 1.26.2）；同时新增 Ubuntu / Debian 的 `.deb` 安装包。
 
-### Zed 上游更新 (v1.24.2 → v1.28.0)
+### Zed 上游更新 (已发布 v1.24.2 之后)
 
 合入 upstream/main 五次同步累积 220 个上游提交，保留全部 fork 特性与汉化：
 
@@ -31,7 +31,7 @@
 
 - **Ubuntu / Debian**：新增 `zed-zh-cn_<版本>_amd64.deb`，安装到 `/usr/lib/zed`，注册 `/usr/bin/zed`、桌面项与图标；`sudo apt install ./zed-zh-cn_<版本>_amd64.deb` 会自动装依赖。
 - **Windows**：`Zed-x86_64.exe`（Inno Setup 安装器）；**macOS**：`Zed-aarch64.dmg`。
-- **版本号**：与上游 `main` 一致，`scripts/sync-upstream-version.py` 负责同步，发布前由 `verify_version` job 校验，避免标签、Release 标题与二进制自报版本错位。
+- **版本号**：本次发布版本号 `1.27.0` 由发布者指定，`release.yml` 校验其不低于上游最新正式 release（当前 1.26.2）、与 `Cargo.lock` 一致，且标签与 `crates/zed/Cargo.toml` 一致。
 - `run_tests.yml` 仅手动触发（`workflow_dispatch`），`check_style` 含汉化键完整性检查。
 
 ### 已知说明

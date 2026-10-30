@@ -65,8 +65,8 @@ crates/zed_i18n/locales/
 - **fs_watcher 健康检查**：`check_watch_health` + `watched_paths`，watch 丢失时自动重扫。
 - **Agent / Agent UI**：保留并强化 fork 特性，包括可恢复消息、混淆字符扫揃（请求与解析后路径同时检查）、markdown 内联图表缓存等。
 - **CI / 发布**：精简 `run_tests.yml` + `release.yml`（三平台未签名包自动发布）；`run_tests` 改为手动触发；`check_style` 增加汉化键完整性检查（`scripts/i18n/check-missing-keys.py`）。三个平台各自输出原生安装包：Linux 为 `.deb`（另附 tar.gz），Windows 为 `.exe` 安装器，macOS 为 `.dmg`。
-- **版本号**：与上游 `zed-industries/zed` 的 `main` 保持一致，由 `scripts/sync-upstream-version.py` 同步，发布前由 `release.yml` 校验。
-- **分支策略**：`main` 为稳定发布分支（当前 `v1.28.0`），功能开发在 `develop` 分支进行并 PR 合并至 `main`。
+- **版本号**：不落后于上游最新正式 release，由 `scripts/sync-upstream-version.py` 指定、同步与校验；`release.yml` 校验 `Cargo.toml`/`Cargo.lock` 一致及版本下限，标签与 `Cargo.toml` 不一致则拒绝发布。
+- **分支策略**：`main` 为稳定发布分支（当前 `v1.27.0`），功能开发在 `develop` 分支进行并 PR 合并至 `main`。
 
 
 ### 安装

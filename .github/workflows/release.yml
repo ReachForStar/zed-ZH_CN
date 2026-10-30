@@ -53,8 +53,15 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 校验 crates/zed/Cargo.toml 与 Cargo.lock 的版本号
-        run: python3 scripts/sync-upstream-version.py --check
+      - name: 校验版本号（不落后于上游、与 Cargo.lock 一致、标签一致）
+        run: |
+          python3 scripts/sync-upstream-version.py --check-not-behind stable
+          version="$(python3 scripts/sync-upstream-version.py --print)"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "标签 ${GITHUB_REF_NAME} 与 crates/zed/Cargo.toml 的版本号 ${version} 不一致，请对齐后重推标签。" >&2
+            exit 1
+          fi
+          echo "发布版本号：${version}"
 
   bundle_linux_x86_64:
     name: 构建 Linux x86_64
@@ -346,7 +353,7 @@ jobs:
       - name: 组装发布说明（固定头部 + 自动列表）
         run: |
           {
-            echo "> **Zed 汉化版** — 基于 Zed v${VERSION} 的社区中文翻译构建。"
+            echo "> **Zed 汉化版** — 社区简体中文翻译构建，版本 v${VERSION}。"
             echo ">"
             echo "> ⚠️ **未签名说明**：本构建未经代码签名。"
             echo "> - Windows：下载 \`Zed-x86_64.exe\` 安装器安装，安装时可能出现 SmartScreen 提示，选择\"更多信息 → 仍要运行\"。"
