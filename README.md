@@ -65,7 +65,7 @@ crates/zed_i18n/locales/
 - **fs_watcher 健康检查**：`check_watch_health` + `watched_paths`，watch 丢失时自动重扫。
 - **Agent / Agent UI**：保留并强化 fork 特性，包括可恢复消息、混淆字符扫揃（请求与解析后路径同时检查）、markdown 内联图表缓存等。
 - **CI / 发布**：精简 `run_tests.yml` + `release.yml`（三平台未签名包自动发布）；`run_tests` 改为手动触发；`check_style` 增加汉化键完整性检查（`scripts/i18n/check-missing-keys.py`）。
-- **分支策略**：`main` 为稳定发布分支（当前 `v1.24.2`），功能开发在 `develop` 分支进行并 PR 合并至 `main`。
+- **分支策略**：`main` 为稳定发布分支（当前 `v1.25.3`），功能开发在 `develop` 分支进行并 PR 合并至 `main`。
 
 
 ### 安装
