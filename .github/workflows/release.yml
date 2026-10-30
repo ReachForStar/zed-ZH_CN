@@ -12,6 +12,13 @@
 #   - 推送 v* 标签
 #   - 手动触发（workflow_dispatch）
 #
+# 版本号：与上游 zed-industries/zed 的 main 保持一致（scripts/sync-upstream-version.py）。
+# verify_version job 在构建前校验，版本号落后于上游时直接失败，避免发布标签、
+# Release 标题与二进制自报版本三者错位。
+#
+# 产物按系统给对应安装包：Ubuntu/Debian 给 .deb，Windows 给 Inno Setup .exe 安装器，
+# macOS 给 .dmg；另外附 Linux tar.gz 与三平台 remote-server 包。
+#
 # 注意：本文件不再由 `cargo xtask workflows` 生成，请勿运行该命令覆盖本文件。
 name: release
 
@@ -33,8 +40,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify_version:
+    name: 校验版本号与上游一致
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 校验 crates/zed/Cargo.toml 与 Cargo.lock 的版本号
+        run: python3 scripts/sync-upstream-version.py --check
+
   bundle_linux_x86_64:
     name: 构建 Linux x86_64
+    needs: verify_version
     runs-on: ubuntu-22.04
     timeout-minutes: 360
     env:
@@ -78,11 +97,21 @@ jobs:
       - name: 打包 Linux
         run: ./script/bundle-linux
 
+      - name: 打包 .deb（Ubuntu/Debian 安装包）
+        run: ./script/bundle-linux-deb
+
       - name: 上传 zed-linux-x86_64.tar.gz
         uses: actions/upload-artifact@v4
         with:
           name: zed-linux-x86_64.tar.gz
           path: target/release/zed-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+      - name: 上传 .deb 安装包
+        uses: actions/upload-artifact@v4
+        with:
+          name: zed-zh-cn-linux-x86_64.deb
+          path: target/release/zed-zh-cn_*_amd64.deb
           if-no-files-found: error
 
       - name: 上传 zed-remote-server-linux-x86_64.gz
@@ -94,6 +123,7 @@ jobs:
 
   bundle_windows_x86_64:
     name: 构建 Windows x86_64
+    needs: verify_version
     # windows-2022 自带 Inno Setup 6 与 VS 2022（脚本已改用 vswhere 动态定位）
     runs-on: windows-2022
     timeout-minutes: 360
@@ -156,6 +186,7 @@ jobs:
 
   bundle_macos_aarch64:
     name: 构建 macOS aarch64
+    needs: verify_version
     # macos-14 为 Apple Silicon（aarch64）runner，自带 Xcode 与命令行工具
     runs-on: macos-14
     timeout-minutes: 360
@@ -257,6 +288,7 @@ jobs:
   release:
     name: 发布到 GitHub Release
     needs:
+      - verify_version
       - bundle_linux_x86_64
       - bundle_windows_x86_64
       - bundle_macos_aarch64
@@ -312,9 +344,10 @@ jobs:
             echo "> **Zed 汉化版** — 基于 Zed v${VERSION} 的社区中文翻译构建。"
             echo ">"
             echo "> ⚠️ **未签名说明**：本构建未经代码签名。"
-            echo "> - Windows：安装时可能出现 SmartScreen 提示，选择\"更多信息 → 仍要运行\"。"
-            echo "> - macOS：首次打开可能被 Gatekeeper 拦截，右键选择\"打开\"，或执行 \`xattr -dr com.apple.quarantine /Applications/Zed.app\`。"
-            echo "> - Linux：解压 \`zed-linux-x86_64.tar.gz\` 后运行 \`bin/zed\`。"
+            echo "> - Windows：下载 \`Zed-x86_64.exe\` 安装器安装，安装时可能出现 SmartScreen 提示，选择\"更多信息 → 仍要运行\"。"
+            echo "> - macOS：下载 \`Zed-aarch64.dmg\`，首次打开可能被 Gatekeeper 拦截，右键选择\"打开\"，或执行 \`xattr -dr com.apple.quarantine /Applications/Zed.app\`。"
+            echo "> - Ubuntu / Debian：下载 \`zed-zh-cn_<版本>_amd64.deb\`，执行 \`sudo apt install ./zed-zh-cn_<版本>_amd64.deb\`（会自动装依赖）；也可用 \`sudo dpkg -i\` 后补 \`sudo apt -f install\`。"
+            echo "> - 其他 Linux：解压 \`zed-linux-x86_64.tar.gz\` 后运行 \`bin/zed\`。"
             echo ""
             echo "---"
             echo ""

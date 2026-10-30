@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+
+# 把上面 script/bundle-linux 产出的 tar.gz 打成 Debian/Ubuntu 的 .deb 安装包。
+#
+# 布局（遵循 Debian 惯例，卸载时不留残渣）：
+#   /usr/lib/zed/                        ← tar.gz 里的 zed.app 内容
+#   /usr/bin/zed                         → ../lib/zed/bin/zed（CLI 入口）
+#   /usr/share/applications/*.desktop    ← 桌面项
+#   /usr/share/icons/hicolor/.../zed.png ← 图标
+#   /usr/share/doc/zed-zh-cn/licenses.md
+#
+# 包名用 zed-zh-cn 并 Conflicts/Replaces 官方 zed 包，避免与系统或官网安装的
+# zed 争用 /usr/bin/zed。
+#
+# 运行时依赖由 ldd 实测推导：只声明包内未附带的系统库，再映射到 Debian 包名。
+# Ubuntu 24.04 把部分库改名为 *t64（glibc 时间过渡），故对这些包用「原名 | t64名」
+# 备选，否则同一份 .deb 在 24.04 上装不上。
+#
+# 用法：
+#   script/bundle-linux-deb                     # 用 target/release/zed-linux-<arch>.tar.gz
+#   script/bundle-linux-deb --app-dir DIR       # 用已解开的 app 目录（调试打包）
+#   script/bundle-linux-deb --output DIR        # 指定 .deb 输出目录（默认 target/release）
+
+set -euo pipefail
+
+help_info() {
+  echo "
+Usage: ${0##*/} [options]
+Build a .deb package for Debian/Ubuntu from the Linux bundle.
+
+Options:
+  --app-dir DIR    已解开的 app 目录（含 bin/zed、libexec/zed-editor、lib/）
+  --output DIR     .deb 输出目录，默认 target/release
+  -h, --help       显示本帮助
+"
+}
+
+app_dir=""
+output_dir="target/release"
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --app-dir)
+      app_dir="$2"
+      shift 2
+      ;;
+    --output)
+      output_dir="$2"
+      shift 2
+      ;;
+    -h|--help)
+      help_info
+      exit 0
+      ;;
+    *)
+      echo "未知参数：$1" >&2
+      help_info
+      exit 1
+      ;;
+  esac
+done
+
+command -v dpkg-deb >/dev/null || {
+  echo "缺少 dpkg-deb：.deb 打包需要 dpkg（Debian/Ubuntu 自带）。" >&2
+  exit 1
+}
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+arch="$(uname -m)"
+case "$arch" in
+  x86_64) deb_arch="amd64" ;;
+  aarch64 | arm64) deb_arch="arm64" ;;
+  *)
+    echo "不支持的架构：$arch" >&2
+    exit 1
+    ;;
+esac
+
+# 版本号以 crates/zed/Cargo.toml 的 [package].version 为准（与 script/get-crate-version 同源）；
+# 这里直接读文件，避免依赖 jq，也不受工作区 CRLF 影响。
+version="$(awk '
+  /^\[package\]/ { in_package = 1; next }
+  /^\[/         { in_package = 0 }
+  in_package && /^version = / { gsub(/.*= "|".*/, ""); print; exit }
+' crates/zed/Cargo.toml | tr -d '\r')"
+[[ -n "$version" ]] || {
+  echo "读不到 crates/zed/Cargo.toml 的 [package].version。" >&2
+  exit 1
+}
+package="zed-zh-cn"
+deb_file="${output_dir}/${package}_${version}_${deb_arch}.deb"
+
+# 中间文件放项目根 tmp/（仓库已忽略），不写系统临时目录
+mkdir -p tmp
+work_dir="$(mktemp -d "${repo_root}/tmp/deb-work.XXXXXX")"
+trap 'rm -rf "$work_dir"' EXIT
+
+if [[ -z "$app_dir" ]]; then
+  tarball="${output_dir}/zed-linux-${arch}.tar.gz"
+  [[ -f "$tarball" ]] || {
+    echo "找不到 $tarball，先运行 script/bundle-linux。" >&2
+    exit 1
+  }
+  tar -xzf "$tarball" -C "$work_dir"
+  # tar 里只有一个 <name>.app 目录
+  app_dir="$(find "$work_dir" -maxdepth 1 -type d -name '*.app' -print -quit)"
+  [[ -n "$app_dir" ]] || {
+    echo "$tarball 里找不到 *.app 目录。" >&2
+    exit 1
+  }
+elif [[ ! -d "$app_dir" ]]; then
+  echo "app 目录不存在：$app_dir" >&2
+  exit 1
+fi
+
+for required in bin/zed libexec/zed-editor lib; do
+  [[ -e "$app_dir/$required" ]] || {
+    echo "app 目录缺少 $required：$app_dir" >&2
+    exit 1
+  }
+done
+
+pkg_root="${work_dir}/pkg"
+mkdir -p "${pkg_root}/DEBIAN" \
+  "${pkg_root}/usr/lib" \
+  "${pkg_root}/usr/bin" \
+  "${pkg_root}/usr/share/applications" \
+  "${pkg_root}/usr/share/doc/${package}"
+
+cp -a "$app_dir" "${pkg_root}/usr/lib/zed"
+# share/ 只用于桌面集成，桌面项与图标下面单独装到 /usr/share，避免同一份图标装两遍
+rm -rf "${pkg_root}/usr/lib/zed/share"
+ln -s ../lib/zed/bin/zed "${pkg_root}/usr/bin/zed"
+
+# 桌面项与图标放在标准位置，桌面环境才能发现 Zed
+shopt -s nullglob
+desktop_files=("${app_dir}/share/applications/"*.desktop)
+[[ ${#desktop_files[@]} -gt 0 ]] || {
+  echo "app 目录缺少 share/applications/*.desktop。" >&2
+  exit 1
+}
+for desktop in "${desktop_files[@]}"; do
+  cp "$desktop" "${pkg_root}/usr/share/applications/"
+  chmod 0644 "${pkg_root}/usr/share/applications/$(basename "$desktop")"
+done
+
+icon_dirs=("${app_dir}/share/icons/hicolor/"*/apps)
+[[ ${#icon_dirs[@]} -gt 0 ]] || {
+  echo "app 目录缺少 share/icons/hicolor/*/apps 图标。" >&2
+  exit 1
+}
+for icon_dir in "${icon_dirs[@]}"; do
+  size="$(basename "$(dirname "$icon_dir")")"
+  install -d "${pkg_root}/usr/share/icons/hicolor/${size}/apps"
+  cp "${icon_dir}"/*.png "${pkg_root}/usr/share/icons/hicolor/${size}/apps/"
+  chmod 0644 "${pkg_root}/usr/share/icons/hicolor/${size}/apps/"*.png
+done
+
+licenses="${app_dir}/licenses.md"
+[[ -f "$licenses" ]] || licenses="assets/licenses.md"
+cp "$licenses" "${pkg_root}/usr/share/doc/${package}/licenses.md"
+chmod 0644 "${pkg_root}/usr/share/doc/${package}/licenses.md"
+shopt -u nullglob
+
+# 运行时依赖：取两个二进制的直接依赖，跳过包内已自带的同名库（按文件名判断，
+# ldd 解析到的是系统路径，不能按路径排除）。
+mapfile -t needed_libs < <(
+  for elf in "${app_dir}/libexec/zed-editor" "${app_dir}/bin/zed"; do
+    ldd "$elf" | awk '/=> \//{print $3}'
+  done | sort -u
+)
+
+# Ubuntu 24.04 的 t64 改名：同一 .deb 要能同时装进 22.04 与 24.04
+declare -A t64_alternatives=(
+  [libasound2]="libasound2 | libasound2t64"
+  [libglib2.0-0]="libglib2.0-0 | libglib2.0-0t64"
+  [libblkid1]="libblkid1 | libblkid1t64"
+  [libmount1]="libmount1 | libmount1t64"
+  [libselinux1]="libselinux1 | libselinux1t64"
+)
+
+declare -A depends=()
+for lib in "${needed_libs[@]}"; do
+  [[ -e "${app_dir}/lib/$(basename "$lib")" ]] && continue
+  real_lib="$(readlink -f "$lib")"
+  # dpkg 记录的是安装时的路径：merged-usr 系统上 /lib/... 与 /usr/lib/... 指同一文件，
+  # 两种写法都要试，否则 glibc 这类库会查不到归属包。
+  owner_line=""
+  for candidate in "$real_lib" "${real_lib/#\/usr\/lib//lib}"; do
+    owner_line="$(dpkg -S "$candidate" 2>/dev/null | head -n 1)" || owner_line=""
+    [[ -n "$owner_line" ]] && break
+  done
+  [[ -n "$owner_line" ]] || {
+    echo "无法确定 $real_lib 所属的 Debian 包，无法写 Depends。" >&2
+    exit 1
+  }
+  owner="${owner_line%%:*}"
+  owner="${owner%%,*}"
+  depends["${t64_alternatives[$owner]:-$owner}"]=1
+done
+# 二进制以 glibc 与 libgcc 为基线依赖（ldd 里可能被解析到包内的其它库）
+depends["libc6"]=1
+depends["libgcc-s1"]=1
+
+depends_list="$(printf '%s\n' "${!depends[@]}" | sort | paste -sd, - | sed 's/,/, /g')"
+
+installed_size="$(du -sk "${pkg_root}/usr" | cut -f1)"
+
+cat > "${pkg_root}/DEBIAN/control" <<EOF
+Package: ${package}
+Version: ${version}
+Section: editors
+Priority: optional
+Architecture: ${deb_arch}
+Maintainer: ReachForStar <ReachForStar@users.noreply.github.com>
+Installed-Size: ${installed_size}
+Depends: ${depends_list}
+Conflicts: zed
+Replaces: zed
+Homepage: https://github.com/ReachForStar/zed-ZH_CN
+Description: Zed editor with Simplified Chinese interface (unofficial build)
+ Zed is a high-performance, multiplayer code editor.
+ .
+ This package ships an unsigned community build with the Simplified Chinese
+ localization from the zed-ZH_CN fork.
+EOF
+
+# 桌面数据库与图标缓存是可选工具：装了才调用，不吞掉它们的失败
+cat > "${pkg_root}/DEBIAN/postinst" <<'EOF'
+#!/bin/sh
+set -e
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database -q /usr/share/applications
+fi
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor
+fi
+EOF
+
+cat > "${pkg_root}/DEBIAN/postrm" <<'EOF'
+#!/bin/sh
+set -e
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database -q /usr/share/applications
+fi
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor
+fi
+EOF
+chmod 0755 "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/postrm"
+
+mkdir -p "$output_dir"
+rm -f "$deb_file"
+dpkg-deb --root-owner-group --build "$pkg_root" "$deb_file"
+echo "已生成 ${deb_file}"

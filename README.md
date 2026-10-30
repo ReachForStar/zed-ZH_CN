@@ -64,8 +64,9 @@ crates/zed_i18n/locales/
 - **tabular_data_preview**：表格与 SQLite/CSV 预览的内联设置面板，挂载在上游 `TableView` 上。
 - **fs_watcher 健康检查**：`check_watch_health` + `watched_paths`，watch 丢失时自动重扫。
 - **Agent / Agent UI**：保留并强化 fork 特性，包括可恢复消息、混淆字符扫揃（请求与解析后路径同时检查）、markdown 内联图表缓存等。
-- **CI / 发布**：精简 `run_tests.yml` + `release.yml`（三平台未签名包自动发布）；`run_tests` 改为手动触发；`check_style` 增加汉化键完整性检查（`scripts/i18n/check-missing-keys.py`）。
-- **分支策略**：`main` 为稳定发布分支（当前 `v1.25.3`），功能开发在 `develop` 分支进行并 PR 合并至 `main`。
+- **CI / 发布**：精简 `run_tests.yml` + `release.yml`（三平台未签名包自动发布）；`run_tests` 改为手动触发；`check_style` 增加汉化键完整性检查（`scripts/i18n/check-missing-keys.py`）。三个平台各自输出原生安装包：Linux 为 `.deb`（另附 tar.gz），Windows 为 `.exe` 安装器，macOS 为 `.dmg`。
+- **版本号**：与上游 `zed-industries/zed` 的 `main` 保持一致，由 `scripts/sync-upstream-version.py` 同步，发布前由 `release.yml` 校验。
+- **分支策略**：`main` 为稳定发布分支（当前 `v1.28.0`），功能开发在 `develop` 分支进行并 PR 合并至 `main`。
 
 
 ### 安装
@@ -73,6 +74,13 @@ crates/zed_i18n/locales/
 macOS、Linux 和 Windows 可直接[下载 Zed](https://zed.dev/download)，或通过包管理器安装（[macOS](https://zed.dev/docs/installation#macos)/[Linux](https://zed.dev/docs/linux#installing-via-a-package-manager)/[Windows](https://zed.dev/docs/windows#package-managers)）。
 
 > 本汉化版提供 GitHub Releases 三平台未签名包：[Releases 页面](https://github.com/ReachForStar/zed-ZH_CN/releases/latest)；或按下方开发指南自行从源码构建。
+
+| 系统 | 安装包 | 安装方式 |
+| --- | --- | --- |
+| Ubuntu / Debian | `zed-zh-cn_<版本>_amd64.deb` | `sudo apt install ./zed-zh-cn_<版本>_amd64.deb` |
+| Windows | `Zed-x86_64.exe` | 运行安装器（未签名，可能出现 SmartScreen 提示） |
+| macOS（Apple Silicon） | `Zed-aarch64.dmg` | 打开镜像并拖入 `Applications` |
+| 其他 Linux | `zed-linux-x86_64.tar.gz` | 解压后运行 `bin/zed` |
 
 其他平台暂不可用：
 
