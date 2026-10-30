@@ -149,6 +149,7 @@ click_to_resolve_with_agent = "Click to Resolve with Agent"
 remote_up_to_date = "Remote up to date"
 
 [git_ui.git_graph]
+column_refs = "Refs"
 column_graph = "Graph"
 column_description = "Description"
 column_date = "Date"

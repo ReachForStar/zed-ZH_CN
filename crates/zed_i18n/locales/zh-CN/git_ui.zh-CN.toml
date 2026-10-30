@@ -149,6 +149,7 @@ click_to_resolve_with_agent = "点击使用 Agent 解决"
 remote_up_to_date = "远程已是最新"
 
 [git_ui.git_graph]
+column_refs = "引用"
 column_graph = "图"
 column_description = "描述"
 column_date = "日期"

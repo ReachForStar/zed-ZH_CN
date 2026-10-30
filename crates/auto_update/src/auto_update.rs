@@ -6,7 +6,7 @@ use gpui::{
     App, AppContext as _, AsyncApp, BackgroundExecutor, Context, Entity, EventEmitter, Global,
     Task, TaskExt, Window, actions,
 };
-use http_client::{HttpClient, HttpClientWithUrl, github};
+use http_client::{HttpClient, HttpClientWithUrl};
 use paths::remote_servers_dir;
 use release_channel::{AppCommitSha, ReleaseChannel};
 use semver::Version;
@@ -685,13 +685,18 @@ impl AutoUpdater {
                 version.pre = semver::Prerelease::EMPTY;
                 version.build = semver::BuildMetadata::EMPTY;
                 let tag = format!("v{version}");
-                github::get_release_by_tag_name(GITHUB_RELEASE_REPO, &tag, http_client)
+                github_releases::get_release_by_tag_name(GITHUB_RELEASE_REPO, &tag, http_client)
                     .await
                     .with_context(|| format!("error fetching release {tag}"))?
             }
-            None => github::latest_github_release(GITHUB_RELEASE_REPO, true, false, http_client)
-                .await
-                .context("error fetching latest release")?,
+            None => github_releases::latest_github_release(
+                GITHUB_RELEASE_REPO,
+                true,
+                false,
+                http_client,
+            )
+            .await
+            .context("error fetching latest release")?,
         };
 
         // tag 形如 "v1.14.0"，去掉前导 v 作为语义化版本号
@@ -1053,7 +1058,7 @@ async fn cleanup_remote_server_cache(
 /// - 主程序 macos:   `Zed-{arch}.dmg`
 /// - 远程服务器:     `zed-remote-server-{os}-{arch}.gz` / `.zip`
 fn select_github_asset(
-    assets: &[github::GithubReleaseAsset],
+    assets: &[github_releases::GithubReleaseAsset],
     asset: &str,
     os: &str,
     arch: &str,
@@ -1527,8 +1532,8 @@ mod tests {
 
     #[test]
     fn test_select_github_asset() {
-        fn asset(name: &str) -> github::GithubReleaseAsset {
-            github::GithubReleaseAsset {
+        fn asset(name: &str) -> github_releases::GithubReleaseAsset {
+            github_releases::GithubReleaseAsset {
                 name: name.to_string(),
                 browser_download_url: format!("https://example.com/{name}"),
                 digest: None,
