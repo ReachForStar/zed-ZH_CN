@@ -14,7 +14,7 @@ updated: 2026-10-30
 
 - [汉化 fork 同步 upstream 的合并模式与特性保留清单](concepts/fork-upstream-sync.md) — fetch 走 HTTPS、diff 判读陷阱、i18n×上游重构冲突解法、内部状态模型重构×fork 特性读旧字段、文案随模块迁移、上游新增测试×fork 特性语义分歧、特性保留清单
 - [汉化口径与批量替换工作流](concepts/i18n-localization-workflow.md) — 汉化/不汉化口径、mkplan+apply 批量流程、t! 返回类型适配、全量 clippy 门禁、未覆盖项
-- [fork 发布 release 的流程与版本号策略](concepts/fork-release-publishing.md) — v* 标签触发 release.yml、版本号跟随上游 main 并由 `scripts/sync-upstream-version.py` 同步 + CI 校验、三平台安装包（deb/exe/dmg）与 deb 打包要点、dry_run 验证
+- [fork 发布 release 的流程与版本号策略](concepts/fork-release-publishing.md) — v* 标签触发 release.yml、版本号由发布者指定且不落后上游正式版（`scripts/sync-upstream-version.py` + CI 三重校验）、三平台安装包（deb/exe/dmg）与 deb 打包要点、dry_run 验证
 
 ## 源总结 sources
 
