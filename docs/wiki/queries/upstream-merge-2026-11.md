@@ -77,6 +77,6 @@ LIBRARY_PATH=$PWD/tmp/libshim cargo test -p acp_thread -p agent_servers -p git_u
 ## 关联页面
 
 - [汉化 fork 同步 upstream 的合并模式与特性保留清单](../concepts/fork-upstream-sync.md)
-- [2026-10 合并上游 main](../queries/upstream-merge-2026-10.md)
+- [2026-10 合并上游 main](upstream-merge-2026-10.md)
 - [ACP 面板自动压缩上下文不生效](acp-auto-compact-external-agents.md)
 - [新建智能体会话慢](slow-new-agent-session.md)
