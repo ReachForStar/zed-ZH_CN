@@ -3,3 +3,4 @@ _version = 1
 view_log = "查看日志"
 git_action_failed = "git %{action} 失败"
 push_rejected = "推送被拒绝：先拉取并整合远端改动，再重新推送"
+output_title = "git {operation} 的输出"

@@ -3,7 +3,7 @@ title: 汉化 fork 同步 upstream 的合并模式与特性保留清单
 type: concept
 tags: [fork, upstream, merge, i18n, workflow]
 created: 2026-09-26
-updated: 2026-10-30
+updated: 2026-11-08
 status: active
 ---
 
@@ -43,6 +43,10 @@ status: active
 - **本机 GCC 11 编 webrtc-sys 需 `-fpermissive`**：新 livekit rev 强制重编 C++ 源码，`virtual const Network* Network() const` 报 `changes meaning` 错误；用 `CXXFLAGS=-fpermissive` 构建（不要改仓库文件）。
 - **测试链接缺 `libX11-xcb.so`**：系统只装了 `libX11-xcb.so.1`，`cargo test` 链接 `scap` 时 `-lX11-xcb` 失败；用 `tmp/libshim/libX11-xcb.so → /usr/lib/x86_64-linux-gnu/libX11-xcb.so.1` 加 `LIBRARY_PATH` 即可，不需要改动仓库或安装系统包。
 - **上游新增测试与 fork 特性语义分歧 → 合并后测试失败**：二次合并带入的上游 `agent_servers` 测试（`test_load_session_replays_notifications_sent_before_response`、`v2_compaction_sdk_chunks_snapshots_and_historical_targeting`）期望上下文压缩完成后旧条目仍在，而 fork 的 `drop_compacted_entries`（内存回收特性）在 `Completed` 时丢弃被压缩区间，两者直接冲突。判定方法：回退到合并前 HEAD 复现同样失败 → 非本次合并引入；再 `git merge-base --is-ancestor <测试提交> <上次合并结果>` 定位带入轮次。此类失败不阻塞合并，但每次合并后跑 `cargo test -p agent_servers` 可见。
+- **上游把函数下沉到新 crate 模块 × fork 侧旧定义**：`open_output` / `show_error_toast` 从 `git_ui::git_panel` 移到 `git_ui_core::notifications`。自动合并会同时留下 fork 的旧函数与上游的 `pub(crate) use ...`，报 `E0255 名称重复定义`；解法是删掉旧函数与之配套的测试，只保留 `pub(crate) use` 重导出。
+- **上游换掉构造函数但 fork 汉化版仍在用**：连接通话挂断确认，上游改成 `window.prompt(PromptLevel::Warning, "...", None, &["Close window and hang up"], cx)`，fork 汉化版仍是 `PromptButton::new(t!(...))`。冲突解决取 fork 文案时，`gpui::{...}` 导入里必须仍有 `PromptButton`，否则 `E0433`。
+- **tooltip / 回调是 `Fn` 不是 `FnOnce`**：把上游写死的 `&'static str` 换成 `t!` 后，`Cow`/`SharedString` 被 `move` 进回调时只有第一次调用能取走，`Disclosure::tooltip`、`PopoverMenu` 等多次调用的闭包里要 `label.clone()`。
+- **确认「本轮是否引入未汉化文案」用计数对比**：对 merge 变动的 rs 文件，统计 `Label::new("…")`、`Tooltip::text("…")`、`SectionHeader("…")`、`.entry("…")`、`Button::new(id, "…")` 等模式里**未包 `t!` 的命中数**，与 `HEAD:<same file>` 比较；只有计数上升才是本轮引入，历史欠账不会被误报成回归。
 
 ## 特性保留清单（每次合并后逐项核对）
 
@@ -55,7 +59,9 @@ status: active
 
 ## 关联页面
 
-- [2026-10 合并上游 main：冲突消解决策与编译失败链](../queries/upstream-merge-2026-10.md) — 本轮合并的决策、clippy 失败链、历史丢失去向与本地校验清单。
+- [2026-11 合并上游 main：冲突消解、编译失败链与 fork 特性核对](../queries/upstream-merge-2026-11.md) — 本轮（1.29.0，77 提交）的冲突决策、编译失败链与 fork 修复核对表。
+- [2026-10 合并上游 main：冲突消解决策与编译失败链](../queries/upstream-merge-2026-10.md) — 上一轮合并的决策、clippy 失败链、历史丢失去向与本地校验清单。
 - [汉化口径与批量替换工作流](i18n-localization-workflow.md) — 合并后补齐汉化的口径、批量脚本与 `t!` 类型适配。
 - [msvc_spectre_libs 构建失败](../queries/msvc-spectre-libs-build-failure.md) — 本地编译 repl/zed 的环境前置。
 - [ACP 面板自动压缩上下文不生效](../queries/acp-auto-compact-external-agents.md) — fork 在 acp_thread 层的自有特性；同批修复 fs `watched_paths` merge 遗留。
+- [新建智能体会话慢](../queries/slow-new-agent-session.md) — 外部智能体二进制首次下发与目录路径误读。

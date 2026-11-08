@@ -50,6 +50,7 @@ pub mod git_panel;
 mod git_panel_settings;
 pub mod git_picker;
 mod git_runtime_diagnostics;
+mod git_timestamp;
 pub mod multi_diff_view;
 pub mod picker_prompt;
 pub mod project_diff;
@@ -835,8 +836,7 @@ impl RefPickerModal {
                                 details.sha.to_string(),
                                 repo.downgrade(),
                                 workspace.weak_handle(),
-                                None,
-                                None,
+                                Default::default(),
                                 window,
                                 cx,
                             );

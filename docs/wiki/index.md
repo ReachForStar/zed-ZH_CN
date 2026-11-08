@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-10-30
+updated: 2026-11-08
 ---
 
 # Wiki 索引
@@ -29,3 +29,5 @@ updated: 2026-10-30
 - [内存占用异常排查](queries/zed-memory-usage-audit.md) — 长时间使用单进程占 50G 的驻留结构审计：ACP 消息驻留（已修复）、undo 历史无界、buffer 无卸载、PTY 通道无界；ETW 堆追踪待实测
 - [macOS 打包要求 SDK 26：macos-14 runner 上 bundle-mac 失败](queries/macos-bundle-sdk-26-requirement.md) — 上游要求 SDK 26，macos-14 自带 Xcode 16 只有 SDK 15；改用 macos-26 并显式校验 SDK，附标签触发失败后用 workflow_dispatch 重跑的提交对齐说明
 - [2026-10 合并上游 main：冲突消解决策与编译失败链](queries/upstream-merge-2026-10.md) — 297 提交合并的取舍清单、六轮编译失败链（image_resolver 两参数、SharedString 补 `.into()`、`t!` 分支类型、redundant_clone）、历史丢失检测与本地校验清单；附二次合并（`28d0a3547f`，零冲突）、三次合并（`91d3b962ae3`，17 处冲突）、四次合并（`604a0ff023`，零冲突）、五次合并（`422b53cff8`，98 提交 / 11 处冲突，含上游删模块与 ACP 字段改访问器的跟进）记录
+- [2026-11 合并上游 main：冲突消解、编译失败链与 fork 特性核对](queries/upstream-merge-2026-11.md) — 1.29.0（77 提交）合并：13 处冲突（git 面板分支模式、plan 渲染、日期格式设置）、六轮编译失败链（PromptButton 缺失、SharedString/`Cow`、`Fn` 闭包 clone）、汉化补齐 68 个键（settings_ui 49 / git_ui 15 / agent_ui 3 / git_ui_core 1）与「计数对比」审计法、fork 修复与上游实现逐项核对表
+- [新建智能体会话慢](queries/slow-new-agent-session.md) — ACP registry 智能体二进制首次下发（opencode-v2 2.2.6，258 MB，约 97 秒）是主因；另含目录路径被当文件读取的 2979 条错误日志来源

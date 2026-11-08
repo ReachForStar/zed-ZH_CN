@@ -561,11 +561,10 @@ fn general_page(cx: &App) -> SettingsPage {
 
     fn extensions_section() -> [SettingsPageItem; 2] {
         [
-            SettingsPageItem::SectionHeader("Extensions".into()),
+            SettingsPageItem::SectionHeader(t!("settings_ui.page_data.extensions_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Suggest Extensions".into(),
-                description:
-                    "Whether to suggest installing extensions based on the files you open.".into(),
+                title: t!("settings_ui.page_data.suggest_extensions_title").into(),
+                description: t!("settings_ui.page_data.suggest_extensions_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("suggest_extensions"),
@@ -1460,8 +1459,12 @@ fn appearance_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Heading Font Weight".into(),
-                description: "Font weight for headings in the markdown preview, in CSS units from 100 to 900.".into(),
+                title: t!("settings_ui.page_data.markdown_preview_heading_font_weight_title")
+                    .into(),
+                description: t!(
+                    "settings_ui.page_data.markdown_preview_heading_font_weight_description"
+                )
+                .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("markdown_preview.heading_font_weight"),
@@ -1487,10 +1490,12 @@ fn appearance_page() -> SettingsPage {
 
     fn mermaid_font_section() -> [SettingsPageItem; 2] {
         [
-            SettingsPageItem::SectionHeader("Mermaid Font".into()),
+            SettingsPageItem::SectionHeader(
+                t!("settings_ui.page_data.mermaid_font_section").into(),
+            ),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Font Family".into(),
-                description: "Font family for Mermaid diagrams in the agent panel and markdown preview. Falls back to the UI font family.".into(),
+                title: t!("settings_ui.page_data.mermaid_font_family_title").into(),
+                description: t!("settings_ui.page_data.mermaid_font_family_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("mermaid_font_family"),
@@ -4223,8 +4228,12 @@ fn search_and_files_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Prefill Query From Selection".into(),
-                description: "Whether to pre-fill the file finder's query with the text selected in the focused item (e.g. an editor or a terminal).".into(),
+                title: t!("settings_ui.page_data.file_finder_prefill_query_from_selection_title")
+                    .into(),
+                description: t!(
+                    "settings_ui.page_data.file_finder_prefill_query_from_selection_description"
+                )
+                .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("file_finder.prefill_query_from_selection"),
@@ -4376,7 +4385,7 @@ fn search_and_files_page() -> SettingsPage {
 }
 
 fn window_and_layout_page() -> SettingsPage {
-    fn status_bar_section() -> [SettingsPageItem; 12] {
+    fn status_bar_section() -> [SettingsPageItem; 13] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.status_bar_section").into()),
             SettingsPageItem::SettingItem(SettingItem {
@@ -4547,6 +4556,33 @@ fn window_and_layout_page() -> SettingsPage {
                     pick: |settings_content| settings_content.diagnostics.as_ref()?.button.as_ref(),
                     write: |settings_content, value, _| {
                         settings_content.diagnostics.get_or_insert_default().button = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.edit_prediction_button_title").into(),
+                description: t!("settings_ui.page_data.edit_prediction_button_description").into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("edit_predictions.button"),
+                    pick: |settings_content| {
+                        settings_content
+                            .project
+                            .all_languages
+                            .edit_predictions
+                            .as_ref()?
+                            .button
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .project
+                            .all_languages
+                            .edit_predictions
+                            .get_or_insert_default()
+                            .button = value;
                     },
                 }),
                 metadata: None,
@@ -4945,8 +4981,9 @@ fn window_and_layout_page() -> SettingsPage {
                     .collect(),
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Open Menus on Hover".into(),
-                description: "Automatically open menus in the titlebar on hover.".into(),
+                title: t!("settings_ui.page_data.title_bar_open_menus_on_hover_title").into(),
+                description: t!("settings_ui.page_data.title_bar_open_menus_on_hover_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("title_bar.open_menus_on_hover"),
@@ -5543,8 +5580,7 @@ fn window_and_layout_page() -> SettingsPage {
             }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.fullscreen_mode_title").into(),
-                description:
-                    "(macOS only) which fullscreen mode the toggle fullscreen action enters.".into(),
+                description: t!("settings_ui.page_data.fullscreen_mode_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("fullscreen_mode"),
@@ -6542,8 +6578,8 @@ fn panels_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Starts Open".into(),
-                description: "Whether the terminal panel should open on startup.".into(),
+                title: t!("settings_ui.page_data.terminal_starts_open_title").into(),
+                description: t!("settings_ui.page_data.terminal_starts_open_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("terminal.starts_open"),
@@ -6858,9 +6894,23 @@ fn panels_page() -> SettingsPage {
         ]
     }
 
-    fn git_panel_section() -> [SettingsPageItem; 19] {
+    fn git_panel_section() -> [SettingsPageItem; 20] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.git_panel_section").into()),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_panel_date_style_title").into(),
+                description: t!("settings_ui.page_data.git_panel_date_style_description").into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git_panel.date_style"),
+                    pick: |content| content.git_panel.as_ref()?.date_style.as_ref(),
+                    write: |content, value, _| {
+                        content.git_panel.get_or_insert_default().date_style = value
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.git_panel_button_title").into(),
                 description: t!("settings_ui.page_data.git_panel_button_description").into(),
@@ -6890,8 +6940,8 @@ fn panels_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Starts Open".into(),
-                description: "Whether the git panel should open on startup.".into(),
+                title: t!("settings_ui.page_data.git_panel_starts_open_title").into(),
+                description: t!("settings_ui.page_data.git_panel_starts_open_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("git_panel.starts_open"),
@@ -7129,9 +7179,8 @@ fn panels_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Commit Editor".into(),
-                description:
-                    "Whether the commit message editor is shown in the Git panel by default.".into(),
+                title: t!("settings_ui.page_data.git_panel_commit_editor_title").into(),
+                description: t!("settings_ui.page_data.git_panel_commit_editor_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("git_panel.commit_editor"),
@@ -7231,7 +7280,7 @@ fn panels_page() -> SettingsPage {
         ]
     }
 
-    fn debugger_panel_section() -> [SettingsPageItem; 2] {
+    fn debugger_panel_section() -> [SettingsPageItem; 4] {
         [
             SettingsPageItem::SectionHeader(
                 t!("settings_ui.page_data.debugger_panel_section").into(),
@@ -7245,6 +7294,44 @@ fn panels_page() -> SettingsPage {
                     pick: |settings_content| settings_content.debugger.as_ref()?.dock.as_ref(),
                     write: |settings_content, value, _| {
                         settings_content.debugger.get_or_insert_default().dock = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.debugger_default_width_title").into(),
+                description: t!("settings_ui.page_data.debugger_default_width_description").into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("debugger.default_width"),
+                    pick: |settings_content| {
+                        settings_content.debugger.as_ref()?.default_width.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .debugger
+                            .get_or_insert_default()
+                            .default_width = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.debugger_default_height_title").into(),
+                description: t!("settings_ui.page_data.debugger_default_height_description").into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("debugger.default_height"),
+                    pick: |settings_content| {
+                        settings_content.debugger.as_ref()?.default_height.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .debugger
+                            .get_or_insert_default()
+                            .default_height = value;
                     },
                 }),
                 metadata: None,
@@ -8513,11 +8600,25 @@ fn terminal_page() -> SettingsPage {
 }
 
 fn version_control_page() -> SettingsPage {
-    fn git_integration_section() -> [SettingsPageItem; 3] {
+    fn git_integration_section() -> [SettingsPageItem; 4] {
         [
             SettingsPageItem::SectionHeader(
                 t!("settings_ui.page_data.git_integration_section").into(),
             ),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_date_format_title").into(),
+                description: t!("settings_ui.page_data.git_date_format_description").into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.date_format"),
+                    pick: |content| content.git.as_ref()?.date_format.as_ref(),
+                    write: |content, value, _| {
+                        content.git.get_or_insert_default().date_format = value
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
             SettingsPageItem::DynamicItem(DynamicItem {
                 discriminant: SettingItem {
                     files: USER,
@@ -8731,11 +8832,39 @@ fn version_control_page() -> SettingsPage {
         ]
     }
 
-    fn inline_git_blame_section() -> [SettingsPageItem; 6] {
+    fn inline_git_blame_section() -> [SettingsPageItem; 7] {
         [
             SettingsPageItem::SectionHeader(
                 t!("settings_ui.page_data.inline_git_blame_section").into(),
             ),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_inline_blame_date_style_title").into(),
+                description: t!("settings_ui.page_data.git_inline_blame_date_style_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.inline_blame.date_style"),
+                    pick: |content| {
+                        content
+                            .git
+                            .as_ref()?
+                            .inline_blame
+                            .as_ref()?
+                            .date_style
+                            .as_ref()
+                    },
+                    write: |content, value, _| {
+                        content
+                            .git
+                            .get_or_insert_default()
+                            .inline_blame
+                            .get_or_insert_default()
+                            .date_style = value
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
             SettingsPageItem::DynamicItem(DynamicItem {
                 discriminant: SettingItem {
                     title: t!("settings_ui.page_data.git_inline_blame_enabled_title").into(),
@@ -8928,11 +9057,30 @@ fn version_control_page() -> SettingsPage {
         ]
     }
 
-    fn git_blame_view_section() -> [SettingsPageItem; 2] {
+    fn git_blame_view_section() -> [SettingsPageItem; 3] {
         [
             SettingsPageItem::SectionHeader(
                 t!("settings_ui.page_data.git_blame_view_section").into(),
             ),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_blame_date_style_title").into(),
+                description: t!("settings_ui.page_data.git_blame_date_style_description").into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.blame.date_style"),
+                    pick: |content| content.git.as_ref()?.blame.as_ref()?.date_style.as_ref(),
+                    write: |content, value, _| {
+                        content
+                            .git
+                            .get_or_insert_default()
+                            .blame
+                            .get_or_insert_default()
+                            .date_style = value
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.git_blame_show_avatar_title").into(),
                 description: t!("settings_ui.page_data.git_blame_show_avatar_description").into(),
@@ -8963,11 +9111,39 @@ fn version_control_page() -> SettingsPage {
         ]
     }
 
-    fn branch_picker_section() -> [SettingsPageItem; 2] {
+    fn branch_picker_section() -> [SettingsPageItem; 3] {
         [
             SettingsPageItem::SectionHeader(
                 t!("settings_ui.page_data.branch_picker_section").into(),
             ),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_branch_picker_date_style_title").into(),
+                description: t!("settings_ui.page_data.git_branch_picker_date_style_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.branch_picker.date_style"),
+                    pick: |content| {
+                        content
+                            .git
+                            .as_ref()?
+                            .branch_picker
+                            .as_ref()?
+                            .date_style
+                            .as_ref()
+                    },
+                    write: |content, value, _| {
+                        content
+                            .git
+                            .get_or_insert_default()
+                            .branch_picker
+                            .get_or_insert_default()
+                            .date_style = value
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.git_branch_picker_show_author_name_title").into(),
                 description: t!(
@@ -9001,6 +9177,62 @@ fn version_control_page() -> SettingsPage {
         ]
     }
 
+    fn stash_picker_section() -> [SettingsPageItem; 2] {
+        [
+            SettingsPageItem::SectionHeader(
+                t!("settings_ui.page_data.stash_picker_section").into(),
+            ),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_stash_picker_date_style_title").into(),
+                description: t!("settings_ui.page_data.git_stash_picker_date_style_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.stash_picker.date_style"),
+                    pick: |content| {
+                        content
+                            .git
+                            .as_ref()?
+                            .stash_picker
+                            .as_ref()?
+                            .date_style
+                            .as_ref()
+                    },
+                    write: |content, value, _| {
+                        content
+                            .git
+                            .get_or_insert_default()
+                            .stash_picker
+                            .get_or_insert_default()
+                            .date_style = value
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+        ]
+    }
+
+    fn git_graph_section() -> [SettingsPageItem; 2] {
+        [
+            SettingsPageItem::SectionHeader(t!("settings_ui.page_data.git_graph_section").into()),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_graph_date_style_title").into(),
+                description: t!("settings_ui.page_data.git_graph_date_style_description").into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git_graph.date_style"),
+                    pick: |content| content.git_graph.as_ref()?.date_style.as_ref(),
+                    write: |content, value, _| {
+                        content.git_graph.get_or_insert_default().date_style = value
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+        ]
+    }
+
     fn git_hunks_section() -> [SettingsPageItem; 5] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.git_hunks_section").into()),
@@ -9018,9 +9250,9 @@ fn version_control_page() -> SettingsPage {
                 metadata: None,
                 files: USER,
             }),
-SettingsPageItem::SettingItem(SettingItem {
-                title: "Diff Base".into(),
-                description: "Whether git features show changes relative to HEAD (uncommitted changes) or to the default branch (all changes on the current branch).".into(),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_diff_base_title").into(),
+                description: t!("settings_ui.page_data.git_diff_base_description").into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("git.diff_base"),
@@ -9115,6 +9347,8 @@ SettingsPageItem::SettingItem(SettingItem {
             inline_git_blame_section(),
             git_blame_view_section(),
             branch_picker_section(),
+            stash_picker_section(),
+            git_graph_section(),
             file_diff_section(),
             git_hunks_section(),
         ],
@@ -9573,8 +9807,11 @@ fn ai_page(cx: &App) -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Max Idle Threads".into(),
-                description: "Maximum number of idle agent threads with loadable sessions to keep loaded. When the limit is exceeded, the least recently updated threads are unloaded.".into(),
+                title: t!("settings_ui.page_data.agent_max_idle_retained_threads_title").into(),
+                description: t!(
+                    "settings_ui.page_data.agent_max_idle_retained_threads_description"
+                )
+                .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("agent.max_idle_retained_threads"),
@@ -9803,6 +10040,32 @@ fn ai_page(cx: &App) -> SettingsPage {
                             .agent
                             .get_or_insert_default()
                             .show_merge_conflict_indicator = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.agent_auto_generate_thread_titles_title").into(),
+                description: t!(
+                    "settings_ui.page_data.agent_auto_generate_thread_titles_description"
+                )
+                .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("agent.auto_generate_thread_titles"),
+                    pick: |settings_content| {
+                        settings_content
+                            .agent
+                            .as_ref()?
+                            .auto_generate_thread_titles
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .agent
+                            .get_or_insert_default()
+                            .auto_generate_thread_titles = value;
                     },
                 }),
                 metadata: None,
@@ -10120,8 +10383,9 @@ fn language_settings_data() -> Box<[SettingsPageItem]> {
                 files: USER | PROJECT,
             }),
             SettingsPageItem::SettingItem(SettingItem {
-                title: "Soft Wrap Indent".into(),
-                description: "How to indent soft-wrapped lines.".into(),
+                title: t!("settings_ui.page_data.languages_soft_wrap_indent_title").into(),
+                description: t!("settings_ui.page_data.languages_soft_wrap_indent_description")
+                    .into(),
                 field: Box::new(SettingField {
                     organization_override: None,
                     json_path: Some("languages.$(language).soft_wrap_indent"),

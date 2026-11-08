@@ -25,7 +25,7 @@ pub fn open_output(
     let editor = cx.new(|cx| {
         let mut editor = Editor::for_buffer(buffer, None, window, cx);
         editor.buffer().update(cx, |buffer, cx| {
-            buffer.set_title(format!("Output from git {operation}"), cx);
+            buffer.set_title(t!("git_ui_core.output_title", operation = operation), cx);
         });
         editor.set_read_only(true);
         editor

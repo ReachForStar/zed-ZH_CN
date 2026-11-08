@@ -5,8 +5,9 @@ use crate::{
         commit_context_menu, git_context_menu_tasks, git_task_context,
     },
     commit_tooltip::CommitAvatar,
-    commit_view::CommitView,
+    commit_view::{CommitView, CommitViewOptions},
     git_status_icon,
+    git_timestamp::format_git_timestamp,
 };
 use collections::{BTreeMap, HashMap, IndexSet};
 use editor::Editor;
@@ -29,6 +30,7 @@ use language::line_diff;
 use markdown::{Markdown, MarkdownElement};
 use menu::{Cancel, SelectFirst, SelectLast, SelectNext, SelectPrevious};
 use picker::{Picker, PickerDelegate};
+use project::project_settings::ProjectSettings;
 use project::{
     ProjectPath, TaskSourceKind,
     git_store::{
@@ -36,6 +38,7 @@ use project::{
         GraphDataResponse, Repository, RepositoryEvent, RepositoryId,
     },
 };
+use settings::{GitDateStyle, RegisterSetting, Settings};
 use smallvec::{SmallVec, smallvec};
 use std::{
     borrow::Cow,
@@ -267,8 +270,10 @@ impl ChangedFileEntry {
             commit_sha.to_string(),
             repository.clone(),
             workspace.clone(),
-            None,
-            Some(self.repo_path.clone()),
+            CommitViewOptions {
+                file_filter: Some(self.repo_path.clone()),
+                ..Default::default()
+            },
             window,
             cx,
         );
@@ -621,17 +626,39 @@ fn timestamp_format() -> &'static [BorrowedFormatItem<'static>] {
     })
 }
 
-fn format_timestamp(timestamp: i64) -> String {
+#[derive(Clone, Debug, RegisterSetting)]
+pub(crate) struct GitGraphSettings {
+    pub date_style: GitDateStyle,
+}
+
+impl Settings for GitGraphSettings {
+    fn from_settings(content: &settings::SettingsContent) -> Self {
+        Self {
+            date_style: content.git_graph.as_ref().unwrap().date_style.unwrap(),
+        }
+    }
+}
+
+fn format_timestamp(timestamp: i64, date_style: GitDateStyle, cx: &App) -> String {
     let Ok(datetime) = OffsetDateTime::from_unix_timestamp(timestamp) else {
         return t!("git_ui.git_graph.unknown").to_string();
     };
 
+    if date_style == GitDateStyle::Relative {
+        return format_git_timestamp(datetime, time_format::TimestampFormat::Relative, cx);
+    }
     let local_offset = UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC);
     let local_datetime = datetime.to_offset(local_offset);
 
-    local_datetime
-        .format(timestamp_format())
-        .unwrap_or_default()
+    ProjectSettings::get_global(cx)
+        .git
+        .date_format
+        .format(local_datetime)
+        .unwrap_or_else(|| {
+            local_datetime
+                .format(timestamp_format())
+                .unwrap_or_default()
+        })
 }
 
 fn accent_colors_count(accents: &AccentColors) -> usize {
@@ -1393,9 +1420,13 @@ impl RefMenuEntry {
         window: &mut Window,
     ) -> ContextMenu {
         if let Some(ref_name) = self.ref_name {
-            menu = menu.entry("Copy Ref Name", None, move |_window, cx| {
-                cx.write_to_clipboard(ClipboardItem::new_string(ref_name.to_string()));
-            });
+            menu = menu.entry(
+                t!("git_ui.git_graph.copy_ref_name"),
+                None,
+                move |_window, cx| {
+                    cx.write_to_clipboard(ClipboardItem::new_string(ref_name.to_string()));
+                },
+            );
         }
 
         menu = menu.separator().header("Custom Commands");
@@ -1684,8 +1715,17 @@ impl GitGraph {
             },
         );
         let mut row_height = Self::row_height(window, cx);
+        let mut was_date_style = GitGraphSettings::get_global(cx).date_style;
+        let mut was_date_format = ProjectSettings::get_global(cx).git.date_format.clone();
 
         cx.observe_global_in::<settings::SettingsStore>(window, move |this, window, cx| {
+            let date_style = GitGraphSettings::get_global(cx).date_style;
+            let date_format = &ProjectSettings::get_global(cx).git.date_format;
+            if date_style != was_date_style || *date_format != was_date_format {
+                was_date_style = date_style;
+                was_date_format = date_format.clone();
+                cx.notify();
+            }
             let new_row_height = Self::row_height(window, cx);
             if new_row_height != row_height {
                 // The `uniform_list` powering the table caches the item size
@@ -2059,7 +2099,11 @@ impl GitGraph {
                     author_name = data.author_name.clone();
                     author_email =
                         (!data.author_email.is_empty()).then(|| data.author_email.clone());
-                    formatted_time = format_timestamp(data.commit_timestamp);
+                    formatted_time = format_timestamp(
+                        data.commit_timestamp,
+                        GitGraphSettings::get_global(cx).date_style,
+                        cx,
+                    );
                 } else {
                     subject = t!("git_ui.common.loading").into();
                     author_name = SharedString::default();
@@ -2560,8 +2604,7 @@ impl GitGraph {
             commit_entry.data.sha.to_string(),
             repository.downgrade(),
             self.workspace.clone(),
-            None,
-            None,
+            Default::default(),
             window,
             cx,
         );
@@ -3063,7 +3106,9 @@ impl GitGraph {
             CommitDataState::Loading(_) => (t!("git_ui.common.loading").into(), "".into(), None),
         };
 
-        let date_string = commit_timestamp.map(format_timestamp).unwrap_or_default();
+        let date_string = commit_timestamp
+            .map(|timestamp| format_timestamp(timestamp, GitDateStyle::Absolute, cx))
+            .unwrap_or_default();
 
         let remote = repository.update(cx, |repo, cx| {
             let remote_url = repo.default_remote_url()?;
@@ -4335,17 +4380,17 @@ impl GitGraph {
                                 cx.notify();
                             }))
                             .tooltip({
-                                let label = if !collapsed {
-                                    "Hide Commit Message"
+                                let label: SharedString = if !collapsed {
+                                    t!("git_ui.git_graph.hide_commit_message").into()
                                 } else {
-                                    "Show Commit Message"
+                                    t!("git_ui.git_graph.show_commit_message").into()
                                 };
 
-                                move |_window, cx: &mut App| Tooltip::simple(label, cx)
+                                move |_window, cx: &mut App| Tooltip::simple(label.clone(), cx)
                             }),
                     )
                     .child(
-                        Label::new("Message")
+                        Label::new(t!("git_ui.git_graph.message_column"))
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     ),
@@ -5436,6 +5481,24 @@ mod tests {
     use smallvec::{SmallVec, smallvec};
     use std::path::Path;
     use std::sync::{Arc, Mutex};
+
+    #[gpui::test]
+    fn test_graph_dates_use_date_format(cx: &mut App) {
+        let store = SettingsStore::test(cx);
+        cx.set_global(store);
+        ProjectSettings::register(cx);
+        SettingsStore::update_global(cx, |store, cx| {
+            store.update_user_settings(cx, |content| {
+                content.git.get_or_insert_default().date_format = Some("%Y".into());
+            });
+        });
+        let timestamp = time::macros::datetime!(2024-06-08 12:34 UTC).unix_timestamp();
+        assert!(format_timestamp(timestamp, GitDateStyle::Relative, cx).ends_with(" ago"));
+        assert_eq!(
+            format_timestamp(timestamp, GitDateStyle::Absolute, cx),
+            "2024"
+        );
+    }
 
     fn init_test(cx: &mut TestAppContext) {
         cx.update(|cx| {
