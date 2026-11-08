@@ -1908,11 +1908,34 @@ impl ToolCall {
         project: WeakEntity<Project>,
         cx: &mut AsyncApp,
     ) -> Option<ResolvedLocation> {
+        let (fs, is_absolute) = project
+            .update(cx, |project, cx| {
+                (
+                    project.fs().clone(),
+                    project.path_style(cx).is_absolute(&location.path),
+                )
+            })
+            .ok()?;
+        // Agents report directories (the workspace root, a folder they just
+        // created) as tool call locations. Opening a buffer for one fails with
+        // EISDIR and logs an error for every reported location, so check the
+        // kind first.
+        if is_absolute
+            && fs
+                .metadata(&location.path)
+                .await
+                .ok()
+                .flatten()
+                .is_some_and(|metadata| metadata.is_dir)
+        {
+            return None;
+        }
+
         let buffer = project
             .update(cx, |project, cx| {
                 if let Some(path) = project.project_path_for_absolute_path(&location.path, cx) {
                     Some(project.open_buffer(path, cx))
-                } else if project.path_style(cx).is_absolute(&location.path) {
+                } else if is_absolute {
                     Some(project.open_local_buffer(&location.path, cx))
                 } else {
                     None
@@ -18519,6 +18542,77 @@ mod tests {
             assert!(call.resolved_locations.is_empty());
             assert!(thread.project.read(cx).agent_location().is_none());
         });
+    }
+
+    #[gpui::test]
+    async fn test_tool_locations_skip_directories(cx: &mut TestAppContext) {
+        init_test(cx);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            path!("/project"),
+            json!({"src": {"file.rs": "first\nsecond\n"}}),
+        )
+        .await;
+        fs.insert_tree(path!("/outside"), json!({"notes.md": "# notes\n"}))
+            .await;
+        let project = Project::test(fs.clone(), [Path::new(path!("/project"))], cx).await;
+        let connection = Rc::new(FakeAgentConnection::new());
+        let thread = cx
+            .update(|cx| {
+                connection.new_session(
+                    project.clone(),
+                    PathList::new(&[Path::new(path!("/project"))]),
+                    cx,
+                )
+            })
+            .await
+            .expect("session");
+
+        let reads_before = fs.read_call_count();
+        let id = acp_v2::ToolCallId::new("directory-location");
+        thread.update(cx, |thread, cx| {
+            thread
+                .upsert_tool_call(
+                    acp_v1::ToolCall::new("directory-location", "Read").locations(vec![
+                        acp_v1::ToolCallLocation::new(path!("/project")),
+                        acp_v1::ToolCallLocation::new(path!("/project/src")),
+                        acp_v1::ToolCallLocation::new(path!("/outside")),
+                        acp_v1::ToolCallLocation::new(path!("/project/src/file.rs")).line(2),
+                    ]),
+                    cx,
+                )
+                .expect("tool call");
+        });
+        cx.run_until_parked();
+
+        thread.read_with(cx, |thread, cx| {
+            let (index, call) = thread.tool_call(&id).expect("tool");
+            assert_eq!(call.locations.len(), 4);
+            assert_eq!(
+                call.resolved_locations.iter().flatten().count(),
+                1,
+                "only the file location should resolve"
+            );
+            assert!(thread.entries[index].location(0).is_none());
+            assert!(thread.entries[index].location(1).is_none());
+            assert!(thread.entries[index].location(2).is_none());
+            assert!(thread.entries[index].location(3).is_some());
+            assert_eq!(
+                thread
+                    .project
+                    .read(cx)
+                    .worktrees(cx)
+                    .map(|worktree| worktree.read(cx).abs_path().to_path_buf())
+                    .collect::<Vec<_>>(),
+                vec![PathBuf::from(path!("/project"))],
+                "a directory location must not create a worktree for it"
+            );
+        });
+        assert_eq!(
+            fs.read_call_count() - reads_before,
+            1,
+            "only the file location may be read; directory locations must not be opened"
+        );
     }
 
     #[gpui::test]

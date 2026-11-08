@@ -55,6 +55,7 @@ status: active
 - `crates/settings_ui/*` 的设置项标题/描述为 `SharedString`（运行期本地化）；取上游新代码后补 `.into()`，上游新增设置项要与 `[SettingsPageItem; N]` 数组长度、`terminal_panel_section`/`git_hunks_section` 等分节数组同步。
 - `crates/fs/src/fs_watcher.rs` 的 `check_watch_health`（watch 健康检查）——含 `WatchBackend::watched_paths`；上游新增的 test 后端需补实现（见要点）；上游重构 `PathRegistrationState` 后要按新 `coverage` 模型重写孤儿判定；健康检查线程用 `Weak<OsWatcher>` 持有 watcher，否则会把 `OsWatcher` 及其 `BackgroundExecutor` 永久钉住（上游 `watcher_retains_scheduler_until_teardown` 用例会失败）。
 - `.github/workflows/` 仅 `release.yml` + `run_tests.yml`（精简 CI，禁止 `cargo xtask workflows` 覆盖）；上游删除 workflow 文件与 fork 的删除产生 delete/modify 冲突时取删除。
+- `crates/acp_thread/src/acp_thread.rs` 的 `resolve_location` 用 `project.fs().metadata()` 跳过目录路径（上游未修，会为每个目录位置记 EISDIR 错误并可能在项目外创建工作树）；合并后确认该判断仍在，`FakeFs::read_call_count` 仍是 `test_tool_locations_skip_directories` 的断言依据。
 - `README.md` 顶部 `> [!IMPORTANT]` 与 `> Remove this line ...` 两行完好（.rules 硬规则，勿删）。
 
 ## 关联页面

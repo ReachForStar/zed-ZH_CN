@@ -27,6 +27,7 @@ chrono.workspace = true
 collections.workspace = true
 diffy.workspace = true
 feature_flags.workspace = true
+fs.workspace = true
 multi_buffer.workspace = true
 file_icons.workspace = true
 futures.workspace = true
