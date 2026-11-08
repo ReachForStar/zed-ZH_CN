@@ -3,7 +3,7 @@ title: fork 发布 release 的流程与版本号策略
 type: concept
 tags: [release, tag, workflow, fork, versioning]
 created: 2026-09-26
-updated: 2026-10-30
+updated: 2026-11-08
 status: active
 ---
 
@@ -39,6 +39,7 @@ status: active
 - 2026-10-24 准备 v1.25.3（上游 main 开发号为 1.27.0，取上游 stable 最新版）：版本号、`README`、`RELEASE_NOTES.md` 与 `script/lib/workspace.ps1` 的 `cargo metadata --format-version=1` 遗留一并写好，**尚未打标签发布**（GitHub Releases 最新仍是 v1.24.2），准备提交为 `110f5c907a`，`v1.25.3` 需在合并上游后另行打标签触发。
 - 2026-10-30 发布 v1.27.0（**已发布**）：提交 `077d25fa39` 上打附注标签并推送触发 run 41062882626，该轮 macOS job 因 `macos-14` 只带 SDK 15 失败（详见 [macOS 打包要求 SDK 26](../queries/macos-bundle-sdk-26-requirement.md)）；修复提交 `94b50ea89c` 把 macOS job 改成 `macos-26` 并显式校验 SDK 后，用 `workflow_dispatch`（`dry_run=false`）重跑 run 41066083715，四个 job 全绿，Release `Zed 1.27.0 (汉化版)` 已创建并标记 Latest，7 个产物：`Zed-aarch64.dmg`、`Zed-x86_64.exe`、`zed-linux-x86_64.tar.gz`、`zed-zh-cn_1.27.0_amd64.deb`、三个 `zed-remote-server-*`。Linux `.deb` 安装包本轮首次上线（见上文「三平台安装包」）。
 - 该 Release 的 `target_commitish` 是重跑时的 main HEAD（`94b50ea89c`），标签仍指向 `077d25fa39`：两者差异只有 wiki 与 workflow 改动；若要三者对齐，需在修复提交上重打标签。
+- 2026-11-08 发布 v1.29.0（**已发布**）：提交 `98085e9da2`（版本号由 1.27.0 提到 1.29.0，`crates/zed/Cargo.toml`、`Cargo.lock`、`README.md`、`RELEASE_NOTES.md` 四处一致）上打附注标签并推送，run 42444974852 全绿：`verify_version` 8s、Linux 1h3m56s、macOS 1h25m49s、Windows 1h34m39s、发布 job 35s。Release「Zed 1.29.0 (汉化版)」已创建并标记 Latest，7 个产物齐全（`Zed-aarch64.dmg`、`Zed-x86_64.exe`、`zed-linux-x86_64.tar.gz`、`zed-zh-cn_1.29.0_amd64.deb`、三个 `zed-remote-server-*`）。版本号取 1.29.0 的理由：与本次代码基线 upstream/main 一致，且高于上游正式发布线当时最新的 1.27.0。本次由标签直接触发、未重跑，`target_commitish` 与标签同指 `98085e9da2`，三者对齐（修正上一次的偏差）。
 - 残留验证：`script/get-crate-version` 在 CRLF 工作区无法直接执行（`#!/usr/bin/env bash\r`），本地核验版本号用 `git show :script/get-crate-version > tmp/x.sh && bash tmp/x.sh zed`，或直接读 `cargo metadata --no-deps --format-version=1`。
 
 ## 关联页面
