@@ -50,7 +50,7 @@ status: active
   5. **链接缺 `-l` 名**：只装运行库、缺 `libx11-xcb-dev`/`libxkbcommon-x11-dev` 时链接报 `unable to find library -lxkbcommon-x11` / `-lX11-xcb`。在 `tmp/syslibs` 里给 `libX11-xcb.so.1`、`libxkbcommon-x11.so.0` 建无版本号软链并设 `LIBRARY_PATH`，无需 apt。
   6. **许可证**：`script/generate-licenses` 需要 `cargo-about 0.8.2`，缺失时先 `cargo install cargo-about@0.8.2 --locked`。
   7. 完整命令：`PATH="$PWD/tmp/bin:$PATH" LIBRARY_PATH="$PWD/tmp/syslibs" CC=clang-22 CXX=clang++-22 LLD=/usr/bin/ld.lld-22 REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu bash script/bundle-linux --skip-sentry`，随后 `bash script/bundle-linux-deb`。
-- 2026-11-13 发布 v1.29.1（**CI 进行中**）：提交 `4d236e7002`（`Cargo.toml`/`Cargo.lock`/`README.md`/`RELEASE_NOTES.md` 四处一致，版本 1.29.1，`--check-not-behind stable` 通过：上游正式线 1.28.1）上打附注标签并推送，run 43358134925 触发。内容为 ACP 面板统计与自动压缩修复（见 [ACP 面板自动压缩上下文不生效](../queries/acp-auto-compact-external-agents.md)）。
+- 2026-11-13 发布 v1.29.1（**已发布**，2026-11-14 完成）：首轮在合并前的 `4d236e7002` 打标签触发 run 43358134925，构建中被取消（当时准备先合并上游）。合并 upstream/main（`27bbbc1cc4`，1.30.0，76 提交）并修复焦点句柄与两处未汉化文案后，删除旧标签、在 `a8c7029f60` 重打附注标签 `v1.29.1` 推送，run 43379538856 全绿：`verify_version` 8s、Linux 1m23m14s、macOS 1h41m35s、Windows 1h36m06s、发布 job 34s，总计 1h42m24s。Release「Zed 1.29.1 (汉化版)」标记 Latest，`target_commitish` 与标签同指 `a8c7029f60`，7 个产物齐全（`Zed-aarch64.dmg`、`Zed-x86_64.exe`、`zed-linux-x86_64.tar.gz`、`zed-zh-cn_1.29.1_amd64.deb` 74.5 MB、三个 `zed-remote-server-*`）。版本号沿用上一轮用户指定的 1.29.1，高于上游正式线 1.28.1；代码基线 1.30.0 高于版本号属预期。
 
 ## 关联页面
 
