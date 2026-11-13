@@ -55,11 +55,18 @@ status: active
 
 - `cargo check -p zed`：通过。
 - `cargo clippy -p zed -p acp_thread -p agent_ui -p agent_servers -p settings_ui -p git_ui -p workspace -p tabular_data_preview -p open_path_prompt --all-targets -- -D warnings`：通过（首轮暴露 `branch_picker` 的 `TaskExt` 未使用导入，删除后全绿）。
-- 测试：acp_thread 316、agent_servers 198、settings_ui 76、tabular_data_preview 23 全过；git_ui 212 过、1 个已知本地失败 `git_panel::tests::test_history_tab_focus_border_only_for_keyboard_focus`（上游本轮未改该逻辑，属既有本地环境失败）。
+- 测试：acp_thread 316、agent_servers 198、settings_ui 76、tabular_data_preview 23 全过；git_ui 首轮 212 过 / 1 失败（`test_history_tab_focus_border_only_for_keyboard_focus`），已定位并修复，修后 213 全过（见下节）。
 - `rustfmt --check`（本次编辑的 6 个文件）：通过。
 - 本地构建注意：webrtc-sys 需 clang（`.cargo/config.toml [env]` 强制 `CC/CXX`，构建后还原）；debug profile 首次编译需要 webrtc 预编译包，网络不可达时用 `LK_CUSTOM_WEBRTC` 指向 release 产物目录。
+
+## 已知失败的真因：焦点句柄重复创建（2026-11-13 修复）
+
+`test_history_tab_focus_border_only_for_keyboard_focus` 自 2026-10 起被记为「本地环境失败」，实际是早前合并冲突引入的缺陷：`GitPanel` 构造函数在局部 `focus_handle` 上注册 `cx.on_focus(..., Self::focus_in)`，结构体字段却写成 `focus_handle: cx.focus_handle()` 另建了一个句柄。两者 id 不同，真实界面与测试聚焦的都是字段句柄，`focus_in` 从未触发，键盘焦点边框永远不出现。上游结构体字段是同一句柄的简写 `focus_handle,`。
+
+修复：`crates/git_ui/src/git_panel.rs` 改回 `focus_handle,`。验证：单测通过、`git_ui` 213 项全过、`clippy -p git_ui -- -D warnings` 与 fmt 通过。提交 `a111afd787`。
 
 ## 复发预防
 
 - 上游把 `commit_view_section` 一类的分节数组扩容时，汉化键要跟着增删，并用 `check-missing-keys` 双向核对。
 - debug 与 release 的 webrtc 预编译目录不共享，断网环境先给 debug 也准备一份，或用 `LK_CUSTOM_WEBRTC`。
+- 解决构造函数冲突时，核对「注册监听用的 focus handle」与「结构体字段保存的 handle」是否为同一个：上游惯用 `focus_handle` 简写，误写成 `focus_handle: cx.focus_handle()` 会让 `on_focus`/`on_blur` 静默失效，只有聚焦行为类测试能发现。

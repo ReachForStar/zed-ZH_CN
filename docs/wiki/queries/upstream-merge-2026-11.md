@@ -68,7 +68,7 @@ LIBRARY_PATH=$PWD/tmp/libshim cargo test -p acp_thread -p agent_servers -p git_u
 
 结果：`cargo check -p zed` 通过；全量 `clippy --deny warnings` 通过；`cargo fmt --check` 通过；汉化键检查 0 问题；`acp_thread` 312 通过、`agent_servers` 196 通过（1 忽略，含 fork 的 `test_auto_compact_*` 两个用例）、`agent_ui` 585 通过、`settings_ui` 76 通过、`git_ui` 210 通过（1 个已知本地失败，见下）。
 
-已知本地失败：`git_ui::tests::test_history_tab_focus_border_only_for_keyboard_focus`（210 通过 / 1 失败）。该测试及其依赖的 `focus_in`、`history_keyboard_nav`、`focused_history_entry` 代码与 `upstream/main` 完全一致（`git diff upstream/main -- crates/git_ui/src/git_panel.rs` 在这些符号上无差异），属测试环境（`simulate_keystrokes("f19")` 后 `window.last_input_was_keyboard()`）问题，与 fork 改动无关，留给上游 CI 核对。
+已知本地失败 `git_ui::tests::test_history_tab_focus_border_only_for_keyboard_focus`（210 通过 / 1 失败）后来证实不是环境问题：fork 的 `GitPanel` 构造函数把 `focus_handle: cx.focus_handle()` 写成了新句柄，与注册 `on_focus` 的局部句柄不是同一个，导致 `focus_in` 从不触发。已于 2026-11-13 修复（提交 `a111afd787`），详见 [2026-11-13 合并记录](upstream-merge-2026-11-13.md#已知失败的真因焦点句柄重复创建2026-11-13-修复)。
 
 ## 会话启动性能（同批排查）
 

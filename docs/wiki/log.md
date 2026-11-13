@@ -3,6 +3,8 @@
 > 只追加、不修改历史。可用 `grep "^## \[" docs/wiki/log.md | tail -5` 看最近记录。
 > 前缀格式：`## [YYYY-MM-DD] <init|feat|fix|query|lint|chore> | <简述>`
 
+## [2026-11-13] fix | 修正 git 面板历史标签焦点边框：自 2026-10 起被记为「本地环境失败」的 `test_history_tab_focus_border_only_for_keyboard_focus`，真因是 fork 构造函数把结构体字段写成 `focus_handle: cx.focus_handle()` 另建句柄，而 `on_focus` 订阅在局部句柄上，`focus_in` 从不触发；改回上游的 `focus_handle,` 简写后单测通过、git_ui 213 项全过、clippy/fmt 通过（提交 `a111afd787`）；同步修正 2026-10 / 2026-11 合并页的错误结论并在复发预防中记录构造函数句柄核对
+
 ## [2026-11-13] feat | 合并 upstream/main（`27bbbc1cc4`，1.30.0，76 提交）：9 处冲突（workflow 取删除、`Cargo.toml` 保 1.29.1、`Cargo.lock` 取上游后 `cargo metadata` 重裁、`branch_picker` 保留 `PromptButton` 且删除上游已不用的 `TaskExt`、`open_path_prompt` 导入合并、`page_data` 取上游新增 `title_bar.show` 与 `commit_view_section` 结构并汉化、表内设置面板与上游 `extend_selection`/`clear_selection` 并存、安全弹窗取 `stay_restricted_and_dismiss` 与 `remote_host_label`、`main.rs` 导入与 toast 文案保留汉化）；新增 7 个汉化键、删除 `file_diff_section`，`check-missing-keys` 0 问题；`cargo check -p zed`、clippy（9 crate，`-D warnings`）、acp_thread 316 / agent_servers 198 / settings_ui 76 / tabular_data_preview 23 全过，git_ui 仅既有本地失败 `test_history_tab_focus_border_only_for_keyboard_focus`；沉淀 queries/upstream-merge-2026-11-13.md
 
 ## [2026-11-13] chore | 准备并发布 v1.29.1：同步版本号 1.29.1（Cargo.toml/Cargo.lock/README/RELEASE_NOTES 四处一致，`--check-not-behind stable` 通过，上游正式线 1.28.1）并提交 `4d236e7002`；本地 Ubuntu 22.04 实测构建 `zed-zh-cn_1.29.1_amd64.deb`（73 MB）与 tar.gz（92 MB），CLI 自报 `Zed 1.29.1 4d236e7`，踩坑记录（CRLF 脚本与 RELEASE_CHANNEL、版本化 clang/lld/llvm-objcopy、CXX 需经 `.cargo/config.toml [env]` force、无 musl-gcc 改 gnu remote server、缺 dev 库用 `LIBRARY_PATH` 软链）已写入 fork-release-publishing；附注标签 v1.29.1 推送触发 release run 43358134925，三平台构建进行中

@@ -133,7 +133,7 @@ bash tmp/check-keymaps.sh  # script/check-keymaps 的 LF 副本
 - **冲突残留的重复分隔符**：`title_bar`、`thread_view` 各出现一处 `};` 重复（自己写的解析块尾部多带一个），表现为 `unexpected closing delimiter`，靠 `rustfmt --check` 的指示列定位。
 - **汉化补齐**：`git_ui_core.push_rejected`（推送被拒绝提示）、`column_refs`、`agent_ui.thread_view.subagent_status_unknown`、`submission_detail_waiting`/`_accepted_connection_lost`/`_connection_lost_unknown`（可恢复消息状态行的 tooltip 明细），en/zh-CN 双侧同补。
 - **本机环境（非代码问题）**：新 livekit rev 触发 `webrtc-sys` 重编，GCC 11 下报 `changes meaning of 'Network' [-fpermissive]`，需 `CXXFLAGS=-fpermissive`；测试链接报 `unable to find library -lX11-xcb`（系统只有 `libX11-xcb.so.1`，缺 dev 符号），用 `tmp/libshim/libX11-xcb.so → .so.1` 符号链接 + `LIBRARY_PATH` 链接，不改仓库文件。
-- **已知本地失败**：上游新测试 `git_panel::tests::test_history_tab_focus_border_only_for_keyboard_focus` 本地必失败（断点在「键盘输入后聚焦面板应显示焦点边框」）。该文件与上游仅差汉化字符串、`crates/gpui` 与上游逐字节一致，且 `focus_in` 回调在测试中未被调用，判定为上游测试在本机的环境差异，不作为合并阻塞项；待上游 CI 结果核对。
+- **已知本地失败（已修复）**：`git_panel::tests::test_history_tab_focus_border_only_for_keyboard_focus`（断点在「键盘输入后聚焦面板应显示焦点边框」）。当时判为环境差异，实际根因是 fork 构造函数重复创建焦点句柄（`focus_handle: cx.focus_handle()`），`focus_in` 从不触发；2026-11-13 修复（`a111afd787`），详见 [2026-11-13 合并记录](upstream-merge-2026-11-13.md)。
 - **门禁结果**：`cargo check -p zed`、全量 `cargo clippy --workspace --all-targets -- --deny warnings`（469 crate，0 警告）、`cargo fmt --all --check`、`check-missing-keys.py`（3922 引用键 / 3980 键，0 问题）、check-todos、check-keymaps 通过；acp_thread 308、agent_ui 583、agent_servers 187、git_ui_core 33、title_bar 26、fs 34、settings_ui 76 项测试通过（git_ui 187 通过 + 上述 1 项已知失败）。
 
 ## 涉及模块
