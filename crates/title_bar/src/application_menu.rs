@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use ui::{ContextMenu, PopoverMenu, PopoverMenuHandle, Tooltip, prelude::*};
 use zed_i18n::t;
 
-use crate::title_bar_settings::TitleBarSettings;
+use platform_title_bar::TitleBarSettings;
 
 actions!(
     app_menu,

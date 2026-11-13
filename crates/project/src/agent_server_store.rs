@@ -1712,6 +1712,10 @@ impl CustomAgentServerSettings {
     }
 
     pub fn default_config_option(&self, config_id: &str) -> Option<&AgentConfigOptionValue> {
+        self.default_config_options().get(config_id)
+    }
+
+    pub fn default_config_options(&self) -> &HashMap<String, AgentConfigOptionValue> {
         match self {
             CustomAgentServerSettings::Custom {
                 default_config_options,
@@ -1720,7 +1724,7 @@ impl CustomAgentServerSettings {
             | CustomAgentServerSettings::Registry {
                 default_config_options,
                 ..
-            } => default_config_options.get(config_id),
+            } => default_config_options,
         }
     }
 

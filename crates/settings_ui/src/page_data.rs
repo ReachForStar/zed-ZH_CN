@@ -4649,9 +4649,24 @@ fn window_and_layout_page() -> SettingsPage {
         ]
     }
 
-    fn title_bar_section() -> [SettingsPageItem; 12] {
+    fn title_bar_section() -> [SettingsPageItem; 13] {
         [
             SettingsPageItem::SectionHeader(t!("settings_ui.page_data.title_bar_section").into()),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.title_bar_show_title_bar_title").into(),
+                description: t!("settings_ui.page_data.title_bar_show_title_bar_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("title_bar.show"),
+                    pick: |settings_content| settings_content.title_bar.as_ref()?.show.as_ref(),
+                    write: |settings_content, value, _| {
+                        settings_content.title_bar.get_or_insert_default().show = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.title_bar_show_branch_status_icon_title").into(),
                 description: t!(
@@ -9305,9 +9320,67 @@ fn version_control_page() -> SettingsPage {
         ]
     }
 
-    fn file_diff_section() -> [SettingsPageItem; 2] {
+    fn commit_view_section() -> [SettingsPageItem; 4] {
         [
-            SettingsPageItem::SectionHeader(t!("settings_ui.page_data.file_diff_section").into()),
+            SettingsPageItem::SectionHeader(t!("settings_ui.page_data.commit_view_section").into()),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_commit_view_expand_description_title").into(),
+                description: t!(
+                    "settings_ui.page_data.git_commit_view_expand_description_description"
+                )
+                .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.commit_view.expand_description"),
+                    pick: |settings_content| {
+                        settings_content
+                            .git
+                            .as_ref()?
+                            .commit_view
+                            .as_ref()?
+                            .expand_description
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .git
+                            .get_or_insert_default()
+                            .commit_view
+                            .get_or_insert_default()
+                            .expand_description = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: t!("settings_ui.page_data.git_commit_view_expand_files_title").into(),
+                description: t!("settings_ui.page_data.git_commit_view_expand_files_description")
+                    .into(),
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git.commit_view.expand_files"),
+                    pick: |settings_content| {
+                        settings_content
+                            .git
+                            .as_ref()?
+                            .commit_view
+                            .as_ref()?
+                            .expand_files
+                            .as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .git
+                            .get_or_insert_default()
+                            .commit_view
+                            .get_or_insert_default()
+                            .expand_files = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
             SettingsPageItem::SettingItem(SettingItem {
                 title: t!("settings_ui.page_data.git_file_diff_show_full_file_title").into(),
                 description: t!("settings_ui.page_data.git_file_diff_show_full_file_description")
@@ -9348,8 +9421,8 @@ fn version_control_page() -> SettingsPage {
             git_blame_view_section(),
             branch_picker_section(),
             stash_picker_section(),
+            commit_view_section(),
             git_graph_section(),
-            file_diff_section(),
             git_hunks_section(),
         ],
     }

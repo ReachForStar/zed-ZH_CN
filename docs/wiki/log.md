@@ -3,6 +3,8 @@
 > 只追加、不修改历史。可用 `grep "^## \[" docs/wiki/log.md | tail -5` 看最近记录。
 > 前缀格式：`## [YYYY-MM-DD] <init|feat|fix|query|lint|chore> | <简述>`
 
+## [2026-11-13] feat | 合并 upstream/main（`27bbbc1cc4`，1.30.0，76 提交）：9 处冲突（workflow 取删除、`Cargo.toml` 保 1.29.1、`Cargo.lock` 取上游后 `cargo metadata` 重裁、`branch_picker` 保留 `PromptButton` 且删除上游已不用的 `TaskExt`、`open_path_prompt` 导入合并、`page_data` 取上游新增 `title_bar.show` 与 `commit_view_section` 结构并汉化、表内设置面板与上游 `extend_selection`/`clear_selection` 并存、安全弹窗取 `stay_restricted_and_dismiss` 与 `remote_host_label`、`main.rs` 导入与 toast 文案保留汉化）；新增 7 个汉化键、删除 `file_diff_section`，`check-missing-keys` 0 问题；`cargo check -p zed`、clippy（9 crate，`-D warnings`）、acp_thread 316 / agent_servers 198 / settings_ui 76 / tabular_data_preview 23 全过，git_ui 仅既有本地失败 `test_history_tab_focus_border_only_for_keyboard_focus`；沉淀 queries/upstream-merge-2026-11-13.md
+
 ## [2026-11-13] chore | 准备并发布 v1.29.1：同步版本号 1.29.1（Cargo.toml/Cargo.lock/README/RELEASE_NOTES 四处一致，`--check-not-behind stable` 通过，上游正式线 1.28.1）并提交 `4d236e7002`；本地 Ubuntu 22.04 实测构建 `zed-zh-cn_1.29.1_amd64.deb`（73 MB）与 tar.gz（92 MB），CLI 自报 `Zed 1.29.1 4d236e7`，踩坑记录（CRLF 脚本与 RELEASE_CHANNEL、版本化 clang/lld/llvm-objcopy、CXX 需经 `.cargo/config.toml [env]` force、无 musl-gcc 改 gnu remote server、缺 dev 库用 `LIBRARY_PATH` 软链）已写入 fork-release-publishing；附注标签 v1.29.1 推送触发 release run 43358134925，三平台构建进行中
 
 ## [2026-11-13] fix | 复查 ACP 面板上下文统计与自动压缩：核对 pi/opencode/claude/codex 均上报 usage_update 且公布 compact、圆环读数准确（pi 322307/1048576≈30%，用户 80% 阈值未达属预期）；补强 acp_thread（PromptResponse.usage 去 beta 门禁使每轮 token 统计生效、maybe_trigger_auto_compact 空闲判定改 foreground_activity 并排除 AgentOwned、update_session_state Idle 补触发点、新增三档决策日志）与 agent_ui（max=0 不渲染圆环、占比 clamp）；新增两条测试，acp_thread 315 项全过
