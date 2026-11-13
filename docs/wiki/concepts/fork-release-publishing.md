@@ -3,7 +3,7 @@ title: fork 发布 release 的流程与版本号策略
 type: concept
 tags: [release, tag, workflow, fork, versioning]
 created: 2026-09-26
-updated: 2026-11-08
+updated: 2026-11-13
 status: active
 ---
 
@@ -17,7 +17,7 @@ status: active
 
 - **触发方式**：推送 `v*` 标签（或 workflow_dispatch 手动触发）。release job 依赖 `bundle_linux_x86_64` / `bundle_windows_x86_64` / `bundle_macos_aarch64` 三个构建 job（单 job 超时 360 分钟），产物由 `softprops/action-gh-release@v2` 上传，`make_latest: true`。
 - **版本号来源**：`script/get-crate-version zed` 读 `crates/zed/Cargo.toml` 的 `version`，用于 Release 标题 `Zed {version} (汉化版)` 与发布说明头部"基于 Zed v{version}"；tag 触发时标签名即 `v{...}`。改版本需同步 `Cargo.lock` 中 `name = "zed"` 条目，否则 lock 不一致。
-- **发布通道**：仓库内 `crates/zed/RELEASE_CHANNEL` 保持 `dev`（本地开发共存），各 bundle job 检出后统一覆盖为 `stable` 再构建，无需修改仓库文件。
+- **发布通道**：仓库内 `crates/zed/RELEASE_CHANNEL` 当前提交值为 `stable`（此前长期为 `dev` 以便本地开发共存）；各 bundle job 检出后仍统一覆盖为 `stable` 再构建，无需修改仓库文件。
 - **版本号策略（2026-10-30 决策，取代 2026-09-26 的「取上游已发布 stable 版本」）**：版本号由发布者指定（`python3 scripts/sync-upstream-version.py --version X.Y.Z`，同时写入本仓库 `crates/zed/Cargo.toml` 与 `Cargo.lock` 的 `zed` 条目），`release.yml` 的 `verify_version` job 在构建前三重校验：
   1. `--check-not-behind stable`：仓库版本不得低于上游最新正式 release（不落后）；
   2. `--check-not-behind` 内部同时校验 `Cargo.lock` 与 `Cargo.toml` 的版本一致；
@@ -41,6 +41,15 @@ status: active
 - 该 Release 的 `target_commitish` 是重跑时的 main HEAD（`94b50ea89c`），标签仍指向 `077d25fa39`：两者差异只有 wiki 与 workflow 改动；若要三者对齐，需在修复提交上重打标签。
 - 2026-11-08 发布 v1.29.0（**已发布**）：提交 `98085e9da2`（版本号由 1.27.0 提到 1.29.0，`crates/zed/Cargo.toml`、`Cargo.lock`、`README.md`、`RELEASE_NOTES.md` 四处一致）上打附注标签并推送，run 42444974852 全绿：`verify_version` 8s、Linux 1h3m56s、macOS 1h25m49s、Windows 1h34m39s、发布 job 35s。Release「Zed 1.29.0 (汉化版)」已创建并标记 Latest，7 个产物齐全（`Zed-aarch64.dmg`、`Zed-x86_64.exe`、`zed-linux-x86_64.tar.gz`、`zed-zh-cn_1.29.0_amd64.deb`、三个 `zed-remote-server-*`）。版本号取 1.29.0 的理由：与本次代码基线 upstream/main 一致，且高于上游正式发布线当时最新的 1.27.0。本次由标签直接触发、未重跑，`target_commitish` 与标签同指 `98085e9da2`，三者对齐（修正上一次的偏差）。
 - 残留验证：`script/get-crate-version` 在 CRLF 工作区无法直接执行（`#!/usr/bin/env bash\r`），本地核验版本号用 `git show :script/get-crate-version > tmp/x.sh && bash tmp/x.sh zed`，或直接读 `cargo metadata --no-deps --format-version=1`。
+- 2026-11-13 本地构建 v1.29.1 安装包（**不发布**，用于先验证打包链路）：以下步骤在 Ubuntu 22.04 实测通过，产物 `zed-zh-cn_1.29.1_amd64.deb`（73 MB）与 `zed-linux-x86_64.tar.gz`（92 MB），CLI 自报 `Zed 1.29.1 4d236e7`。
+  1. **CRLF 工作区**：`core.autocrlf=true` 时工作区脚本为 CRLF，直接执行会失败。先对 `script/bundle-linux`、`script/bundle-linux-deb`、`script/get-crate-version`、`script/generate-licenses`、`script/lib/blob-store.sh`、`crates/zed/RELEASE_CHANNEL`、`crates/zed/resources/zed.desktop.in` 执行 `sed -i 's/\r$//'`。其中 `RELEASE_CHANNEL` 不转会出现 `stable\r` 后缀（产物名带回车）；索引仍是 LF，转后 `git diff` 为空，构建完 `git checkout --` 恢复即可。
+  2. **工具链**：系统若只有版本化命令（`clang-22`、`ld.lld-22`、`llvm-objcopy-22`），设 `CC=clang-22`、`LLD=/usr/bin/ld.lld-22`，并在 `tmp/bin` 建 `llvm-objcopy` 软链后前置 `PATH`（脚本里该命令是硬编码的）。
+  3. **C++ 编译器**：`webrtc-sys` 会退回 `c++`（GCC）并在 `-Wno-changes-meaning` 处硬失败。仅导出 `CXX=clang++-22` 不够，需在 `.cargo/config.toml` 的 `[env]` 里以 `force = true` 写 `CC`/`CXX`，构建后还原该文件（CI 用 job 级 `CC/CXX: clang-18` 不涉及）。
+  4. **musl**：本机无 `musl-gcc` 时设 `REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu`，跳过 musl 版 remote_server（该文件是独立产物，不在 `.deb` 内）。
+  5. **链接缺 `-l` 名**：只装运行库、缺 `libx11-xcb-dev`/`libxkbcommon-x11-dev` 时链接报 `unable to find library -lxkbcommon-x11` / `-lX11-xcb`。在 `tmp/syslibs` 里给 `libX11-xcb.so.1`、`libxkbcommon-x11.so.0` 建无版本号软链并设 `LIBRARY_PATH`，无需 apt。
+  6. **许可证**：`script/generate-licenses` 需要 `cargo-about 0.8.2`，缺失时先 `cargo install cargo-about@0.8.2 --locked`。
+  7. 完整命令：`PATH="$PWD/tmp/bin:$PATH" LIBRARY_PATH="$PWD/tmp/syslibs" CC=clang-22 CXX=clang++-22 LLD=/usr/bin/ld.lld-22 REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu bash script/bundle-linux --skip-sentry`，随后 `bash script/bundle-linux-deb`。
+- 2026-11-13 发布 v1.29.1（**CI 进行中**）：提交 `4d236e7002`（`Cargo.toml`/`Cargo.lock`/`README.md`/`RELEASE_NOTES.md` 四处一致，版本 1.29.1，`--check-not-behind stable` 通过：上游正式线 1.28.1）上打附注标签并推送，run 43358134925 触发。内容为 ACP 面板统计与自动压缩修复（见 [ACP 面板自动压缩上下文不生效](../queries/acp-auto-compact-external-agents.md)）。
 
 ## 关联页面
 
