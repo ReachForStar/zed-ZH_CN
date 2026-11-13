@@ -65,6 +65,14 @@ status: active
 
 修复：`crates/git_ui/src/git_panel.rs` 改回 `focus_handle,`。验证：单测通过、`git_ui` 213 项全过、`clippy -p git_ui -- -D warnings` 与 fmt 通过。提交 `a111afd787`。
 
+全仓同类问题扫描（脚本按三种规则做函数级/文件级匹配，先用旧版 `git_panel.rs` 自检确认能命中）：
+
+1. **构造函数订阅的局部句柄 × 结构体另建 `focus_handle: cx.focus_handle()`**：修复后 0 处（自检旧版命中 1 处）。
+2. **局部句柄只用于 `on_focus*` 订阅、随后未存储也未 `track_focus`**：6 处，全部是订阅子实体/面板自身的句柄（`split.rs` 的左右编辑器、`commit_modal` 的提交编辑器、`recent_projects` 的 picker、`buffer_search` 的可搜索条目、`workspace::add_panel` 的 panel handle），非缺陷。
+3. **`impl Focusable` 返回子句柄**：98 处，均为委托模式（`picker` / `editor` / `state` 等），与本次缺陷不同类。
+
+结论：除已修复的 `git_panel` 外没有同类句柄重复创建问题。
+
 ## 复发预防
 
 - 上游把 `commit_view_section` 一类的分节数组扩容时，汉化键要跟着增删，并用 `check-missing-keys` 双向核对。
