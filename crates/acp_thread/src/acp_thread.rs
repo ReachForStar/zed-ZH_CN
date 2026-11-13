@@ -20,7 +20,6 @@ use anyhow::{Context as _, Result, anyhow};
 use collections::{HashSet, IndexMap};
 pub use connection::*;
 pub use diff::*;
-use feature_flags::{AcpBetaFeatureFlag, FeatureFlagAppExt as _};
 #[cfg(any(test, feature = "test-support"))]
 use futures::future::BoxFuture;
 use futures::{FutureExt, channel::oneshot};
@@ -4967,6 +4966,11 @@ impl AcpThread {
         {
             cx.emit(AcpThreadEvent::ActivityConfirmedIdle);
         }
+        // v2 智能体在回合结束上报 Idle 时才发用量，此时再补一次阈值检查；
+        // 触发函数内部已按活动状态与 AgentOwned 会话做了过滤。
+        if self.foreground_activity() == ForegroundActivity::Idle {
+            self.maybe_trigger_auto_compact(cx);
+        }
         Ok(())
     }
 
@@ -6401,22 +6405,45 @@ impl AcpThread {
     /// usage crosses the threshold. The native agent self-compacts in its turn
     /// loop, so it's excluded.
     fn maybe_trigger_auto_compact(&mut self, cx: &mut Context<Self>) {
-        if self.connection.is_native() || self.running_turn.is_some() {
+        if self.connection.is_native()
+            || self.foreground_activity().is_active()
+            || matches!(
+                self.submissions.transport(),
+                SubmissionTransport::AgentOwned
+            )
+        {
             return;
         }
         let auto_compact = AgentSettings::get_global(cx).auto_compact;
         if !auto_compact.enabled {
             return;
         }
+        let Some(usage) = self.token_usage.as_ref() else {
+            return;
+        };
 
         if !self.auto_compact_threshold_reached(auto_compact.threshold) {
             // Below the threshold: allow the next crossing to compact again.
+            let was_disarmed = !self.auto_compact_armed;
             self.auto_compact_armed = true;
+            if was_disarmed {
+                log::info!(
+                    "Auto-compact re-armed after usage fell below threshold ({}/{} tokens)",
+                    usage.used_tokens,
+                    usage.max_tokens
+                );
+            }
             return;
         }
         // Only fire once per threshold crossing so an agent whose compaction
         // doesn't shrink the context enough can't be prompted in a loop.
         if !self.auto_compact_armed {
+            log::debug!(
+                "Auto-compact: usage {}/{} crossed threshold but already fired once; \
+                 waiting for usage to drop below threshold",
+                usage.used_tokens,
+                usage.max_tokens
+            );
             return;
         }
 
@@ -6424,6 +6451,12 @@ impl AcpThread {
             let name = command.name();
             name.eq_ignore_ascii_case("compact") || name.eq_ignore_ascii_case("compress")
         }) else {
+            log::warn!(
+                "Auto-compact: usage {}/{} reached threshold but the agent advertises no \
+                 compact/compress command",
+                usage.used_tokens,
+                usage.max_tokens
+            );
             return;
         };
         self.auto_compact_armed = false;
@@ -7882,9 +7915,10 @@ impl AcpThread {
                             cx.emit(AcpThreadEvent::Refusal);
                         }
 
-                        if cx.has_flag::<AcpBetaFeatureFlag>()
-                            && let Some(response_usage) = &r.usage
-                        {
+                        // 外部智能体在回合响应里直接上报本轮 input/output 用量；这类数据与
+                        // `UsageUpdate`（used/size）互补，不应被 beta 门禁丢弃，否则 ACP
+                        // 面板的每轮 token 统计永远是空的。
+                        if let Some(response_usage) = &r.usage {
                             let usage = this.token_usage.get_or_insert_with(Default::default);
                             usage.input_tokens = response_usage.input_tokens;
                             usage.output_tokens = response_usage.output_tokens;
@@ -23377,6 +23411,127 @@ mod tests {
         });
         cx.run_until_parked();
         assert_eq!(prompts.borrow().len(), 2);
+    }
+
+    #[gpui::test]
+    async fn test_auto_compact_after_usage_reported_inside_turn(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let prompts = Rc::new(RefCell::new(Vec::new()));
+        let connection = Rc::new(FakeAgentConnection::new().on_user_message({
+            let prompts = prompts.clone();
+            move |request, thread, mut cx| {
+                let is_first = {
+                    let mut prompts = prompts.borrow_mut();
+                    prompts.push(request.prompt);
+                    prompts.len() == 1
+                };
+                async move {
+                    if is_first {
+                        // pi-acp 与 codex-acp 在回合内上报用量：此时 running_turn 仍占用，
+                        // 客户端只能在本轮结束（收到 PromptResponse）时补做阈值检查。
+                        thread.update(&mut cx, |thread, cx| {
+                            thread
+                                .handle_session_update(
+                                    acp_v1::SessionUpdate::AvailableCommandsUpdate(
+                                        acp_v1::AvailableCommandsUpdate::new(vec![
+                                            acp_v1::AvailableCommand::new(
+                                                "compact",
+                                                "Compact the context",
+                                            ),
+                                        ]),
+                                    ),
+                                    cx,
+                                )
+                                .unwrap();
+                            thread
+                                .handle_session_update(
+                                    acp_v1::SessionUpdate::UsageUpdate(acp_v1::UsageUpdate::new(
+                                        9_500, 10_000,
+                                    )),
+                                    cx,
+                                )
+                                .unwrap();
+                        })?;
+                    }
+                    Ok(acp_v1::PromptResponse::new(acp_v1::StopReason::EndTurn))
+                }
+                .boxed_local()
+            }
+        }));
+        let thread = cx
+            .update(|cx| {
+                connection.new_session(project, PathList::new(&[Path::new(path!("/test"))]), cx)
+            })
+            .await
+            .unwrap();
+
+        thread
+            .update(cx, |thread, cx| thread.send_raw("work", cx))
+            .await
+            .unwrap();
+        cx.run_until_parked();
+
+        assert_eq!(prompts.borrow().len(), 2, "回合结束后应补发压缩命令");
+        match &prompts.borrow()[1][0] {
+            acp_v2::ContentBlock::Text(text) => assert_eq!(text.text, "/compact"),
+            block => panic!("expected a text block, got {block:?}"),
+        }
+    }
+
+    #[gpui::test]
+    async fn test_prompt_response_usage_populates_token_stats(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let events = Rc::new(RefCell::new(Vec::new()));
+        let connection = Rc::new(FakeAgentConnection::new().on_user_message({
+            move |_request, _thread, _cx| {
+                async move {
+                    Ok(acp_v1::PromptResponse::new(acp_v1::StopReason::EndTurn)
+                        .usage(acp_v1::Usage::new(150, 100, 50)))
+                }
+                .boxed_local()
+            }
+        }));
+        let thread = cx
+            .update(|cx| {
+                connection.new_session(project, PathList::new(&[Path::new(path!("/test"))]), cx)
+            })
+            .await
+            .unwrap();
+        let _subscription = cx.update(|cx| {
+            cx.subscribe(&thread, {
+                let events = events.clone();
+                move |_, event, _| {
+                    if let AcpThreadEvent::TokenUsageUpdated(update) = event {
+                        events.borrow_mut().push(*update);
+                    }
+                }
+            })
+        });
+
+        thread
+            .update(cx, |thread, cx| thread.send_raw("work", cx))
+            .await
+            .unwrap();
+        cx.run_until_parked();
+
+        thread.read_with(cx, |thread, _| {
+            let usage = thread.token_usage().expect("token usage recorded");
+            assert_eq!(usage.input_tokens, 100);
+            assert_eq!(usage.output_tokens, 50);
+            let adds = events
+                .borrow()
+                .iter()
+                .filter(|update| matches!(update, OutputTokensUpdate::LegacyAdd { .. }))
+                .count();
+            // 即使未启用 acp-beta，ACP 面板的每轮统计也要能显示转出的 token 数。
+            assert_eq!(adds, 1);
+        });
     }
 
     #[gpui::test]

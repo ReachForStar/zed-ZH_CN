@@ -3,6 +3,8 @@
 > 只追加、不修改历史。可用 `grep "^## \[" docs/wiki/log.md | tail -5` 看最近记录。
 > 前缀格式：`## [YYYY-MM-DD] <init|feat|fix|query|lint|chore> | <简述>`
 
+## [2026-11-13] fix | 复查 ACP 面板上下文统计与自动压缩：核对 pi/opencode/claude/codex 均上报 usage_update 且公布 compact、圆环读数准确（pi 322307/1048576≈30%，用户 80% 阈值未达属预期）；补强 acp_thread（PromptResponse.usage 去 beta 门禁使每轮 token 统计生效、maybe_trigger_auto_compact 空闲判定改 foreground_activity 并排除 AgentOwned、update_session_state Idle 补触发点、新增三档决策日志）与 agent_ui（max=0 不渲染圆环、占比 clamp）；新增两条测试，acp_thread 315 项全过
+
 ## [2026-09-25] init | wiki-memory hook 自动创建知识库骨架
 
 ## [2026-09-26] query | 沉淀 msvc_spectre_libs 构建失败排查（缺 14.51 Spectre 缓解库，装组件解决）

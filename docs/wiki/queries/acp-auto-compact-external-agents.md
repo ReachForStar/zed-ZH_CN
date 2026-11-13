@@ -3,7 +3,7 @@ title: ACP 面板自动压缩上下文不生效：外部智能体缺客户端触
 type: query
 tags: [acp, agent, auto-compact, 上下文压缩]
 created: 2026-09-26
-updated: 2026-10-24
+updated: 2026-11-13
 status: active
 ---
 
@@ -121,3 +121,31 @@ trait 新增的 `watched_paths`（fs_watcher 健康检查特性），`cargo test
   外部智能体看本页的客户端触发是否命中（智能体须公布 compact/compress 命令并上报 UsageUpdate）。
 - 改 `drop_compacted_entries` 的丢弃区间时，`InProgress` 压缩也是屏障；否则后续
   chunk/update 会把被丢掉的进行中记录重建成新行，同一用例会在历史顺序上反复出错。
+
+## 2026-11-13 复查：统计口径核对与两处补强（v1.29.0）
+
+用户复报「统计不生效、不会自动压缩」。逐项核对四个 registry 智能体后确认**数值链路本身
+是对的**，问题集中在「1M 窗口 × 80% 阈值下占比一直偏小」与「每轮 token 统计被 beta 门禁丢弃」：
+
+- **智能体实测**：pi-acp 0.0.34、opencode v2.2.7、claude-acp、codex-acp 2.5.0 都会上报
+  `usage_update`（used/size），并都在 `available_commands_update` 里公布 `compact` 命令；
+  用户面板斜杠菜单可见 compact。用像素量当前 pi 面板圆环 ≈ 30%，与 pi 会话
+  `contextUsage`（322307 / 1048576）一致，即圆环读数准确。
+- **不触发是阈值未达**：用户阈值 80%（838861），会话最大用量 945963（90%，pi 侧自动压缩
+  先行触发）。到不了阈值时客户端不动作属预期，不能用「不生效」一概而论。
+- **修复 A（统计）**：`AcpThread::run_turn` 完成回调里，PromptResponse 的
+  `usage`（input/output）原先被 `AcpBetaFeatureFlag` 门禁丢弃，外部智能体每轮 token 统计
+  永远为空。去掉门禁后，opencode/claude/codex 等上报 response usage 的智能体在 ACP 面板
+  能显示每轮 token 数；pi 只上报 used/size，无解（其 response 不带 usage）。
+- **修复 B（触发健壮性）**：`maybe_trigger_auto_compact` 空闲判定从 `running_turn.is_none()`
+  改为 `!foreground_activity().is_active()` 且排除 `SubmissionTransport::AgentOwned`（子会话
+  Zed 不能发 prompt）；并在 `update_session_state` 的 Idle 分支补触发点，覆盖 v2 receipt
+  智能体「回合结束才在 Idle 里报用量」的场景。新增决策日志：
+  `Auto-compact re-armed / crossed threshold but already fired / advertises no compact`，
+  下次复现可直接从 `RUST_LOG=info` 区分三档原因。
+- **修复 C（显示）**：`max_tokens == 0`（智能体从未上报窗口）时不再渲染圆环，避免永远 0%
+  的误导性进度；占比 clamp 到 [0, 1]。
+
+测试：新增 `test_auto_compact_after_usage_reported_inside_turn`（回合内报用量、结束补发
+`/compact`）、`test_prompt_response_usage_populates_token_stats`；acp_thread 315 项全过、
+agent_servers `v2_usage_sdk_preserves_counters_and_patches_cost` 过、agent_ui usage 4 项过。

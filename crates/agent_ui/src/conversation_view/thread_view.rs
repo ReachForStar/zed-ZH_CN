@@ -6052,6 +6052,11 @@ impl ThreadView {
     fn render_token_usage(&self, cx: &mut Context<Self>) -> Option<impl IntoElement> {
         let thread = self.thread.read(cx);
         let usage = thread.token_usage()?;
+        // 没有上下文窗口上限（外部智能体从未上报 size）时，0/max 的占比没有意义，
+        // 显示一个永远为空的圆环比不显示更误导。
+        if usage.max_tokens == 0 {
+            return None;
+        }
         let show_split = self.supports_split_token_display(cx);
 
         let cost_label = thread.cost().map(|cost| {
@@ -6077,7 +6082,7 @@ impl ThreadView {
         let output_tokens_label = crate::humanize_token_count(usage.output_tokens);
 
         let progress_ratio = if usage.max_tokens > 0 {
-            usage.used_tokens as f32 / usage.max_tokens as f32
+            (usage.used_tokens as f32 / usage.max_tokens as f32).clamp(0.0, 1.0)
         } else {
             0.0
         };
