@@ -3,6 +3,8 @@
 > 只追加、不修改历史。可用 `grep "^## \[" docs/wiki/log.md | tail -5` 看最近记录。
 > 前缀格式：`## [YYYY-MM-DD] <init|feat|fix|query|lint|chore> | <简述>`
 
+## [2026-11-13] chore | 记录发布版本号规则：Agent 不自行决定或修改版本号，必须等用户明确指定 `X.Y.Z` 后才写 `Cargo.toml`/`Cargo.lock`、改 README/RELEASE_NOTES 并打 `v*` 标签；未收到通知时只做合并/修复/验证/文档（写入 fork-release-publishing）
+
 ## [2026-11-13] fix | 补齐上游新增的两处未汉化文案：`agent_ui/src/conversation_view/thread_view.rs` 的 `Open Session` / `Unavailable Session` 改用已存在的 `agent_ui.thread_view.open_session` / `unavailable_session` 键；顺带完成变更扫描——`cargo check --workspace --all-targets` 与 `cargo check -p fs --features test-support --all-targets` 通过，新增 panic 全在测试、新增 unsafe 均为 macOS objc，文案计数对比只剩测试夹具不计，提交 `f63355b9f7`
 
 ## [2026-11-13] fix | 修正 git 面板历史标签焦点边框：自 2026-10 起被记为「本地环境失败」的 `test_history_tab_focus_border_only_for_keyboard_focus`，真因是 fork 构造函数把结构体字段写成 `focus_handle: cx.focus_handle()` 另建句柄，而 `on_focus` 订阅在局部句柄上，`focus_in` 从不触发；改回上游的 `focus_handle,` 简写后单测通过、git_ui 213 项全过、clippy/fmt 通过（提交 `a111afd787`）；同步修正 2026-10 / 2026-11 合并页的错误结论并在复发预防中记录构造函数句柄核对；全仓按三类规则扫描同类问题：构造函数重复建句柄 0 处（旧版自检命中 1）、局部句柄仅订阅 6 处均为子实体/面板句柄、`impl Focusable` 委托子句柄 98 处均属正常
