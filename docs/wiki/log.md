@@ -3,7 +3,7 @@
 > 只追加、不修改历史。可用 `grep "^## \[" docs/wiki/log.md | tail -5` 看最近记录。
 > 前缀格式：`## [YYYY-MM-DD] <init|feat|fix|query|lint|chore> | <简述>`
 
-## [2026-11-13] chore | 记录发布版本号规则：Agent 不自行决定或修改版本号，必须等用户明确指定 `X.Y.Z` 后才写 `Cargo.toml`/`Cargo.lock`、改 README/RELEASE_NOTES 并打 `v*` 标签；未收到通知时只做合并/修复/验证/文档（写入 fork-release-publishing）
+## [2026-11-13] chore | 记录发布版本号规则：Agent 不自行决定或修改版本号，必须等用户明确指定 `X.Y.Z` 后才写 `Cargo.toml`/`Cargo.lock`、改 README/RELEASE_NOTES 并打 `v*` 标签；未收到通知时只做合并/修复/验证/文档；补充唯一例外——用户明确说「版本号与上游一致」时可用 `sync-upstream-version.py` 同步上游版本（默认 upstream/main）后发布（写入 fork-release-publishing）
 
 ## [2026-11-13] fix | 补齐上游新增的两处未汉化文案：`agent_ui/src/conversation_view/thread_view.rs` 的 `Open Session` / `Unavailable Session` 改用已存在的 `agent_ui.thread_view.open_session` / `unavailable_session` 键；顺带完成变更扫描——`cargo check --workspace --all-targets` 与 `cargo check -p fs --features test-support --all-targets` 通过，新增 panic 全在测试、新增 unsafe 均为 macOS objc，文案计数对比只剩测试夹具不计，提交 `f63355b9f7`
 

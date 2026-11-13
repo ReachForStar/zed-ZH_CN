@@ -23,7 +23,7 @@ status: active
   2. `--check-not-behind` 内部同时校验 `Cargo.lock` 与 `Cargo.toml` 的版本一致；
   3. 标签触发时要求 `v{版本号}` 与标签名完全一致。
   这样合并上游不再为版本行产生冲突，也允许 fork 发布自选版本号（例如基于上游 main 的 `1.27.0`，虽然上游正式发布线当时是 `1.26.2`、main 的 `Cargo.toml` 是 `1.28.0`）。需要与上游完全一致时用 `--check`（配 `--source main|stable`）；`--print` 输出仓库当前版本号供 CI 比对标签。
-- **版本号由用户决定（2026-11-13 硬规则）**：Agent 不自行选择或修改发布版本号，包括沿用当前值、按上游顺延、跟随上游 main 的开发号。未收到用户明确指定的 `X.Y.Z` 时，只做合并、修复、验证与文档，不执行 `scripts/sync-upstream-version.py --version ...`、不新建或移动 `v*` 标签、不触发发布构建。收到具体版本号后才写入 `Cargo.toml`/`Cargo.lock`、同步 `README`/`RELEASE_NOTES` 并打标签。
+- **版本号由用户决定（2026-11-13 硬规则，同日补充）**：Agent 不自行选择或修改发布版本号，包括沿用当前值、按上游顺延、跟随上游 main 的开发号。未收到用户明确指定的 `X.Y.Z` 时，只做合并、修复、验证与文档，不执行 `scripts/sync-upstream-version.py --version ...`、不新建或移动 `v*` 标签、不触发发布构建。收到具体版本号后才写入 `Cargo.toml`/`Cargo.lock`、同步 `README`/`RELEASE_NOTES` 并打标签。**唯一例外**：用户明确说「版本号与上游一致」时，才可用 `python3 scripts/sync-upstream-version.py`（未另行说明来源时取 upstream/main）同步版本号并发布。
 - **版本号策略（2026-09-26 决策，已被上一条取代）**：取**上游已发布的最新 stable release 版本号**，而不是上游 main 的开发版本号。例如 2026-10-24 发版取 v1.25.3（上游 main 当时已预升到 1.27.0）。这样 tag、Release 标题、二进制自报版本三者一致。代价：fork 的 `crates/zed/Cargo.toml` 与 upstream/main 长期存在一行版本差异，合并时该行必冲突，取 fork 侧数值即可。
 - **版本号判定要先分清上游两条线**：stable/preview 的 tag 提交、`upstream/main` 是不同分支。`git merge-base --is-ancestor <tag> upstream/main` 对 stable tag 通常是**否**（v1.25.3 的父提交就不在 main 上），不能据此判断"上游没发布”。权威依据是 GitHub Releases API 的 `prerelease=false` 清单，而不是 main 的 Cargo.toml 版本号。
 - **fetch 上游 tag 会污染本地标签**：`git fetch <url> refs/tags/v...` 会把上游 tag 直接写进本地 `refs/tags/`，与 fork 的发布标签同名冲突（本次误入 7 个）。fetch 上游 tag 时必须重命名（`refs/tags/vX:+refs/tags/upstream-vX`），用完即删；否则打 fork 标签前先核对 `git rev-parse refs/tags/vX` 指向提交是否在 fork 历史里。
