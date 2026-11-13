@@ -12173,7 +12173,7 @@ impl ThreadView {
                 .child(
                     Button::new(SharedString::from(element_id), label)
                         .label_size(LabelSize::Small)
-                        .tooltip(Tooltip::text("Open Session"))
+                        .tooltip(Tooltip::text(t!("agent_ui.thread_view.open_session")))
                         .on_click(cx.listener({
                             let session_id = reference.session_id.clone();
                             move |this, _, window, cx| {
@@ -12189,7 +12189,7 @@ impl ThreadView {
                 .into_any_element(),
             // The reference is display-only, so a session this conversation has no thread for
             // is shown rather than loaded.
-            None => Label::new("Unavailable Session")
+            None => Label::new(t!("agent_ui.thread_view.unavailable_session"))
                 .size(LabelSize::Small)
                 .color(Color::Muted)
                 .into_any_element(),
