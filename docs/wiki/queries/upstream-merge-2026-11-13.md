@@ -73,6 +73,14 @@ status: active
 
 结论：除已修复的 `git_panel` 外没有同类句柄重复创建问题。
 
+## 其他缺陷扫描（2026-11-13）
+
+- **全工作区测试目标编译**：`cargo check --workspace --all-targets` 通过（0 错误），排除「合并只破坏测试目标」的遗留。
+- **feature 门控**：`cargo check -p fs --features test-support --all-targets` 通过，符合本页记录过的「fork 给共享 trait 加方法 × 上游新增 test 后端」检查要求。
+- **新增未汉化文案计数对比**（按 `Label::new("…")`、`Tooltip::text("…")`、`.title("…")` 等模式比较合并前后每个 rs 文件）：仅 `agent_ui/src/conversation_view/thread_view.rs` 新增 2 处裸字面量（`Open Session` / `Unavailable Session`），对应键 `agent_ui.thread_view.open_session` / `unavailable_session` 已在 en/zh-CN 中存在，已改用 `t!`；`conversation_view.rs` 的 `Delegate` / `Investigator` 是测试夹具数据，不计入。
+- **新增 panic / unsafe 抽查**：本轮新增的 `panic!` 全部位于测试；新增 `unsafe` 均为 macOS objc 桥接代码（上游）。
+- **焦点句柄三类扫描**：见上节，除 `git_panel` 外无同类问题。
+
 ## 复发预防
 
 - 上游把 `commit_view_section` 一类的分节数组扩容时，汉化键要跟着增删，并用 `check-missing-keys` 双向核对。
