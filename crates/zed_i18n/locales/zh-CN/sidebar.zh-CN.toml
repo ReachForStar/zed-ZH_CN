@@ -14,6 +14,7 @@ sidebar.project_header.no_threads_yet = "暂无对话"
 sidebar.new_thread.tooltip = "开始新的智能体对话"
 sidebar.new_thread.menu_header = "新建对话于…"
 sidebar.new_thread.create_worktree_submenu = "创建新工作树…"
+sidebar.new_thread.create_worktree_in = "在 %{workspaces} 中创建新工作树…"
 sidebar.new_thread.based_on = "基于 %{branch}"
 
 sidebar.project_menu.open_in_new_window = "在新窗口中打开项目"

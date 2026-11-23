@@ -19,14 +19,8 @@ use zed_i18n::t;
 actions!(
     channel_modal,
     [
-        /// Selects the next control in the channel modal.
-        SelectNextControl,
         /// Toggles between invite members and manage members mode.
         ToggleMode,
-        /// Toggles admin status for the selected member.
-        ToggleMemberAdmin,
-        /// Removes the selected member from the channel.
-        RemoveMember
     ]
 );
 

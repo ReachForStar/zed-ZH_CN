@@ -408,7 +408,7 @@ fn reject_edits_in_ranges(
         let buffer = multibuffer.read(cx).buffer(hunk.buffer_id);
         if let Some(buffer) = buffer {
             ranges_by_buffer
-                .entry(buffer.clone())
+                .entry(buffer)
                 .or_insert_with(Vec::new)
                 .push(hunk.buffer_range.clone());
         }

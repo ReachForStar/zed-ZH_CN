@@ -1,10 +1,8 @@
 use gpui::{Action, ClickEvent, FocusHandle, prelude::*};
 use language_model::DisabledReason;
 use ui::{Chip, ElevationIndex, KeyBinding, ListItem, ListItemSpacing, Tooltip, prelude::*};
-use zed_actions::agent::ToggleModelSelector;
+use zed_actions::agent::{CycleFavoriteModels, ToggleModelSelector};
 use zed_i18n::t;
-
-use crate::CycleFavoriteModels;
 
 enum ModelIcon {
     Name(IconName),

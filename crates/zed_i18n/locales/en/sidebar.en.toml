@@ -14,6 +14,7 @@ sidebar.project_header.no_threads_yet = "No threads yet"
 sidebar.new_thread.tooltip = "Start New Agent Thread"
 sidebar.new_thread.menu_header = "New Thread In…"
 sidebar.new_thread.create_worktree_submenu = "Create New Worktree…"
+sidebar.new_thread.create_worktree_in = "Create New Worktree in %{workspaces}…"
 sidebar.new_thread.based_on = "Based on %{branch}"
 
 sidebar.project_menu.open_in_new_window = "Open Project in New Window"

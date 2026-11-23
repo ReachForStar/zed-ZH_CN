@@ -69,6 +69,7 @@ inno/x86_64/
 AGS_SDK_v6.3.0.zip
 Microsoft.Windows.Console.ConPTY.1.23.251216003.nupkg
 tmp/
+task_todo/
 .cache
 
 # 本地 ffmpeg 开发库（各平台构建产物，不入库）

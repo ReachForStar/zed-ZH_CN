@@ -130,13 +130,14 @@
 
 //! List of "tainted files" that the user may not operate on
 
-use crate::ProjectPanel;
+use crate::{ProjectPanel, RemovalKind};
 use anyhow::{Context, Result, anyhow};
 use client::{ErrorCode, ErrorExt as _, RpcError};
 use fs::{TrashId, TrashRestoreError};
 use futures::channel::mpsc;
 use gpui::{
-    AppContext, AsyncApp, IntoElement, PromptLevel, SharedString, Styled, Task, WeakEntity,
+    AppContext, AsyncApp, IntoElement, PromptButton, PromptLevel, SharedString, Styled, Task,
+    WeakEntity,
 };
 use markdown::{Markdown, MarkdownElement};
 use project::Project;
@@ -990,43 +991,18 @@ impl Inner {
     where
         S: AsRef<str>,
     {
-        let (message, detail) = if names.len() == 1 {
-            let name = names[0].as_ref();
-            let msg = format!("Are you sure you want to trash '{}'?", name);
-            let detail = if dirty_buffers > 0 {
-                Some(format!(
-                    "This file has {} unsaved buffer(s). Trashing it will discard those changes.",
-                    dirty_buffers
-                ))
-            } else {
-                None
-            };
-            (msg, detail)
-        } else {
-            let name_list = names
-                .iter()
-                .map(|n| format!("• {}", n.as_ref()))
-                .collect::<Vec<_>>()
-                .join("\n");
-            let msg = format!("Are you sure you want to trash {} files?", names.len());
-            let detail = if dirty_buffers > 0 {
-                Some(format!(
-                    "Files to trash:\n{}\n\n{} file(s) have unsaved changes that will be discarded.",
-                    name_list, dirty_buffers
-                ))
-            } else {
-                Some(format!("Files to trash:\n{}", name_list))
-            };
-            (msg, detail)
-        };
+        let prompt = ProjectPanel::build_removal_prompt(RemovalKind::Trash, names, dirty_buffers);
         let answer = self
             .panel
             .update_in(cx, |_panel, window, cx| {
                 window.prompt(
                     PromptLevel::Info,
-                    &message,
-                    detail.as_deref(),
-                    &["Trash", "Cancel"],
+                    &prompt.message,
+                    prompt.detail.as_deref(),
+                    &[
+                        PromptButton::new(prompt.confirmation_label),
+                        PromptButton::cancel(t!("project_panel.prompt.cancel")),
+                    ],
                     cx,
                 )
             })?

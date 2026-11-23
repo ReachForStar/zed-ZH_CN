@@ -154,7 +154,6 @@ impl Component for SessionNoticePreview {
                         .width(px(640.)),
                     ],
                 )
-                .vertical()
                 .into_any_element(),
                 example_group_with_title(
                     "Layout",
@@ -202,7 +201,6 @@ impl Component for SessionNoticePreview {
                         .width(px(320.)),
                     ],
                 )
-                .vertical()
                 .into_any_element(),
             ])
             .into_any_element()

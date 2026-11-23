@@ -1371,11 +1371,13 @@ delete_skill_detail = "This will move %{path} to the trash. This skill is shared
 delete_skill_prompt = "Delete the %{skill_scope} skill \"%{skill_name}\"?"
 no_context_skills = "No skills available for this context."
 no_global_skills = "No global skills installed."
+no_global_skills_on_host = "No global skills installed on %{remote_host}."
 no_project_skills = "No project skills found."
 open = "Open"
 scope_global = "global"
 scope_project = "project"
 shared_scope_global = "on this machine"
+shared_scope_global_remote = "on the remote machine"
 shared_scope_project = "used in this project"
 
 [settings_ui.sub_page]

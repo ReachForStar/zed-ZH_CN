@@ -299,29 +299,42 @@ impl Render for KeyContextView {
                                     .pl_8()
                                     .overflow_x_scroll()
                                     .items_start()
-                                    .children(
-                                                self.last_possibilities
-                                                    .iter()
-                                                    .map(|(name, predicate, state)| {
-                                                        let (text, color) = match state {
-                                                            Some(true) => ("(match)", ui::Color::Success),
-                                                            Some(false) => ("(low precedence)", ui::Color::Hint),
-                                                            None => ("(no match)", ui::Color::Error),
-                                                        };
-                                                        h_flex()
-                                                            .gap_2()
-                                                            .child(div().min_w(px(200.)).flex_shrink_0().child(Label::new(name.clone()).single_line()))
-                                                            .child(Label::new(predicate.clone()).single_line().flex_shrink_0())
-                                                            .child(Label::new(text).color(color).single_line().flex_shrink_0())
-                                    }),
-                                )
+                                    .children(self.last_possibilities.iter().map(
+                                        |(name, predicate, state)| {
+                                            let (text, color) = match state {
+                                                Some(true) => ("(match)", ui::Color::Success),
+                                                Some(false) => {
+                                                    ("(low precedence)", ui::Color::Hint)
+                                                }
+                                                None => ("(no match)", ui::Color::Error),
+                                            };
+                                            h_flex()
+                                                .gap_2()
+                                                .child(
+                                                    div().min_w(px(200.)).flex_shrink_0().child(
+                                                        Label::new(name.clone()).single_line(),
+                                                    ),
+                                                )
+                                                .child(
+                                                    Label::new(predicate.clone())
+                                                        .single_line()
+                                                        .flex_shrink_0(),
+                                                )
+                                                .child(
+                                                    Label::new(text)
+                                                        .color(color)
+                                                        .single_line()
+                                                        .flex_shrink_0(),
+                                                )
+                                        },
+                                    )),
                             )
                             .custom_scrollbars(
                                 Scrollbars::new(ScrollAxes::Horizontal)
                                     .tracked_scroll_handle(&self.scroll_handle),
                                 window,
                                 cx,
-                            )
+                            ),
                     )
             })
             .when_some(key_equivalents, |el, key_equivalents| {

@@ -1257,7 +1257,7 @@ fn handle_url_click(
     if path_part.is_empty() {
         if let Some(fragment) = fragment {
             let view = view.clone();
-            let slug = SharedString::from(fragment.to_string());
+            let slug = SharedString::from(fragment);
             window.defer(cx, move |window, cx| {
                 if let Some(view) = view.upgrade() {
                     let markdown = view.read(cx).markdown.clone();
@@ -1286,8 +1286,8 @@ fn handle_url_click(
         }
     } else {
         open_preview_url(
-            SharedString::from(path_part.to_string()),
-            fragment.map(|fragment| SharedString::from(fragment.to_string())),
+            SharedString::from(path_part),
+            fragment.map(SharedString::from),
             base_directory,
             Some(view.clone()),
             workspace,

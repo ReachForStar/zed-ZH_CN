@@ -96,6 +96,7 @@ favorite = "Favorite"
 unfavorite = "Unfavorite"
 favorites = "Favorites"
 all_options = "All Options"
+agent_options = "Agent Options"
 
 [agent_ui.agent_panel]
 no_active_native_thread_to_copy = "No active native thread to copy"
@@ -642,6 +643,8 @@ session_message_between_sessions = "Message between sessions"
 open_session = "Open Session"
 unavailable_session = "Unavailable Session"
 main_agent = "Main Agent"
+open_plan_file = "Open Plan File"
+cycle_response_speed = "Cycle Response Speed"
 
 [agent_ui.session_notice]
 dismiss_notice = "Dismiss Notice"

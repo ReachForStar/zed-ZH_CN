@@ -1371,11 +1371,13 @@ delete_skill_detail = "这会将 %{path} 移至回收站。此技能与%{shared_
 delete_skill_prompt = "删除这个%{skill_scope}技能「%{skill_name}」？"
 no_context_skills = "此上下文没有可用的技能。"
 no_global_skills = "尚未安装全局技能。"
+no_global_skills_on_host = "尚未在 %{remote_host} 上安装全局技能。"
 no_project_skills = "未找到项目技能。"
 open = "打开"
 scope_global = "全局"
 scope_project = "项目"
 shared_scope_global = "此机器上"
+shared_scope_global_remote = "远程机器上"
 shared_scope_project = "此项目中"
 
 [settings_ui.sub_page]

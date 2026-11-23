@@ -3,7 +3,7 @@ title: 汉化 fork 同步 upstream 的合并模式与特性保留清单
 type: concept
 tags: [fork, upstream, merge, i18n, workflow]
 created: 2026-09-26
-updated: 2026-11-08
+updated: 2026-11-23
 status: active
 ---
 
@@ -46,6 +46,10 @@ status: active
 - **上游把函数下沉到新 crate 模块 × fork 侧旧定义**：`open_output` / `show_error_toast` 从 `git_ui::git_panel` 移到 `git_ui_core::notifications`。自动合并会同时留下 fork 的旧函数与上游的 `pub(crate) use ...`，报 `E0255 名称重复定义`；解法是删掉旧函数与之配套的测试，只保留 `pub(crate) use` 重导出。
 - **上游换掉构造函数但 fork 汉化版仍在用**：连接通话挂断确认，上游改成 `window.prompt(PromptLevel::Warning, "...", None, &["Close window and hang up"], cx)`，fork 汉化版仍是 `PromptButton::new(t!(...))`。冲突解决取 fork 文案时，`gpui::{...}` 导入里必须仍有 `PromptButton`，否则 `E0433`。
 - **tooltip / 回调是 `Fn` 不是 `FnOnce`**：把上游写死的 `&'static str` 换成 `t!` 后，`Cow`/`SharedString` 被 `move` 进回调时只有第一次调用能取走，`Disclosure::tooltip`、`PopoverMenu` 等多次调用的闭包里要 `label.clone()`。
+- **上游新增 crate × fork 的 `zed_i18n`**：上游把模块拆成新 crate（如 `language_model_selector`）时，fork 的 `t!` 调用会跟着搬过去，但新 crate 的 `Cargo.toml` 没有 `zed_i18n` 依赖 → `E0432`。合并后对新 crate 逐个补 `zed_i18n.workspace = true`。
+- **上游删 `.rules` 并入 `AGENTS.md`**：`git merge` 报 `.rules`/`AGENTS.md` 的 delete/modify 冲突（并生成 `AGENTS.md~<commit>` 残留文件）。取 fork 的两个文件，再删除残留文件；漏删会被误提交。
+- **上游把「内联 UI 逻辑」收敛为共享函数 × fork 旧内联副本**：确认框由 `ProjectPanel::build_removal_prompt(RemovalKind, names, dirty_buffers)` 统一后，fork 早前为编译写的内联版本不会冲突、会静默留下，结果是「行为可用但上游测试断言失败」（未保存警告落在 detail 而非 message）。用 `git diff <upstream> -- <file>` 找上游已删除的旧实现并恢复共享函数，不要改测试。
+- **上游改访问器语义 × fork 的回归测试**：`AgentThreadEntry::location(ix)` 从「未解析返回 None」改成「未解析也返回 `Some((原始位置, None))`」。fork 的目录跳过测试要改为断言元组第二项（`location(ix).and_then(|(_, resolved)| resolved)`），fork 逻辑本身不受影响。
 - **确认「本轮是否引入未汉化文案」用计数对比**：对 merge 变动的 rs 文件，统计 `Label::new("…")`、`Tooltip::text("…")`、`SectionHeader("…")`、`.entry("…")`、`Button::new(id, "…")` 等模式里**未包 `t!` 的命中数**，与 `HEAD:<same file>` 比较；只有计数上升才是本轮引入，历史欠账不会被误报成回归。
 
 ## 特性保留清单（每次合并后逐项核对）
@@ -60,6 +64,7 @@ status: active
 
 ## 关联页面
 
+- [2026-11-23 合并上游 main（1.31.0，135 提交）](../queries/upstream-merge-2026-11-23.md) — 本轮冲突判定、`language_model_selector` 缺 `zed_i18n` 的编译失败、既有 fork 回归（窗口失活守卫、删除确认框收敛、`location()` 语义）修复与验证数值。
 - [2026-11 合并上游 main：冲突消解、编译失败链与 fork 特性核对](../queries/upstream-merge-2026-11.md) — 本轮（1.29.0，77 提交）的冲突决策、编译失败链与 fork 修复核对表。
 - [2026-10 合并上游 main：冲突消解决策与编译失败链](../queries/upstream-merge-2026-10.md) — 上一轮合并的决策、clippy 失败链、历史丢失去向与本地校验清单。
 - [汉化口径与批量替换工作流](i18n-localization-workflow.md) — 合并后补齐汉化的口径、批量脚本与 `t!` 类型适配。

@@ -191,7 +191,7 @@ impl Component for AnnouncementToast {
 
         v_flex()
             .gap_6()
-            .child(example_group(examples).vertical())
+            .child(example_group(examples))
             .into_any_element()
     }
 }

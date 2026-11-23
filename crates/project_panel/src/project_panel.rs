@@ -110,6 +110,9 @@ struct State {
     /// project entries (and all non-leaf nodes are guaranteed to be directories).
     ancestors: HashMap<ProjectEntryId, FoldedAncestors>,
     visible_entries: Vec<VisibleEntriesForWorktree>,
+    /// Directories known to show no rows when expanded, from the same snapshot as
+    /// `visible_entries`.
+    empty_dir_ids: HashSet<ProjectEntryId>,
     max_width_item_index: Option<usize>,
     edit_state: Option<EditState>,
     temporarily_unfolded_pending_state: Option<TemporaryUnfoldedPendingState>,
@@ -130,6 +133,7 @@ impl State {
             last_worktree_root_id: None,
             ancestors: Default::default(),
             visible_entries: Default::default(),
+            empty_dir_ids: Default::default(),
             max_width_item_index: None,
             edit_state: old.edit_state.clone(),
             temporarily_unfolded_pending_state: None,
@@ -137,6 +141,18 @@ impl State {
             expanded_dir_ids: old.expanded_dir_ids.clone(),
         }
     }
+}
+
+struct RemovalPrompt {
+    message: String,
+    detail: Option<SharedString>,
+    confirmation_label: SharedString,
+}
+
+#[derive(Clone, Copy)]
+enum RemovalKind {
+    Trash,
+    Delete,
 }
 
 pub struct ProjectPanel {
@@ -830,7 +846,7 @@ impl ProjectPanel {
                     EditorEvent::SelectionsChanged { .. } => {
                         project_panel.autoscroll(cx);
                     }
-                    EditorEvent::Blurred => {
+                    EditorEvent::Blurred if window.is_window_active() => {
                         if project_panel
                             .state
                             .edit_state
@@ -922,6 +938,7 @@ impl ProjectPanel {
                     temporarily_unfolded_pending_state: None,
                     last_worktree_root_id: Default::default(),
                     visible_entries: Default::default(),
+                    empty_dir_ids: Default::default(),
                     ancestors: Default::default(),
                     expanded_dir_ids: Default::default(),
                     unfolded_dir_ids: Default::default(),
@@ -2190,14 +2207,14 @@ impl ProjectPanel {
         };
         let filename = self.filename_editor.read(cx).text(cx);
         if !filename.is_empty() {
-            if filename.is_empty() {
+            let trimmed_filename = filename.trim();
+            if trimmed_filename.is_empty() {
                 edit_state.validation_state =
                     ValidationState::Error(t!("project_panel.validation.empty_name").to_string());
                 cx.notify();
                 return;
             }
 
-            let trimmed_filename = filename.trim();
             if trimmed_filename != filename {
                 edit_state.validation_state =
                     ValidationState::Warning(t!("project_panel.validation.whitespace").to_string());
@@ -2224,7 +2241,7 @@ impl ProjectPanel {
                         already_exists = true;
                     }
                 } else {
-                    let new_path = match entry.path.clone().parent() {
+                    let new_path = match entry.path.parent() {
                         Some(parent) => parent.join(&filename),
                         None => filename.to_owned(),
                     };
@@ -2958,6 +2975,79 @@ impl ProjectPanel {
         });
     }
 
+    /// Builds the confirmation prompt shared by direct removal and undo/redo.
+    ///
+    /// The `names` slice must contain every path being removed, and this
+    /// function will apply markdown formatting and display truncation. The
+    /// `dirty_buffers` parameter should be the number of those paths that have
+    /// unsaved changes.
+    fn build_removal_prompt<S>(
+        kind: RemovalKind,
+        names: &[S],
+        dirty_buffers: usize,
+    ) -> RemovalPrompt
+    where
+        S: AsRef<str>,
+    {
+        // 句子结构含英文连接词（"the following N files?"），中英混排更糟，保持整句英文
+        let (message_start, confirmation_label, detail) = match kind {
+            RemovalKind::Trash => (
+                "Do you want to trash",
+                t!("project_panel.prompt.trash"),
+                None,
+            ),
+            RemovalKind::Delete => (
+                "Are you sure you want to permanently delete",
+                t!("project_panel.prompt.delete"),
+                Some(t!("project_panel.prompt.cannot_be_undone")),
+            ),
+        };
+
+        let mut message = match names {
+            [name] => format!("{message_start} {}?", MarkdownInlineCode(name.as_ref())),
+            _ => {
+                const CUTOFF_POINT: usize = 10;
+                let mut listed_names = names
+                    .iter()
+                    .take(CUTOFF_POINT)
+                    .map(|name| MarkdownInlineCode(name.as_ref()).to_string())
+                    .collect::<Vec<_>>();
+                let omitted_count = names.len().saturating_sub(CUTOFF_POINT);
+                if omitted_count == 1 {
+                    listed_names.push(".. 1 file not shown".into());
+                } else if omitted_count > 1 {
+                    listed_names.push(format!(".. {omitted_count} files not shown"));
+                }
+
+                format!(
+                    "{message_start} the following {} files?\n{}",
+                    names.len(),
+                    listed_names.join("\n")
+                )
+            }
+        };
+        match dirty_buffers {
+            0 => {}
+            1 if names.len() == 1 => {
+                message.push_str("\n\nIt has unsaved changes, which will be lost.");
+            }
+            1 => {
+                message.push_str("\n\n1 of these has unsaved changes, which will be lost.");
+            }
+            dirty_buffers => {
+                message.push_str(&format!(
+                    "\n\n{dirty_buffers} of these have unsaved changes, which will be lost."
+                ));
+            }
+        }
+
+        RemovalPrompt {
+            message,
+            detail: detail.map(Into::into),
+            confirmation_label: confirmation_label.into(),
+        }
+    }
+
     // TODO(yara|dino): trashing and deleting are conceptually distinct, even
     // more so with the fact that trashing can now be undone, whereas deleting
     // cannot.
@@ -2996,75 +3086,22 @@ impl ProjectPanel {
                 return None;
             }
             let answer = if !skip_prompt {
-                let operation = if trash {
-                    PromptButton::new(t!("project_panel.prompt.trash"))
+                let removal_kind = if trash {
+                    RemovalKind::Trash
                 } else {
-                    PromptButton::new(t!("project_panel.prompt.delete"))
+                    RemovalKind::Delete
                 };
-                let message_start = if trash {
-                    "Do you want to trash"
-                } else {
-                    "Are you sure you want to permanently delete"
-                };
-                let prompt = match file_paths.first() {
-                    Some((_, _, path)) if file_paths.len() == 1 => {
-                        let unsaved_warning = if dirty_buffers > 0 {
-                            "\n\nIt has unsaved changes, which will be lost."
-                        } else {
-                            ""
-                        };
-
-                        format!(
-                            "{message_start} {}?{unsaved_warning}",
-                            MarkdownInlineCode(path)
-                        )
-                    }
-                    _ => {
-                        const CUTOFF_POINT: usize = 10;
-                        let names = if file_paths.len() > CUTOFF_POINT {
-                            let truncated_path_counts = file_paths.len() - CUTOFF_POINT;
-                            let mut paths = file_paths
-                                .iter()
-                                .map(|(_, _, path)| MarkdownInlineCode(path).to_string())
-                                .take(CUTOFF_POINT)
-                                .collect::<Vec<String>>();
-                            paths.truncate(CUTOFF_POINT);
-                            if truncated_path_counts == 1 {
-                                paths.push(".. 1 file not shown".into());
-                            } else {
-                                paths.push(format!(".. {} files not shown", truncated_path_counts));
-                            }
-                            paths
-                        } else {
-                            file_paths
-                                .iter()
-                                .map(|(_, _, path)| MarkdownInlineCode(path).to_string())
-                                .collect()
-                        };
-                        let unsaved_warning = if dirty_buffers == 0 {
-                            String::new()
-                        } else if dirty_buffers == 1 {
-                            "\n\n1 of these has unsaved changes, which will be lost.".to_string()
-                        } else {
-                            format!(
-                                "\n\n{dirty_buffers} of these have unsaved changes, which will be lost."
-                            )
-                        };
-
-                        format!(
-                            "{message_start} the following {} files?\n{}{unsaved_warning}",
-                            file_paths.len(),
-                            names.join("\n")
-                        )
-                    }
-                };
-                let detail = (!trash).then(|| t!("project_panel.prompt.cannot_be_undone"));
+                let names = file_paths
+                    .iter()
+                    .map(|(_, _, name)| name.as_str())
+                    .collect::<Vec<_>>();
+                let prompt = Self::build_removal_prompt(removal_kind, &names, dirty_buffers);
                 Some(window.prompt(
                     PromptLevel::Info,
-                    &prompt,
-                    detail.as_deref(),
+                    &prompt.message,
+                    prompt.detail.as_deref(),
                     &[
-                        operation,
+                        PromptButton::new(prompt.confirmation_label),
                         PromptButton::cancel(t!("project_panel.prompt.cancel")),
                     ],
                     cx,
@@ -4143,9 +4180,7 @@ impl ProjectPanel {
 
                         // Create parent directories if needed
                         if let Some(parent) = destination_path.parent() {
-                            if !parent.exists() {
-                                fs.create_dir(parent).await.log_err();
-                            }
+                            fs.create_dir(parent).await.log_err();
                         }
 
                         let download_task = this.update(cx, |this, cx| {
@@ -4777,7 +4812,10 @@ impl ProjectPanel {
 
         let visible_worktrees: Vec<_> = project
             .visible_worktrees(cx)
-            .map(|worktree| worktree.read(cx).snapshot())
+            .map(|worktree| {
+                let worktree = worktree.read(cx);
+                (worktree.snapshot(), worktree.is_local())
+            })
             .collect();
         let hide_root = settings.hide_root && visible_worktrees.len() == 1;
         let hide_hidden = settings.hide_hidden;
@@ -4785,7 +4823,7 @@ impl ProjectPanel {
         let visible_entries_task = cx.spawn_in(window, async move |this, cx| {
             let new_state = cx
                 .background_spawn(async move {
-                    for worktree_snapshot in visible_worktrees {
+                    for (worktree_snapshot, is_local) in visible_worktrees {
                         let worktree_id = worktree_snapshot.id();
 
                         let mut new_entry_parent_id = None;
@@ -4877,11 +4915,6 @@ impl ProjectPanel {
                                 }
                             }
                             auto_folded_ancestors.clear();
-                            if (!hide_gitignore || !entry.is_ignored)
-                                && (!hide_hidden || !entry.is_hidden)
-                            {
-                                visible_worktree_entries.push(entry.to_owned());
-                            }
                             let precedes_new_entry = if let Some(new_entry_id) = new_entry_parent_id
                             {
                                 entry.id == new_entry_id || {
@@ -4892,9 +4925,24 @@ impl ProjectPanel {
                             } else {
                                 false
                             };
+                            if is_entry_shown(&entry, hide_gitignore, hide_hidden) {
+                                // A remote host sends a directory it has not loaded yet as `Dir`,
+                                // so only a local one counts.
+                                let is_loaded = is_local && entry.kind == EntryKind::Dir;
+                                // A missing chevron reads as "empty", so a directory keeps it until
+                                // it is loaded.
+                                if is_loaded
+                                    && !precedes_new_entry
+                                    && !worktree_snapshot.child_entries(&entry.path).any(|child| {
+                                        is_entry_shown(child, hide_gitignore, hide_hidden)
+                                    })
+                                {
+                                    new_state.empty_dir_ids.insert(entry.id);
+                                }
+                                visible_worktree_entries.push(entry.to_owned());
+                            }
                             if precedes_new_entry
-                                && (!hide_gitignore || !entry.is_ignored)
-                                && (!hide_hidden || !entry.is_hidden)
+                                && is_entry_shown(&entry, hide_gitignore, hide_hidden)
                             {
                                 visible_worktree_entries.push(Self::create_new_git_entry(
                                     entry.entry,
@@ -7284,6 +7332,10 @@ impl ProjectPanel {
         let is_expanded = expanded_entry_ids.binary_search(&entry.id).is_ok();
 
         let (chevron, icon) = Self::entry_icons(entry, is_expanded, cx);
+        // Without a folder icon, the chevron is all that tells a folder from a file.
+        let hide_chevron =
+            folder_indicator.shows_icon() && self.state.empty_dir_ids.contains(&entry.id);
+        let chevron = if hide_chevron { None } else { chevron };
 
         let path_style = self.project.read(cx).path_style(cx);
         let (depth, difference) =
@@ -7657,6 +7709,10 @@ fn entry_file_name<'a>(entry: &'a Entry, root_name: &'a RelPath) -> &'a str {
         .path
         .file_name()
         .unwrap_or_else(|| root_name.as_unix_str())
+}
+
+fn is_entry_shown(entry: &Entry, hide_gitignore: bool, hide_hidden: bool) -> bool {
+    (!hide_gitignore || !entry.is_ignored) && (!hide_hidden || !entry.is_hidden)
 }
 
 fn item_width_estimate(depth: usize, item_text_chars: usize, is_symlink: bool) -> usize {

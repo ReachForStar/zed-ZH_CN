@@ -96,6 +96,7 @@ favorite = "收藏"
 unfavorite = "取消收藏"
 favorites = "收藏"
 all_options = "全部选项"
+agent_options = "智能体选项"
 
 [agent_ui.agent_panel]
 no_active_native_thread_to_copy = "没有可复制的活动原生对话"
@@ -642,6 +643,8 @@ session_message_between_sessions = "会话之间的消息"
 open_session = "打开会话"
 unavailable_session = "不可用的会话"
 main_agent = "主智能体"
+open_plan_file = "打开计划文件"
+cycle_response_speed = "循环切换响应速度"
 
 [agent_ui.session_notice]
 dismiss_notice = "关闭通知"

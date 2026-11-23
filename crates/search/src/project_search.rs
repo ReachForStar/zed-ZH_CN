@@ -69,8 +69,6 @@ actions!(
         SearchInNew,
         /// Toggles focus between the search bar and the search results.
         ToggleFocus,
-        /// Moves to the next input field.
-        NextField,
         /// Toggles the search filters panel.
         ToggleFilters,
         /// Toggles collapse/expand state of all search result excerpts.
@@ -1044,9 +1042,7 @@ fn render_landing_action_button<A: Action>(
         .on_click({
             let focus_handle = focus_handle.clone();
             cx.listener(move |this, _: &ClickEvent, window, cx| {
-                if !focus_handle.is_focused(window) {
-                    window.focus(&focus_handle, cx);
-                }
+                window.focus(&focus_handle, cx);
                 handler(this, action, window, cx);
             })
         })
