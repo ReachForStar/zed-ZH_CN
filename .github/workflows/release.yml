@@ -54,6 +54,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 校验版本号（不落后于上游、与 Cargo.lock 一致、标签一致）
+        env:
+          # 未认证的 GitHub API 请求会撞共享 IP 限流，用 runner token 提额
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           python3 scripts/sync-upstream-version.py --check-not-behind stable
           version="$(python3 scripts/sync-upstream-version.py --print)"

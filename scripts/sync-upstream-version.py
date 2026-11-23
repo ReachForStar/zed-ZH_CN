@@ -20,6 +20,7 @@ fork 手改 `crates/zed/Cargo.toml` 的版本行会与上游长期冲突，发�
 
 import argparse
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -39,7 +40,12 @@ LOCK_ZED_VERSION = re.compile(r'(?m)^name = "zed"\r?\nversion = "([^"]+)"')
 
 
 def fetch(url: str) -> str:
-    request = urllib.request.Request(url, headers={"User-Agent": "zed-zh-cn-sync-version"})
+    # GitHub API 对未认证请求有很低的共享 IP 配额，CI 里用 runner 的 token 提额
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    headers = {"User-Agent": "zed-zh-cn-sync-version"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             return response.read().decode("utf-8")
