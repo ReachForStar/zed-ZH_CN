@@ -3,7 +3,7 @@ title: fork 发布 release 的流程与版本号策略
 type: concept
 tags: [release, tag, workflow, fork, versioning]
 created: 2026-09-26
-updated: 2026-11-13
+updated: 2026-11-23
 status: active
 ---
 
@@ -32,6 +32,8 @@ status: active
 - **三平台安装包（2026-10-30 起）**：Linux 产出 `zed-zh-cn_<版本>_amd64.deb`（`script/bundle-linux-deb`，另附 `zed-linux-x86_64.tar.gz`）、Windows 产出 `Zed-x86_64.exe`（Inno Setup 安装器，`script/bundle-windows.ps1`）、macOS 产出 `Zed-aarch64.dmg`（`script/bundle-mac`）；三平台另附 `zed-remote-server-*` 包。
 - **deb 打包要点**：包名 `zed-zh-cn` 并 `Conflicts`/`Replaces` `zed`，装到 `/usr/lib/zed`、软链 `/usr/bin/zed`、桌面项与 hicolor 图标放 `/usr/share`；`share/` 不重复装进 `/usr/lib/zed`。运行时 `Depends` 由 `ldd` 实测推导：跳过包内自带同名库，其余映射到 `dpkg -S` 的包名，并对 Ubuntu 24.04 的 t64 改名（`libasound2`、`libglib2.0-0`、`libblkid1`、`libmount1`、`libselinux1`）写「原名 | t64名」备选，使同一份 `.deb` 同时可装 22.04 与 24.04。
 - **验证流水线**：`release.yml` 的 `workflow_dispatch` 带 `dry_run` 布尔输入，为真时只构建三平台安装包、跳过创建 Release，用于不打标签验证打包链路。
+- **许可证门禁会拦 AGPL**：三平台打包前都会跑 `cargo about generate --fail -c script/licenses/zed-licenses.toml`，`script/licenses/zed-licenses.toml` 的 `accepted` 列表明确不允许 AGPL。fork 的 `office_preview` 依赖 `pdf-render`，其预发布约束 `"1.0.0-beta.17"` 允许解析到 1.3.x，而 `pdf-render 1.3.1` 经 `pdf-interpret` 拉入 `pdf-render-types 1.0.0`（`AGPL-3.0-only OR 商业许可`），导致三个平台同时失败。改为 `pdf-render = "=1.3.0"` 锁定（`cargo update -p pdf-render --precise 1.3.0`，同时把 `pdf-interpret`/`pdf-syntax` 落回 0.6.2、移除 `pdf-render-types`）。改动依赖后本地先跑同一条 `cargo about generate --fail` 再打标签。
+- **`verify_version` 需要 GitHub API token**：`--check-not-behind stable` 访问 `api.github.com`，未认证请求在 runner 共享 IP 上会 403 `rate limit exceeded`，14 秒内即失败。脚本按 `GITHUB_TOKEN` / `GH_TOKEN` 环境变量附带 `Authorization: Bearer`，`release.yml` 的校验步骤因此传入 `${{ github.token }}`。
 
 ## 验证与遗留
 
@@ -50,6 +52,7 @@ status: active
   5. **链接缺 `-l` 名**：只装运行库、缺 `libx11-xcb-dev`/`libxkbcommon-x11-dev` 时链接报 `unable to find library -lxkbcommon-x11` / `-lX11-xcb`。在 `tmp/syslibs` 里给 `libX11-xcb.so.1`、`libxkbcommon-x11.so.0` 建无版本号软链并设 `LIBRARY_PATH`，无需 apt。
   6. **许可证**：`script/generate-licenses` 需要 `cargo-about 0.8.2`，缺失时先 `cargo install cargo-about@0.8.2 --locked`。
   7. 完整命令：`PATH="$PWD/tmp/bin:$PATH" LIBRARY_PATH="$PWD/tmp/syslibs" CC=clang-22 CXX=clang++-22 LLD=/usr/bin/ld.lld-22 REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu bash script/bundle-linux --skip-sentry`，随后 `bash script/bundle-linux-deb`。
+- 2026-11-23 发布 v1.31.0（**已发布**）：版本号按用户要求与上游 `main` 一致（1.31.0，上游正式发布线最新 1.29.3），`Cargo.toml`/`Cargo.lock`/`README`/`RELEASE_NOTES` 四处一致，在 `199b8cfa64` 打附注标签 `v1.31.0` 推送触发 run 45122919207。失败链三段：① 首轮 run 45120039495 三平台全部卡在许可证生成（`pdf-render-types` AGPL，见上文要点）→ 锁 `pdf-render = "=1.3.0"`（`edf253165e`）；② 重打标签后 run 45122720126 在 `verify_version` 14 秒失败（GitHub API 未认证限流）→ 脚本与 workflow 改用 runner token（`199b8cfa64`）；③ 第三轮 run 45122919207 里 Linux（1h14m19s）、Windows（2h04m40s）成功，macOS 在 dmg 阶段报 `hdiutil: udifrez failed - Resource temporarily unavailable`（macOS runner 瞬时资源问题，exit 70），`gh run rerun --failed` 重跑该 job（1h28m44s）后成功，发布 job 46s 创建 Release「Zed 1.31.0 (汉化版)」并标记 Latest，`target_commitish` 与标签同指 `199b8cfa64`，7 个产物齐全（`Zed-aarch64.dmg`、`Zed-x86_64.exe`、`zed-linux-x86_64.tar.gz`、`zed-zh-cn_1.31.0_amd64.deb` 74.8 MB、三个 `zed-remote-server-*`）。每次修好提交后都要「删除远端标签 → 在新提交上重打 → 推送」，标签历史见 `git tag -l v1.31.0`。
 - 2026-11-13 发布 v1.29.1（**已发布**，2026-11-14 完成）：首轮在合并前的 `4d236e7002` 打标签触发 run 43358134925，构建中被取消（当时准备先合并上游）。合并 upstream/main（`27bbbc1cc4`，1.30.0，76 提交）并修复焦点句柄与两处未汉化文案后，删除旧标签、在 `a8c7029f60` 重打附注标签 `v1.29.1` 推送，run 43379538856 全绿：`verify_version` 8s、Linux 1m23m14s、macOS 1h41m35s、Windows 1h36m06s、发布 job 34s，总计 1h42m24s。Release「Zed 1.29.1 (汉化版)」标记 Latest，`target_commitish` 与标签同指 `a8c7029f60`，7 个产物齐全（`Zed-aarch64.dmg`、`Zed-x86_64.exe`、`zed-linux-x86_64.tar.gz`、`zed-zh-cn_1.29.1_amd64.deb` 74.5 MB、三个 `zed-remote-server-*`）。版本号沿用上一轮用户指定的 1.29.1，高于上游正式线 1.28.1；代码基线 1.30.0 高于版本号属预期。
 
 ## 关联页面
