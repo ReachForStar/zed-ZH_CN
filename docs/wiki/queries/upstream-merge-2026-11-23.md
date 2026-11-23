@@ -13,6 +13,7 @@ status: active
 
 - 上游基线：`upstream/main` 的 `f126950f9d`（上游 `crates/zed/Cargo.toml` 为 `1.31.0`），距上次合并（`306d2b31dc`，上游 `27bbbc1cc4`、1.30.0）新增 135 个提交、650 个文件。
 - 合并落点：本仓库 `main`，`git merge --no-ff --no-commit`，版本行保持 fork 的 `1.29.1`（版本号仍由用户指定，未改动）。
+- 合并提交：`eb75b7af61`（父提交 `4595b8478b` + `f126950f9d`），已推送 fork `main`。
 
 ## 冲突与判定
 
