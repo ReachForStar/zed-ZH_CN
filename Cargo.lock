@@ -13023,16 +13023,15 @@ dependencies = [
 
 [[package]]
 name = "pdf-interpret"
-version = "0.6.3"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdb0e12433d06478c2a7dc5571330ae4a59251d29ec4f98b5c26f07eaec5f25d"
+checksum = "f0fcadef362f4a166e54c20ff96b0722406a616d3d3588bfb7d275569590b78d"
 dependencies = [
  "bitflags 2.13.1",
  "kurbo",
  "log",
  "moxcms 0.7.11",
  "pdf-font",
- "pdf-render-types",
  "pdf-syntax",
  "phf 0.13.1",
  "rustc-hash 2.1.3",
@@ -13045,39 +13044,28 @@ dependencies = [
 
 [[package]]
 name = "pdf-render"
-version = "1.3.1"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d38df7fff04fa8d0d7218d4779dedd1ebb317bae84ca45354b83f42e93ddac3f"
+checksum = "c49fe60fe9408b8b7f4aacb2e0647e6c36e0c8335de73f8446033bff37659805"
 dependencies = [
  "bytemuck",
  "fast_image_resize",
  "image",
  "kurbo",
  "pdf-interpret",
- "pdf-render-types",
  "rayon",
  "vello_cpu",
 ]
 
 [[package]]
-name = "pdf-render-types"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85810eae0324cda4ca27da626d5ea398531e572c6927314550c8d0187138c44b"
-dependencies = [
- "phf 0.13.1",
-]
-
-[[package]]
 name = "pdf-syntax"
-version = "0.6.3"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "834196aae882379d460c071b74e114004e93a6c33a9b1d5aa595ddc024abbc9f"
+checksum = "41207cfcbd17b6a70c6e78275e835e40358e8feb27b88af49edfb6dae93d66fe"
 dependencies = [
  "aes",
  "flate2",
  "log",
- "pdf-render-types",
  "pdfluent-ccitt",
  "pdfluent-jbig2",
  "pdfluent-jpeg2000",
