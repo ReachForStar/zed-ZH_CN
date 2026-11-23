@@ -42,7 +42,7 @@ status: active
 - `agent_ui.config_options.agent_options`
 - `agent_ui.thread_view.open_plan_file`、`cycle_response_speed`
 
-`scripts/i18n/check-missing-keys.py`：代码静态引用 3995 键、en/zh-CN 各 4057 键、0 问题。另按「与上游同文件裸字面量计数对比」核对，本轮未引入新的未汉化文案（`toggle_button.rs` 的 3 处位于 gallery 测试夹具，不计）。
+`scripts/i18n/check-missing-keys.py`：代码静态引用 3998 键、en/zh-CN 各 4060 键、0 问题。另按「与上游同文件裸字面量计数对比」核对，本轮未引入新的未汉化文案（`toggle_button.rs` 的 3 处位于 gallery 测试夹具，不计）。
 
 ## 编译失败链
 
