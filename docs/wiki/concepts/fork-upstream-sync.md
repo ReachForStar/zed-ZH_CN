@@ -3,7 +3,7 @@ title: 汉化 fork 同步 upstream 的合并模式与特性保留清单
 type: concept
 tags: [fork, upstream, merge, i18n, workflow]
 created: 2026-09-26
-updated: 2026-11-23
+updated: 2026-11-25
 status: active
 ---
 
@@ -50,6 +50,15 @@ status: active
 - **上游删 `.rules` 并入 `AGENTS.md`**：`git merge` 报 `.rules`/`AGENTS.md` 的 delete/modify 冲突（并生成 `AGENTS.md~<commit>` 残留文件）。取 fork 的两个文件，再删除残留文件；漏删会被误提交。
 - **上游把「内联 UI 逻辑」收敛为共享函数 × fork 旧内联副本**：确认框由 `ProjectPanel::build_removal_prompt(RemovalKind, names, dirty_buffers)` 统一后，fork 早前为编译写的内联版本不会冲突、会静默留下，结果是「行为可用但上游测试断言失败」（未保存警告落在 detail 而非 message）。用 `git diff <upstream> -- <file>` 找上游已删除的旧实现并恢复共享函数，不要改测试。
 - **上游改访问器语义 × fork 的回归测试**：`AgentThreadEntry::location(ix)` 从「未解析返回 None」改成「未解析也返回 `Some((原始位置, None))`」。fork 的目录跳过测试要改为断言元组第二项（`location(ix).and_then(|(_, resolved)| resolved)`），fork 逻辑本身不受影响。
+- **冲突块只覆盖函数头部 → 签名与函数体分属两侧**：`render_sandbox_authorization_path_row` 的基线已是上游新版（`granted: &settings::GrantedWritePath`），fork HEAD 是上游 #58358 之前的旧版（`path: &Path, show_border: bool`），git 只把真正不同的头部行标冲突，拼出的代码不成立（`thread_view.rs` 语法错误 `unexpected closing delimiter` 也来自此处）。解法=整函数取上游 + 重新汉化，并把调用点一并改回上游形式；按行号整段替换前先核对被替换区间的末行属于该函数，否则会多留一个 `}`。
+- **上游新增行是否全部进入合并结果，用集合核对**：对上游本轮改过的每个 `.rs`，取 `git diff -U0 <上次基线>..<upstream>` 的新增行（去空白、忽略 <12 字符），逐行查是否在合并结果里。报缺失的只应是「被 `t!` 替换」与「导入两侧合并」两类。该方法比人工读 diff 可靠，比「计数对比」更精确（见下）。
+- **上游删功能 × fork 早年补回的代码**：fork 曾为编译丢失补回 WSL DrvFs 写入警告（`9684f5903a`），上游 #66918（Windows 原生 AppContainer 沙箱）正式移除该功能与 `AgentSettings.sandbox_permissions.warn_ntfs_grants`。判定顺序：`git grep <符号> upstream/main` 确认上游现状 → 找到删除它的提交 → 取删除 → 清 locale 死键（本轮清 4 个）。
+- **ACP SDK 每次对齐 schema 都会把可选字段包成 `MaybeUndefined`**：5.5.1 / schema 1.21.2 把 `CompactionUpdate.status` 变成 `MaybeUndefined<CompactionStatus>`，fork 直读该字段的判定要写成 `MaybeUndefined::Value(acp_v2::CompactionStatus::Completed)` 模式，`cargo check` 期即报 E0308。
+- **汉化把 `&'a str` 改成 `Cow<'a, str>` 后，借用式迭代器适配器失效**：上游 `submission_text_parts(&content, separator) -> impl Iterator<Item = &'a str>` 的 `.flat_map(str::chars)` 在汉化版下报 E0515（引用闭包参数局部值）；改成 `.collect::<String>().chars()`（std 有 `FromIterator<Cow<'_, str>> for String`），复制路径的 `.collect::<String>()` 保持可用。
+- **改文案不改键**：上游只换字符串值（如学生套餐 `$10/month in GPT Luna credits`、`Disconnected { receipt: None }` 的 detail）时，源码 `t!` 调用不动，改 en/zh-CN 两侧的值即可；新增枚举分支（`GenerateCommitMessageConfigurationTooltip::SavedModelUnavailable`）才需要新键。
+- **上游给枚举加变体 × fork 汉化的 match**：`SubagentStatus::Idle` 加入后，fork 侧汉化的分支必须补该变体，否则 E0004 分支不全。
+- **本机跑测试固定 `LC_ALL=C LANG=C`**：`crates/git/src/blame.rs` 以 `"fatal: no such path"` 匹配 git stderr，`LANG=zh_CN.UTF-8` 下 git 输出「致命错误：…」，`test_blame_untracked_path_with_large_contents` 假失败（该用例来自上游 `58be7923cf`，`blame.rs` 与上游一致时属环境问题，不是回归）。
+- **webrtc-sys 预编译包下载不可续传**：`download_webrtc()` 每次先 `remove_dir_all(OUT_DIR/webrtc-<tag>/<triple>)` 再整包下载，中断即留空目录且下次重下。稳定做法：`curl -C - -x <proxy>` 断点续传 zip → 解压到 `target/webrtc-sdk/`（zip 根目录是 `linux-x64-release`）→ 构建时设 `LK_CUSTOM_WEBRTC=<abs>/target/webrtc-sdk/linux-x64-release` 跳过下载；C++ 侧仍需 `CXXFLAGS=-fpermissive`。
 - **确认「本轮是否引入未汉化文案」用计数对比**：对 merge 变动的 rs 文件，统计 `Label::new("…")`、`Tooltip::text("…")`、`SectionHeader("…")`、`.entry("…")`、`Button::new(id, "…")` 等模式里**未包 `t!` 的命中数**，与 `HEAD:<same file>` 比较；只有计数上升才是本轮引入，历史欠账不会被误报成回归。
 
 ## 特性保留清单（每次合并后逐项核对）
@@ -59,11 +68,13 @@ status: active
 - `crates/settings_ui/*` 的设置项标题/描述为 `SharedString`（运行期本地化）；取上游新代码后补 `.into()`，上游新增设置项要与 `[SettingsPageItem; N]` 数组长度、`terminal_panel_section`/`git_hunks_section` 等分节数组同步。
 - `crates/fs/src/fs_watcher.rs` 的 `check_watch_health`（watch 健康检查）——含 `WatchBackend::watched_paths`；上游新增的 test 后端需补实现（见要点）；上游重构 `PathRegistrationState` 后要按新 `coverage` 模型重写孤儿判定；健康检查线程用 `Weak<OsWatcher>` 持有 watcher，否则会把 `OsWatcher` 及其 `BackgroundExecutor` 永久钉住（上游 `watcher_retains_scheduler_until_teardown` 用例会失败）。
 - `.github/workflows/` 仅 `release.yml` + `run_tests.yml`（精简 CI，禁止 `cargo xtask workflows` 覆盖）；上游删除 workflow 文件与 fork 的删除产生 delete/modify 冲突时取删除。
+- `crates/agent_ui/src/conversation_view/thread_view.rs` 的 `render_sandbox_authorization_path_row` 必须保持上游 `granted: &settings::GrantedWritePath` 签名（含 Source / Target / Write Path 三态），fork 曾长期保留 #58358 之前的旧实现；标题走 `agent_ui.thread_view.{sandbox_source_path,sandbox_target_path,requested_write_path}`。
 - `crates/acp_thread/src/acp_thread.rs` 的 `resolve_location` 用 `project.fs().metadata()` 跳过目录路径（上游未修，会为每个目录位置记 EISDIR 错误并可能在项目外创建工作树）；合并后确认该判断仍在，`FakeFs::read_call_count` 仍是 `test_tool_locations_skip_directories` 的断言依据。
 - `README.md` 顶部 `> [!IMPORTANT]` 与 `> Remove this line ...` 两行完好（.rules 硬规则，勿删）。
 
 ## 关联页面
 
+- [2026-11-25 合并 upstream/main（1.31.0 线，68 提交）](../queries/upstream-merge-2026-11-25.md) — 本轮 13 处冲突判定、上游旧实现回填、ACP SDK `MaybeUndefined` 适配、`LC_ALL=C` 测试环境坑与「上游新增行集合核对」方法，38 套件 7030 项测试数值。
 - [2026-11-23 合并上游 main（1.31.0，135 提交）](../queries/upstream-merge-2026-11-23.md) — 本轮冲突判定、`language_model_selector` 缺 `zed_i18n` 的编译失败、既有 fork 回归（窗口失活守卫、删除确认框收敛、`location()` 语义）修复与验证数值。
 - [2026-11 合并上游 main：冲突消解、编译失败链与 fork 特性核对](../queries/upstream-merge-2026-11.md) — 本轮（1.29.0，77 提交）的冲突决策、编译失败链与 fork 修复核对表。
 - [2026-10 合并上游 main：冲突消解决策与编译失败链](../queries/upstream-merge-2026-10.md) — 上一轮合并的决策、clippy 失败链、历史丢失去向与本地校验清单。

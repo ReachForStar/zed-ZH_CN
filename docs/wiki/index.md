@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-11-23
+updated: 2026-11-25
 ---
 
 # Wiki 索引
@@ -31,5 +31,6 @@ updated: 2026-11-23
 - [2026-10 合并上游 main：冲突消解决策与编译失败链](queries/upstream-merge-2026-10.md) — 297 提交合并的取舍清单、六轮编译失败链（image_resolver 两参数、SharedString 补 `.into()`、`t!` 分支类型、redundant_clone）、历史丢失检测与本地校验清单；附二次合并（`28d0a3547f`，零冲突）、三次合并（`91d3b962ae3`，17 处冲突）、四次合并（`604a0ff023`，零冲突）、五次合并（`422b53cff8`，98 提交 / 11 处冲突，含上游删模块与 ACP 字段改访问器的跟进）记录
 - [2026-11-13 合并 upstream/main（1.30.0，76 提交）：冲突消解与 fork 特性核对](queries/upstream-merge-2026-11-13.md) — 9 处冲突（workflow 取删除、版本行保 1.29.1、lock 重裁、`PromptButton`/`t!` 保留、设置分节与安全弹窗取上游新结构、表内设置面板与上游动作并存）、7 个新增汉化键与 1 个失效键、clippy/测试验证与 webrtc 本地编译要点，并把「已知本地失败 test_history_tab_focus_border_only_for_keyboard_focus」定位为构造函数重复创建焦点句柄并修复（`a111afd787`）
 - [2026-11-23 合并 upstream/main（1.31.0，135 提交）：冲突消解、既有 fork 回归修复与验证](queries/upstream-merge-2026-11-23.md) — 27 处冲突（workflow 取删除、`.rules`/`AGENTS.md` 保留 fork、`agent_model_selector` 随上游并入新 crate 取删除、ACP 配置渲染重排、sidebar 工作树子菜单重构）、6 个新增汉化键、`language_model_selector` 缺 `zed_i18n` 编译失败链，以及两项既有 fork 回归（窗口失活守卫、删除确认框收敛到 `build_removal_prompt`）与 `location()` 语义变化的测试适配
+- [2026-11-25 合并 upstream/main（1.31.0 线，68 提交）](queries/upstream-merge-2026-11-25.md) — 13 处冲突（workflow 取删除/取 fork、lock 重裁、`bundle-windows.ps1` 随上游删 AGS、`SubagentStatus::Idle` 补分支、两处导入两侧合并）、把 fork 长期保留的 `render_sandbox_authorization_path_row` 旧实现整函数回填为上游 `GrantedWritePath` 版、随上游删 WSL DrvFs 警告并清 4 个死键、9 个新增汉化键、ACP SDK `MaybeUndefined` 与 `Cow` 借用失败链、webrtc 预编译包续传 + `LK_CUSTOM_WEBRTC`、`LC_ALL=C` 测试环境坑、「上游新增行 ⊆ 合并结果」集合核对法，38 套件 7030 项测试数值
 - [2026-11 合并上游 main：冲突消解、编译失败链与 fork 特性核对](queries/upstream-merge-2026-11.md) — 1.29.0（77 提交）合并：13 处冲突（git 面板分支模式、plan 渲染、日期格式设置）、六轮编译失败链（PromptButton 缺失、SharedString/`Cow`、`Fn` 闭包 clone）、汉化补齐 68 个键（settings_ui 49 / git_ui 15 / agent_ui 3 / git_ui_core 1）与「计数对比」审计法、fork 修复与上游实现逐项核对表
 - [新建智能体会话慢](queries/slow-new-agent-session.md) — ACP registry 智能体二进制首次下发（opencode-v2 2.2.6，258 MB，约 97 秒）是主因；目录路径被当文件读取的 2979 条错误已修（`resolve_location` 先查路径类型，附 `FakeFs::read_call_count` 回归测试）
