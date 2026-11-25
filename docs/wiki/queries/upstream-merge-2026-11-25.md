@@ -41,7 +41,7 @@ fork HEAD 的 `render_sandbox_authorization_path_row` 是上游 #58358（`Improv
 
 处理：整函数按上游重写（含 Source / Target / Write Path 三态），调用点也改回上游形式（`render_sandbox_authorization_path_row(entry_ix, path_ix, path, cx)`，原先 fork 传 `&path.requested` 与 `path_ix < paths.len() - 1`），再补 `t!`。
 
-检测方法（本轮新增，替代人工比对）：对上游本轮改过的每个 `.rs`，取 `git diff -U0 f126950f9d..upstream/main` 的新增行集合，逐行核对是否出现在合并结果里。本轮 282 个文件中 8 个报缺失，逐条确认全部是「被 `t!` 替换」或「导入两侧合并」，无真实丢失。脚本一次性使用，未入库。
+检测方法（本轮新增，替代人工比对）：对上游本轮改过的每个 `.rs`，取 `git diff -U0 f126950f9d..upstream/main` 的新增行集合，逐行核对是否出现在合并结果里。本轮 282 个文件中 8 个报缺失，逐条确认全部是「被 `t!` 替换」或「导入两侧合并」，无真实丢失。该核对已入库为 `scripts/check-upstream-added.py`（提交 `3be4cc39cb`），用法 `python3 scripts/check-upstream-added.py <上次合并的上游基线> <上游 ref>`。
 
 ## 汉化
 
