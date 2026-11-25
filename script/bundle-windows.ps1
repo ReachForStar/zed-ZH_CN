@@ -266,24 +266,6 @@ function Invoke-DownloadWithRetry {
     }
 }
 
-function DownloadAMDGpuServices {
-    # If you update the AGS SDK version, please also update the version in `crates/gpui/src/platform/windows/directx_renderer.rs`
-    $url = "https://codeload.github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK/zip/refs/tags/v6.3.0"
-    $zipPath = ".\AGS_SDK_v6.3.0.zip"
-    $extractDir = ".\AGS_SDK-6.3.0"
-    # 以关键 dll 存在作为解压完成标志：目录存在但文件不全（如解压中断、杀软误删）时重新解压
-    if (Test-Path "$extractDir\ags_lib\lib\amd_ags_x64.dll") {
-        Write-Output "AGS SDK 已存在于 $extractDir，跳过下载"
-        return
-    }
-    # zip 已存在且非空则复用，避免解压中断后重复下载
-    if (-not ((Test-Path $zipPath) -and (Get-Item $zipPath).Length -gt 0)) {
-        Invoke-DownloadWithRetry -Url $url -OutFile $zipPath
-    }
-    # Extract the AGS SDK zip file
-    Expand-Archive -Path $zipPath -DestinationPath "." -Force
-}
-
 function DownloadConpty {
     # TODO: Switch back to the stable channel once Microsoft finally decides to publish v1.26
     $url = "https://github.com/microsoft/terminal/releases/download/v1.25.1912.0/Microsoft.Windows.Console.ConPTY.1.25.260710002-preview.nupkg"
@@ -315,7 +297,6 @@ function CollectFiles {
     else {
         New-Item -Type Directory -Path "$innoDir\x64" -Force
         New-Item -Type Directory -Path "$innoDir\arm64" -Force
-        Move-Item -Path ".\AGS_SDK-6.3.0\ags_lib\lib\amd_ags_x64.dll" -Destination "$innoDir\amd_ags_x64.dll" -Force
         Move-Item -Path ".\conpty\build\native\runtimes\x64\OpenConsole.exe" -Destination "$innoDir\x64\OpenConsole.exe" -Force
         Move-Item -Path ".\conpty\build\native\runtimes\arm64\OpenConsole.exe" -Destination "$innoDir\arm64\OpenConsole.exe" -Force
         Move-Item -Path ".\conpty\runtimes\win-x64\native\conpty.dll" -Destination "$innoDir\conpty.dll" -Force
@@ -451,7 +432,6 @@ BuildRemoteServer
 MakeAppx
 SignZedAndItsFriends
 ZipZedAndItsFriendsDebug
-DownloadAMDGpuServices
 DownloadConpty
 CollectFiles
 BuildInstaller

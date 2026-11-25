@@ -44,10 +44,10 @@ use language_model::{
 };
 use notifications::status_toast::StatusToast;
 use project::ResolvedPath;
-use settings::{update_settings_file, update_settings_file_with_completion};
+use settings::update_settings_file_with_completion;
 use ui::{
-    ButtonLike, CalloutBorderPosition, Checkbox, SpinnerLabel, SpinnerVariant, SplitButton,
-    SplitButtonStyle, Tab, ToggleState,
+    ButtonLike, CalloutBorderPosition, Checkbox, Indicator, SpinnerLabel, SpinnerVariant,
+    SplitButton, SplitButtonStyle, Tab, ToggleState,
 };
 use url::Url;
 use util::markdown::source_position_from_fragment;
@@ -399,8 +399,7 @@ fn parse_cat_numbered_code(code: &str) -> Option<ParsedCatNumberedCode> {
 }
 
 fn strip_line_ending(line: &str) -> &str {
-    let without_lf = line.strip_suffix('\n').unwrap_or(line);
-    without_lf.strip_suffix('\r').unwrap_or(without_lf)
+    line.trim_suffix('\n').trim_suffix('\r')
 }
 
 fn parse_cat_numbered_line(line: &str) -> Option<(u32, &str)> {
@@ -1227,14 +1226,22 @@ impl ThreadView {
             // usable model
             if let Some(native_thread) = native_connection.thread(thread.read(cx).session_id(), cx)
             {
-                subscriptions.push(cx.subscribe(
+                subscriptions.push(cx.subscribe_in(
                     &native_thread,
-                    |this: &mut Self, _thread, _event: &agent::ModelChanged, cx| {
+                    window,
+                    |this: &mut Self, _thread, _event: &agent::ModelChanged, window, cx| {
                         if matches!(this.thread_error, Some(ThreadError::NoModelSelected)) {
                             this.clear_thread_error(cx);
                         }
+                        if let Some(model_selector) = &this.model_selector {
+                            model_selector.update(cx, |model_selector, cx| {
+                                model_selector.refresh_selected_model(window, cx);
+                            });
+                        }
                     },
                 ));
+                // The thread-only indicator follows the thread's mark.
+                subscriptions.push(cx.observe(&native_thread, |_, _, cx| cx.notify()));
             }
         }
 
@@ -1851,28 +1858,40 @@ impl ThreadView {
         (!matches!(record.state, SubmissionState::Completed)).then(|| record.content.clone())
     }
 
-    fn submission_text_parts(
-        content: &[acp_v2::ContentBlock],
-    ) -> impl Iterator<Item = Cow<'_, str>> {
-        content.iter().map(|block| match block {
-            acp_v2::ContentBlock::Text(text) => Cow::Borrowed(text.text.as_str()),
-            acp_v2::ContentBlock::ResourceLink(link) => Cow::Borrowed(link.name.as_str()),
-            acp_v2::ContentBlock::Resource(resource) => match &resource.resource {
-                acp_v2::EmbeddedResourceResource::TextResourceContents(resource) => {
-                    Cow::Borrowed(resource.uri.as_str())
+    fn submission_text_parts<'a>(
+        content: &'a [acp_v2::ContentBlock],
+        separator: &'a str,
+    ) -> impl Iterator<Item = Cow<'a, str>> {
+        let mut previous_text = None;
+        content.iter().flat_map(move |block| {
+            let is_text = matches!(block, acp_v2::ContentBlock::Text(_));
+            let separate = previous_text
+                .replace(is_text)
+                .is_some_and(|previous| !(previous && is_text));
+            let text: Cow<'a, str> = match block {
+                acp_v2::ContentBlock::Text(text) => Cow::Borrowed(text.text.as_str()),
+                acp_v2::ContentBlock::ResourceLink(link) => Cow::Borrowed(link.name.as_str()),
+                acp_v2::ContentBlock::Resource(resource) => match &resource.resource {
+                    acp_v2::EmbeddedResourceResource::TextResourceContents(resource) => {
+                        Cow::Borrowed(resource.uri.as_str())
+                    }
+                    acp_v2::EmbeddedResourceResource::BlobResourceContents(resource) => {
+                        Cow::Borrowed(resource.uri.as_str())
+                    }
+                    _ => t!("agent_ui.thread_view.submission_attachment_resource"),
+                },
+                acp_v2::ContentBlock::Image(_) => {
+                    t!("agent_ui.thread_view.submission_attachment_image")
                 }
-                acp_v2::EmbeddedResourceResource::BlobResourceContents(resource) => {
-                    Cow::Borrowed(resource.uri.as_str())
+                acp_v2::ContentBlock::Audio(_) => {
+                    t!("agent_ui.thread_view.submission_attachment_audio")
                 }
-                _ => t!("agent_ui.thread_view.submission_attachment_resource"),
-            },
-            acp_v2::ContentBlock::Image(_) => {
-                t!("agent_ui.thread_view.submission_attachment_image")
-            }
-            acp_v2::ContentBlock::Audio(_) => {
-                t!("agent_ui.thread_view.submission_attachment_audio")
-            }
-            _ => t!("agent_ui.thread_view.submission_attachment_unsupported"),
+                _ => t!("agent_ui.thread_view.submission_attachment_unsupported"),
+            };
+            separate
+                .then_some(Cow::Borrowed(separator))
+                .into_iter()
+                .chain(std::iter::once(text))
         })
     }
 
@@ -2013,13 +2032,12 @@ impl ThreadView {
                             }
                             _ => (t!("agent_ui.thread_view.submission_status_fallback").into(), None, false),
                         };
-                    let preview: String =
-                        Itertools::intersperse(Self::submission_text_parts(&record.content), Cow::Borrowed(" "))
-                            .collect::<String>()
-                            .chars()
-                            .take(201)
-                            .map(|character| if character.is_whitespace() { ' ' } else { character })
-                            .collect();
+                    let preview: String = Self::submission_text_parts(&record.content, " ")
+                        .collect::<String>()
+                        .chars()
+                        .take(201)
+                        .map(|character| if character.is_whitespace() { ' ' } else { character })
+                        .collect();
                     (
                         submission_id,
                         status,
@@ -2097,8 +2115,9 @@ impl ThreadView {
                                                     {
                                                         let text = Self::submission_text_parts(
                                                             &record.content,
+                                                            "\n",
                                                         )
-                                                        .join("\n");
+                                                        .collect::<String>();
                                                         cx.write_to_clipboard(
                                                             ClipboardItem::new_string(text),
                                                         );
@@ -2507,17 +2526,28 @@ impl ThreadView {
                 })
             });
             if is_first_message && thread.read_with(cx, |thread, _cx| thread.title().is_none())? {
-                let text: String = contents
-                    .iter()
-                    .filter_map(|block| match block {
-                        acp_v2::ContentBlock::Text(text_content) => Some(text_content.text.clone()),
-                        acp_v2::ContentBlock::ResourceLink(resource_link) => {
-                            Some(format!("@{}", resource_link.name))
+                let mut text = String::new();
+                let mut previous_text = false;
+                for block in &contents {
+                    let is_text = matches!(block, acp_v2::ContentBlock::Text(_));
+                    match block {
+                        acp_v2::ContentBlock::Text(content) => {
+                            if !previous_text && !text.is_empty() {
+                                text.push(' ');
+                            }
+                            text.push_str(&content.text);
                         }
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ");
+                        acp_v2::ContentBlock::ResourceLink(link) => {
+                            if !text.is_empty() {
+                                text.push(' ');
+                            }
+                            text.push('@');
+                            text.push_str(&link.name);
+                        }
+                        _ => {}
+                    }
+                    previous_text = is_text;
+                }
                 let text = text.lines().next().unwrap_or("").trim();
                 if !text.is_empty() {
                     let title: SharedString = util::truncate_and_trailoff(text, 200).into();
@@ -4615,7 +4645,7 @@ impl ThreadView {
             .children(request.description.as_ref().map(|description| {
                 div()
                     .debug_selector(|| format!("generic-permission-description-{description}"))
-                    .child(description.clone())
+                    .child(markdown::MarkdownLabel(description.into()))
             }))
             .children(subject)
             .child(
@@ -5789,6 +5819,7 @@ impl ThreadView {
                                     .children(self.render_activity_status_label(cx))
                                     .children(discard_draft_button)
                                     .children(self.render_token_usage(cx))
+                                    .children(self.render_thread_only_indicator(cx))
                                     .children(self.profile_selector.clone())
                                     .map(|this| match self.config_options_view.clone() {
                                         Some(config_view) => this.child(config_view),
@@ -5801,6 +5832,67 @@ impl ThreadView {
                     ),
             )
             .into_any()
+    }
+
+    fn render_thread_only_indicator(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
+        let thread = self.as_native_thread(cx)?;
+        if !thread.read(cx).is_thread_only() {
+            return None;
+        }
+
+        let can_reset = thread.read(cx).can_reset_to_defaults(cx);
+        let thread = thread.downgrade();
+        let trigger = ButtonLike::new("thread-only-indicator")
+            .width(px(24.))
+            .aria_label(t!("agent_ui.thread_view.thread_only_mode"))
+            .child(Indicator::dot().color(Color::Accent));
+        Some(
+            PopoverMenu::new("thread-only-menu")
+                .trigger_with_tooltip(
+                    trigger,
+                    Tooltip::text(t!("agent_ui.thread_view.thread_only_mode")),
+                )
+                .anchor(gpui::Anchor::BottomRight)
+                .offset(gpui::point(px(0.), px(-2.)))
+                .menu(move |window, cx| {
+                    let thread = thread.clone();
+                    Some(ContextMenu::build(window, cx, move |menu, _window, _cx| {
+                        menu.custom_row(|_window, _cx| {
+                            div()
+                                .max_w_72()
+                                .child(Label::new(t!("agent_ui.thread_view.thread_only_mode")))
+                                .child(
+                                    Label::new(t!("agent_ui.thread_view.thread_only_mode_note"))
+                                        .color(Color::Muted),
+                                )
+                                .into_any_element()
+                        })
+                        .separator()
+                        .when(can_reset, |menu| {
+                            let thread = thread.clone();
+                            menu.entry(
+                                t!("agent_ui.thread_view.reset_to_defaults"),
+                                Some(Box::new(ResetThreadToDefaults)),
+                                move |_window, cx| {
+                                    thread
+                                        .update(cx, |thread, cx| thread.reset_to_defaults(cx))
+                                        .ok();
+                                },
+                            )
+                        })
+                        .entry(
+                            t!("agent_ui.thread_view.save_as_default"),
+                            Some(Box::new(SaveThreadAsDefaults)),
+                            move |_window, cx| {
+                                thread
+                                    .update(cx, |thread, cx| thread.save_as_defaults(cx))
+                                    .ok();
+                            },
+                        )
+                    }))
+                })
+                .into_any_element(),
+        )
     }
 
     fn render_activity_status_label(&self, cx: &Context<Self>) -> Option<impl IntoElement> {
@@ -6714,24 +6806,8 @@ impl ThreadView {
                     thread.update(cx, |thread, cx| {
                         let enable_thinking = !thread.thinking_enabled();
                         thread.set_thinking_enabled(enable_thinking, cx);
-
-                        let favorite_key = thread
-                            .model()
-                            .map(|model| (model.provider_id.0.to_string(), model.id.0.to_string()));
-                        let fs = thread.project().read(cx).fs().clone();
-                        update_settings_file(fs, cx, move |settings, _| {
-                            if let Some(agent) = settings.agent.as_mut() {
-                                if let Some(default_model) = agent.default_model.as_mut() {
-                                    default_model.enable_thinking = enable_thinking;
-                                }
-                                if let Some((provider_id, model_id)) = &favorite_key {
-                                    agent.update_favorite_model(
-                                        provider_id,
-                                        model_id,
-                                        |favorite| favorite.enable_thinking = enable_thinking,
-                                    );
-                                }
-                            }
+                        thread.save_model_options(cx, move |model| {
+                            model.enable_thinking = enable_thinking
                         });
                     });
                 }
@@ -6846,55 +6922,31 @@ impl ThreadView {
                         let entry = ContextMenuEntry::new(effort_level.name)
                             .toggleable(IconPosition::End, is_selected);
 
-                        menu.push_item(entry.handler({
-                            let effort = effort_level.value;
+                        let pick_effort = |thread_only: Option<bool>| {
+                            let effort = effort_level.value.clone();
                             let weak_self = weak_self.clone();
-                            move |_window, cx| {
-                                let effort = effort.clone();
+                            move |window: &mut Window, cx: &mut App| {
+                                let effort = effort.to_string();
+                                // A click has no secondary confirm of its own, so
+                                // it goes by the same modifier a picker row does.
+                                let thread_only =
+                                    thread_only.unwrap_or_else(|| window.modifiers().secondary(cx));
                                 weak_self
                                     .update(cx, |this, cx| {
-                                        if let Some(thread) = this.as_native_thread(cx) {
-                                            thread.update(cx, |thread, cx| {
-                                                thread.set_thinking_effort(
-                                                    Some(effort.to_string()),
-                                                    cx,
-                                                );
-
-                                                let favorite_key = thread.model().map(|model| {
-                                                    (
-                                                        model.provider_id().0.to_string(),
-                                                        model.id().0.to_string(),
-                                                    )
-                                                });
-                                                let fs = thread.project().read(cx).fs().clone();
-                                                update_settings_file(fs, cx, move |settings, _| {
-                                                    if let Some(agent) = settings.agent.as_mut() {
-                                                        if let Some(default_model) =
-                                                            agent.default_model.as_mut()
-                                                        {
-                                                            default_model.effort =
-                                                                Some(effort.to_string());
-                                                        }
-                                                        if let Some((provider_id, model_id)) =
-                                                            &favorite_key
-                                                        {
-                                                            agent.update_favorite_model(
-                                                                provider_id,
-                                                                model_id,
-                                                                |favorite| {
-                                                                    favorite.effort =
-                                                                        Some(effort.to_string())
-                                                                },
-                                                            );
-                                                        }
-                                                    }
-                                                });
-                                            });
-                                        }
+                                        this.pick_native_agent_thinking_effort(
+                                            effort,
+                                            thread_only,
+                                            cx,
+                                        );
                                     })
                                     .ok();
                             }
-                        }));
+                        };
+                        menu.push_item(
+                            entry
+                                .handler(pick_effort(None))
+                                .secondary_handler(pick_effort(Some(true))),
+                        );
                     }
 
                     menu
@@ -8001,7 +8053,8 @@ impl ThreadView {
                                     })
                             }
                             ToolCallContent::SessionReference(_) => true,
-                            ToolCallContent::Other { markdown, .. } => {
+                            ToolCallContent::Text { markdown, .. }
+                            | ToolCallContent::Other { markdown, .. } => {
                                 !markdown.read(cx).source().is_empty()
                             }
                         });
@@ -9915,7 +9968,7 @@ impl ThreadView {
         // (title, detail line, docs section slug)
         let (title, detail, docs_section): (SharedString, SharedString, Option<&'static str>) =
             match reason {
-                SandboxNotAppliedReason::ErrorLinuxWsl(error) => (
+                SandboxNotAppliedReason::CreationFailed(error) => (
                     t!("agent_ui.thread_view.couldnt_create_sandbox").into(),
                     error.user_facing_message().into(),
                     Some(error.docs_section()),
@@ -9954,10 +10007,10 @@ impl ThreadView {
     /// Find the first terminal tool call in the thread whose sandbox couldn't be
     /// created, so a later "disabled for this thread" warning can reuse the same
     /// explanation of *why* the sandbox failed.
-    fn find_thread_sandbox_error(&self, cx: &App) -> Option<acp_thread::LinuxWslSandboxError> {
+    fn find_thread_sandbox_error(&self, cx: &App) -> Option<acp_thread::SandboxCreationError> {
         self.thread.read(cx).entries().iter().find_map(|entry| {
             if let AgentThreadEntry::ToolCall(tool_call) = entry
-                && let Some(SandboxNotAppliedReason::ErrorLinuxWsl(error)) =
+                && let Some(SandboxNotAppliedReason::CreationFailed(error)) =
                     &tool_call.sandbox_not_applied
             {
                 return Some(error.clone());
@@ -10656,17 +10709,7 @@ impl ThreadView {
     ) -> AnyElement {
         let has_network = details.network_all_hosts || !details.network_hosts.is_empty();
         let has_write = details.allow_fs_write_all || !details.write_paths.is_empty();
-        // The dedicated Windows-drive warning prompt is only ever sent while the
-        // warning is enabled, so key the banner on the prompt itself. Keeping it
-        // visible even after the "Don't show again" checkbox flips the setting
-        // avoids the card disappearing out from under the user mid-decision.
-        let has_windows_fs_warning = details.warn_windows_fs;
-        if !has_network
-            && !has_write
-            && !details.unsandboxed
-            && details.reason.is_empty()
-            && !has_windows_fs_warning
-        {
+        if !has_network && !has_write && !details.unsandboxed && details.reason.is_empty() {
             return Empty.into_any_element();
         }
 
@@ -10855,13 +10898,7 @@ impl ThreadView {
                 .when(has_path_list && is_open, |this| {
                     this.child(v_flex().children(paths.iter().enumerate().map(
                         |(path_ix, path)| {
-                            self.render_sandbox_authorization_path_row(
-                                entry_ix,
-                                path_ix,
-                                &path.requested,
-                                path_ix < paths.len() - 1,
-                                cx,
-                            )
+                            self.render_sandbox_authorization_path_row(entry_ix, path_ix, path, cx)
                         },
                     )))
                 })
@@ -10903,9 +10940,6 @@ impl ThreadView {
         v_flex()
             .border_t_1()
             .border_color(self.tool_card_border_color(cx))
-            .when(has_windows_fs_warning, |this| {
-                this.child(self.render_sandbox_windows_fs_warning(cx))
-            })
             .when(!confusable_findings.is_empty(), |this| {
                 this.child(self.render_sandbox_confusable_warning(
                     tool_call_id,
@@ -10918,20 +10952,16 @@ impl ThreadView {
             .children(write_section)
             .children(unsandboxed_section)
             .children(reason_section)
-            .when(!has_windows_fs_warning, |this| {
-                // The Windows-drive warning banner carries its own docs link, so
-                // skip the default one that every other sandbox prompt appends.
-                this.child(
-                    h_flex()
-                        .px_1()
-                        .py_0p5()
-                        .child(self.render_sandbox_docs_link(
-                            "sandbox-authorization-docs-link",
-                            None,
-                            cx,
-                        )),
-                )
-            })
+            .child(
+                h_flex()
+                    .px_1()
+                    .py_0p5()
+                    .child(self.render_sandbox_docs_link(
+                        "sandbox-authorization-docs-link",
+                        None,
+                        cx,
+                    )),
+            )
             .into_any_element()
     }
 
@@ -11102,106 +11132,6 @@ impl ThreadView {
             .into_any_element()
     }
 
-    /// Whether the Windows-drive (DrvFs) weaker-guarantee warning is enabled in
-    /// settings (on by default). Windows-only in effect: `warn_windows_fs` is
-    /// never set on other platforms.
-    fn ntfs_warning_enabled(cx: &App) -> bool {
-        AgentSettings::get_global(cx)
-            .sandbox_permissions
-            .warn_ntfs_grants
-    }
-
-    /// Informational banner shown on a sandbox approval prompt when the command
-    /// will write to a file on a Windows drive (reached inside WSL via DrvFs),
-    /// whose sandbox-integrity guarantees are weaker than the distro's native
-    /// filesystem. Unlike the confusable-Unicode banner this does not gate the
-    /// allow buttons: the approval itself is the acknowledgement. A settings gear
-    /// links to where the warning can be suppressed.
-    fn render_sandbox_windows_fs_warning(&self, cx: &Context<Self>) -> AnyElement {
-        v_flex()
-            .w_full()
-            .p_2()
-            .gap_1()
-            .border_t_1()
-            .border_color(cx.theme().status().warning_border)
-            .bg(cx.theme().status().warning_background.opacity(0.15))
-            .child(
-                h_flex()
-                    .w_full()
-                    .gap_1p5()
-                    .items_start()
-                    .child(
-                        Icon::new(IconName::Warning)
-                            .size(IconSize::Small)
-                            .color(Color::Warning),
-                    )
-                    .child(
-                        v_flex()
-                            .min_w_0()
-                            .flex_1()
-                            .gap_0p5()
-                            .child(
-                                Label::new(t!("agent_ui.thread_view.windows_drive_write_warning"))
-                                    .size(LabelSize::Small)
-                                    .color(Color::Warning),
-                            )
-                            .child(
-                                Label::new(t!("agent_ui.thread_view.windows_drive_isolation_note"))
-                                    .size(LabelSize::XSmall)
-                                    .color(Color::Muted),
-                            )
-                            .child(h_flex().child(self.render_sandbox_docs_link(
-                                "sandbox-windows-fs-docs-link",
-                                Some("windows"),
-                                cx,
-                            ))),
-                    )
-                    .child(
-                        IconButton::new("configure-ntfs-warning", IconName::Settings)
-                            .icon_size(IconSize::Small)
-                            .icon_color(Color::Muted)
-                            .tooltip(Tooltip::text(t!(
-                                "agent_ui.thread_view.configure_windows_drive_warning"
-                            )))
-                            .on_click(|_, window, cx| {
-                                window.dispatch_action(
-                                    Box::new(zed_actions::OpenSettingsAt {
-                                        path: zed_actions::AGENT_SANDBOX_SETTINGS_PATH.to_string(),
-                                        target: None,
-                                    }),
-                                    cx,
-                                );
-                            }),
-                    ),
-            )
-            .child(
-                Checkbox::new(
-                    "sandbox-windows-fs-dont-warn",
-                    if Self::ntfs_warning_enabled(cx) {
-                        ToggleState::Unselected
-                    } else {
-                        ToggleState::Selected
-                    },
-                )
-                .label(t!("agent_ui.thread_view.dont_show_this_warning_again"))
-                .label_size(LabelSize::Small)
-                .on_click(cx.listener(|this, state: &ToggleState, _window, cx| {
-                    let disable = *state == ToggleState::Selected;
-                    let fs = this.thread.read(cx).project().read(cx).fs().clone();
-                    update_settings_file(fs, cx, move |settings, _| {
-                        settings
-                            .agent
-                            .get_or_insert_default()
-                            .sandbox_permissions
-                            .get_or_insert_default()
-                            .warn_ntfs_grants = Some(!disable);
-                    });
-                    cx.notify();
-                })),
-            )
-            .into_any_element()
-    }
-
     fn render_sandbox_fallback_authorization_details(
         &self,
         details: &SandboxFallbackAuthorizationDetails,
@@ -11248,60 +11178,73 @@ impl ThreadView {
         &self,
         entry_ix: usize,
         path_ix: usize,
-        path: &Path,
-        show_border: bool,
+        granted: &settings::GrantedWritePath,
         cx: &Context<Self>,
     ) -> Stateful<Div> {
-        let display_path = path.display().to_string();
-        let file_name = path
-            .file_name()
-            .map(|name| name.to_string_lossy().into_owned())
-            .unwrap_or_else(|| display_path.clone());
-        let parent_path = path.parent().and_then(|parent| {
-            let parent = parent.display().to_string();
-            (!parent.is_empty()).then_some(parent)
-        });
+        // The path that is actually granted is the resolved canonical target.
+        // When the request went through a symlink to a *different* target, both
+        // paths are shown, each explicitly captioned, so it's unmistakable which
+        // string was requested and which location write access is really granted
+        // to.
+        let granted_path = granted.canonical_or_requested();
+        let requested_path = granted.requested.clone();
+        // A genuine symlink/junction redirect is just a plain inequality between
+        // the request and its resolved canonical.
+        let is_redirected = granted
+            .resolved
+            .as_deref()
+            .is_some_and(|resolved| resolved != requested_path.as_path());
 
-        h_flex()
-            .id(SharedString::from(format!(
-                "sandbox-authorization-path-{entry_ix}-{path_ix}"
-            )))
+        let granted_display = granted_path.display().to_string();
+        let requested_display = requested_path.display().to_string();
+
+        let captioned_path = |caption: SharedString, path: String, cx: &Context<Self>| {
+            v_flex()
+                .min_w_0()
+                .gap_0p5()
+                .child(
+                    Label::new(caption)
+                        .size(LabelSize::XSmall)
+                        .color(Color::Muted),
+                )
+                .child(Label::new(path).size(LabelSize::Small).buffer_font(cx))
+        };
+
+        v_flex()
+            .id(format!("sandbox-authorization-path-{entry_ix}-{path_ix}"))
             .min_w_0()
+            .gap_1()
             .px_2()
             .py_1p5()
             .bg(cx.theme().colors().editor_background)
-            .when(show_border, |this| {
-                this.border_b_1().border_color(cx.theme().colors().border)
-            })
-            .child(
-                h_flex()
-                    .id(SharedString::from(format!(
-                        "sandbox-authorization-path-name-{entry_ix}-{path_ix}"
-                    )))
-                    .min_w_0()
-                    .gap_0p5()
+            .map(|this| {
+                if is_redirected {
+                    this.child(captioned_path(
+                        t!("agent_ui.thread_view.sandbox_source_path").into(),
+                        requested_display,
+                        cx,
+                    ))
                     .child(
-                        Label::new(file_name)
-                            .size(LabelSize::XSmall)
-                            .buffer_font(cx),
+                        Icon::new(IconName::ArrowDown)
+                            .color(Color::Muted)
+                            .size(IconSize::Small),
                     )
-                    .when_some(parent_path, |this, parent_path| {
-                        this.child(
-                            Label::new(format!(" {parent_path}"))
-                                .color(Color::Muted)
-                                .size(LabelSize::XSmall)
-                                .buffer_font(cx),
-                        )
-                    })
-                    .tooltip(move |_window, cx| {
-                        Tooltip::with_meta(
-                            t!("agent_ui.thread_view.requested_write_path"),
-                            None,
-                            display_path.clone(),
-                            cx,
-                        )
-                    }),
-            )
+                    .child(captioned_path(
+                        t!("agent_ui.thread_view.sandbox_target_path").into(),
+                        granted_display,
+                        cx,
+                    ))
+                } else {
+                    // Not a genuine redirect: show what the user asked for (e.g.
+                    // the `C:\...` path), not the internal Linux canonical.
+                    this.child(captioned_path(
+                        t!("agent_ui.thread_view.requested_write_path").into(),
+                        requested_display,
+                        cx,
+                    ))
+                }
+            })
+            .child(Divider::horizontal())
     }
 
     fn render_permission_buttons(
@@ -12180,6 +12123,15 @@ impl ThreadView {
         cx: &Context<Self>,
     ) -> AnyElement {
         match content {
+            ToolCallContent::Text { markdown, .. } => self.render_markdown_output(
+                markdown.clone(),
+                entry_ix,
+                context_ix,
+                tool_call,
+                card_layout,
+                window,
+                cx,
+            ),
             ToolCallContent::ContentBlock { block, .. } => self.render_output_content_block(
                 entry_ix,
                 context_ix,
@@ -12776,6 +12728,15 @@ impl ThreadView {
                     .size(IconSize::Small)
                     .color(Color::Success)
                     .into_any_element(),
+                SubagentStatus::Idle => div()
+                    .id(status_icon)
+                    .child(
+                        Icon::new(IconName::Circle)
+                            .size(IconSize::Small)
+                            .color(Color::Muted),
+                    )
+                    .tooltip(Tooltip::text(t!("agent_ui.thread_view.subagent_idle")))
+                    .into_any_element(),
                 SubagentStatus::Unknown => div()
                     .id(status_icon)
                     .child(
@@ -12789,9 +12750,23 @@ impl ThreadView {
                     .into_any_element(),
             });
 
-        let has_expandable_content = thread
+        let description = thread.as_ref().and_then(|thread| {
+            let thread = thread.read(cx);
+            if thread.connection().description_format()
+                != acp_thread::AgentDescriptionFormat::Markdown
+            {
+                return None;
+            }
+            thread
+                .subagent_association()?
+                .description
+                .as_ref()
+                .filter(|description| !description.is_empty())
+        });
+        let has_entries = thread
             .as_ref()
-            .map_or(false, |thread| !thread.read(cx).entries().is_empty());
+            .is_some_and(|thread| !thread.read(cx).entries().is_empty());
+        let has_expandable_content = has_entries || description.is_some();
 
         // i18n 后为 String,Fn 闭包无法 move;转 SharedString 在使用处克隆
         // i18n makes this a String, which an Fn closure cannot move;
@@ -12963,6 +12938,17 @@ impl ThreadView {
                         )
                     }),
             )
+            .when_some(description.filter(|_| is_expanded), |this, description| {
+                this.child(
+                    div()
+                        .debug_selector(|| format!("subagent-description-{entry_ix}"))
+                        .px_2()
+                        .py_1()
+                        .text_ui_sm(cx)
+                        .text_color(cx.theme().colors().text_muted)
+                        .child(markdown::MarkdownLabel(description.clone())),
+                )
+            })
             .when_some(thread_view, |this, thread_view| {
                 let thread = &thread_view.read(cx).thread;
                 let tv_session_id = thread.read(cx).session_id();
@@ -13026,13 +13012,15 @@ impl ThreadView {
                     }
                 } else {
                     this.when(is_expanded, |this| {
-                        this.child(self.render_subagent_expanded_content(
-                            thread_view,
-                            card_id,
-                            state,
-                            window,
-                            cx,
-                        ))
+                        this.when(has_entries || description.is_none(), |this| {
+                            this.child(self.render_subagent_expanded_content(
+                                thread_view,
+                                card_id,
+                                state,
+                                window,
+                                cx,
+                            ))
+                        })
                         .when_some(error_message, |this, message| {
                             this.child(
                                 Callout::new()
@@ -14365,24 +14353,48 @@ impl ThreadView {
             return;
         }
         thread.update(cx, |thread, cx| {
-            thread.set_speed(speed, cx);
+            thread.set_speed(Some(speed), cx);
+            thread.save_model_options(cx, move |model| model.speed = Some(speed));
+        });
+    }
 
-            let favorite_key = thread
-                .model()
-                .map(|model| (model.provider_id().0.to_string(), model.id().0.to_string()));
-            let fs = thread.project().read(cx).fs().clone();
-            update_settings_file(fs, cx, move |settings, _| {
-                if let Some(agent) = settings.agent.as_mut() {
-                    if let Some(default_model) = agent.default_model.as_mut() {
-                        default_model.speed = Some(speed);
-                    }
-                    if let Some((provider_id, model_id)) = &favorite_key {
-                        agent.update_favorite_model(provider_id, model_id, |favorite| {
-                            favorite.speed = Some(speed)
-                        });
-                    }
-                }
-            });
+    fn reset_thread_to_defaults(
+        &mut self,
+        _: &ResetThreadToDefaults,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if let Some(thread) = self.as_native_thread(cx) {
+            thread.update(cx, |thread, cx| thread.reset_to_defaults(cx));
+        }
+    }
+
+    fn save_thread_as_defaults(
+        &mut self,
+        _: &SaveThreadAsDefaults,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if let Some(thread) = self.as_native_thread(cx) {
+            thread.update(cx, |thread, cx| thread.save_as_defaults(cx));
+        }
+    }
+
+    pub(super) fn pick_native_agent_thinking_effort(
+        &mut self,
+        effort: String,
+        thread_only: bool,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(thread) = self.as_native_thread(cx) else {
+            return;
+        };
+        thread.update(cx, |thread, cx| {
+            if thread_only {
+                thread.mark_thread_only(cx);
+            }
+            thread.set_thinking_effort(Some(effort.clone()), cx);
+            thread.save_model_options(cx, move |model| model.effort = Some(effort.clone()));
         });
     }
 
@@ -14424,23 +14436,7 @@ impl ThreadView {
 
         thread.update(cx, |thread, cx| {
             thread.set_thinking_effort(Some(next_effort.clone()), cx);
-
-            let favorite_key = thread
-                .model()
-                .map(|model| (model.provider_id().0.to_string(), model.id().0.to_string()));
-            let fs = thread.project().read(cx).fs().clone();
-            update_settings_file(fs, cx, move |settings, _| {
-                if let Some(agent) = settings.agent.as_mut() {
-                    if let Some(default_model) = agent.default_model.as_mut() {
-                        default_model.effort = Some(next_effort.clone());
-                    }
-                    if let Some((provider_id, model_id)) = &favorite_key {
-                        agent.update_favorite_model(provider_id, model_id, |favorite| {
-                            favorite.effort = Some(next_effort)
-                        });
-                    }
-                }
-            });
+            thread.save_model_options(cx, move |model| model.effort = Some(next_effort.clone()));
         });
     }
 }
@@ -14597,6 +14593,8 @@ impl Render for ThreadView {
             .on_action(cx.listener(|this, _: &CycleResponseSpeed, _, cx| {
                 this.cycle_response_speed(cx);
             }))
+            .on_action(cx.listener(Self::reset_thread_to_defaults))
+            .on_action(cx.listener(Self::save_thread_as_defaults))
             .on_action(cx.listener(|this, _: &ToggleThinkingMode, _window, cx| {
                 if this.thread.read(cx).status() != ThreadStatus::Idle {
                     return;
@@ -14609,7 +14607,11 @@ impl Render for ThreadView {
                             )
                         });
                         if model_allows_disabling {
-                            thread.set_thinking_enabled(!thread.thinking_enabled(), cx);
+                            let enable_thinking = !thread.thinking_enabled();
+                            thread.set_thinking_enabled(enable_thinking, cx);
+                            thread.save_model_options(cx, move |model| {
+                                model.enable_thinking = enable_thinking
+                            });
                         }
                     });
                 }
@@ -15204,6 +15206,25 @@ mod tests {
     use util::path;
     use util::paths::PathStyle;
     use workspace::MultiWorkspace;
+
+    #[test]
+    fn submission_preview_and_copy_separate_attachments_but_not_adjacent_text() {
+        let content = [
+            "key".into(),
+            "board".into(),
+            acp_v2::ContentBlock::ResourceLink(acp_v2::ResourceLink::new("file", "file:///file")),
+            "work".into(),
+            "space".into(),
+        ];
+        assert_eq!(
+            ThreadView::submission_text_parts(&content, " ").collect::<String>(),
+            "keyboard file workspace"
+        );
+        assert_eq!(
+            ThreadView::submission_text_parts(&content, "\n").collect::<String>(),
+            "keyboard\nfile\nworkspace"
+        );
+    }
 
     #[test]
     fn test_reported_activity_completion_status() {
