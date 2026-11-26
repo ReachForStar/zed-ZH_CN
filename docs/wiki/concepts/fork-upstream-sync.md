@@ -70,10 +70,12 @@ status: active
 - `.github/workflows/` 仅 `release.yml` + `run_tests.yml`（精简 CI，禁止 `cargo xtask workflows` 覆盖）；上游删除 workflow 文件与 fork 的删除产生 delete/modify 冲突时取删除。
 - `crates/agent_ui/src/conversation_view/thread_view.rs` 的 `render_sandbox_authorization_path_row` 必须保持上游 `granted: &settings::GrantedWritePath` 签名（含 Source / Target / Write Path 三态），fork 曾长期保留 #58358 之前的旧实现；标题走 `agent_ui.thread_view.{sandbox_source_path,sandbox_target_path,requested_write_path}`。
 - `crates/acp_thread/src/acp_thread.rs` 的 `resolve_location` 用 `project.fs().metadata()` 跳过目录路径（上游未修，会为每个目录位置记 EISDIR 错误并可能在项目外创建工作树）；合并后确认该判断仍在，`FakeFs::read_call_count` 仍是 `test_tool_locations_skip_directories` 的断言依据。
+- `crates/auto_update` 的自建更新通道：`GITHUB_RELEASE_REPO`（仓库改名后靠 301 重定向继续可用）、`select_github_asset` 资产选择，以及 `fork_release_notes` + `select_release_notes` 的更新说明三级兜底；上游若改 `github_releases::GithubRelease` 字段，fork 依赖的 `body` 要跟着核对。`crates/auto_update` 的 dev-dependencies 需保留 `db` 的 `test-support` feature，否则 `test_auto_update_downloads` 在 `db::ThreadSafeConnection::global` panic。
 - `README.md` 顶部 `> [!IMPORTANT]` 与 `> Remove this line ...` 两行完好（.rules 硬规则，勿删）。
 
 ## 关联页面
 
+- [应用内查看 Release Note 空白](../queries/release-notes-blank-fork-channel.md) — 版本号超前于上游发布线时 zed.dev 更新说明正文为空；`auto_update` 以自建 GitHub Release 正文兜底。
 - [2026-11-25 合并 upstream/main（1.31.0 线，68 提交）](../queries/upstream-merge-2026-11-25.md) — 本轮 13 处冲突判定、上游旧实现回填、ACP SDK `MaybeUndefined` 适配、`LC_ALL=C` 测试环境坑与「上游新增行集合核对」方法，38 套件 7030 项测试数值。
 - [2026-11-23 合并上游 main（1.31.0，135 提交）](../queries/upstream-merge-2026-11-23.md) — 本轮冲突判定、`language_model_selector` 缺 `zed_i18n` 的编译失败、既有 fork 回归（窗口失活守卫、删除确认框收敛、`location()` 语义）修复与验证数值。
 - [2026-11 合并上游 main：冲突消解、编译失败链与 fork 特性核对](../queries/upstream-merge-2026-11.md) — 本轮（1.29.0，77 提交）的冲突决策、编译失败链与 fork 修复核对表。

@@ -3,7 +3,7 @@ title: fork 发布 release 的流程与版本号策略
 type: concept
 tags: [release, tag, workflow, fork, versioning]
 created: 2026-09-26
-updated: 2026-11-23
+updated: 2026-11-25
 status: active
 ---
 
@@ -33,6 +33,7 @@ status: active
 - **deb 打包要点**：包名 `zed-zh-cn` 并 `Conflicts`/`Replaces` `zed`，装到 `/usr/lib/zed`、软链 `/usr/bin/zed`、桌面项与 hicolor 图标放 `/usr/share`；`share/` 不重复装进 `/usr/lib/zed`。运行时 `Depends` 由 `ldd` 实测推导：跳过包内自带同名库，其余映射到 `dpkg -S` 的包名，并对 Ubuntu 24.04 的 t64 改名（`libasound2`、`libglib2.0-0`、`libblkid1`、`libmount1`、`libselinux1`）写「原名 | t64名」备选，使同一份 `.deb` 同时可装 22.04 与 24.04。
 - **验证流水线**：`release.yml` 的 `workflow_dispatch` 带 `dry_run` 布尔输入，为真时只构建三平台安装包、跳过创建 Release，用于不打标签验证打包链路。
 - **许可证门禁会拦 AGPL**：三平台打包前都会跑 `cargo about generate --fail -c script/licenses/zed-licenses.toml`，`script/licenses/zed-licenses.toml` 的 `accepted` 列表明确不允许 AGPL。fork 的 `office_preview` 依赖 `pdf-render`，其预发布约束 `"1.0.0-beta.17"` 允许解析到 1.3.x，而 `pdf-render 1.3.1` 经 `pdf-interpret` 拉入 `pdf-render-types 1.0.0`（`AGPL-3.0-only OR 商业许可`），导致三个平台同时失败。改为 `pdf-render = "=1.3.0"` 锁定（`cargo update -p pdf-render --precise 1.3.0`，同时把 `pdf-interpret`/`pdf-syntax` 落回 0.6.2、移除 `pdf-render-types`）。改动依赖后本地先跑同一条 `cargo about generate --fail` 再打标签。
+- **版本号超前会让应用内更新说明变空白**：`view_release_notes_locally` 请求 zed.dev 的 `/api/release_notes/v2/{channel}/{version}`，该接口只为上游自己正式发布过的版本给正文（汉化版 `1.31.0` 返回 200 + 空串）。现已按「上游正文 → 自建 GitHub Release 正文 → 都空则报错」三级取舍兜底，正文来源是发布时写入 Release 的 `RELEASE_NOTES.md`。细节见 [应用内查看 Release Note 空白](../queries/release-notes-blank-fork-channel.md)。
 - **`verify_version` 需要 GitHub API token**：`--check-not-behind stable` 访问 `api.github.com`，未认证请求在 runner 共享 IP 上会 403 `rate limit exceeded`，14 秒内即失败。脚本按 `GITHUB_TOKEN` / `GH_TOKEN` 环境变量附带 `Authorization: Bearer`，`release.yml` 的校验步骤因此传入 `${{ github.token }}`。
 
 ## 验证与遗留
@@ -58,3 +59,4 @@ status: active
 ## 关联页面
 
 - [汉化 fork 同步 upstream 的合并模式与特性保留清单](fork-upstream-sync.md) — 合并时版本号行的处理。
+- [应用内查看 Release Note 空白](../queries/release-notes-blank-fork-channel.md) — zed.dev 更新说明接口对超前版本号返回空正文、以自建 GitHub Release 正文兜底的三级取舍。
