@@ -368,10 +368,8 @@ pub fn select_release_notes<'a>(from_zed: &'a str, from_fork: Option<&'a str>) -
     from_fork.filter(|notes| !notes.trim().is_empty())
 }
 
-/// 汉化版自建发布通道的 Release 正文（Markdown）。
-///
-/// zed.dev 的更新说明接口只为它自己正式发布过的版本给正文；汉化版版本号按上游 main
-/// 走，会超前于上游发布线，此时正文为空串。调用方据此回退到本仓库的 Release 正文。
+/// 按 tag `v{version}` 取汉化版自建发布通道的 Release 正文（Markdown）。
+/// 请求失败、该版本没有 Release、或正文为空时返回 None。
 pub async fn fork_release_notes(
     version: &Version,
     http_client: Arc<dyn HttpClient>,
