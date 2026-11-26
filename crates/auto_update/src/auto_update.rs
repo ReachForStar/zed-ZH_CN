@@ -49,9 +49,9 @@ const POLL_INTERVAL: Duration = Duration::from_secs(60 * 60);
 const NIGHTLY_POLL_INTERVAL: Duration = Duration::from_secs(15 * 60);
 const REMOTE_SERVER_CACHE_LIMIT: usize = 5;
 
-/// 检查更新所用的 GitHub 仓库（汉化版），从其 GitHub Releases 拉取安装包；
-/// 仓库改名后 GitHub API 仍会重定向，故保留历史地址。
-pub const GITHUB_RELEASE_REPO: &str = "MindFlowLab/zed-ZH_CN";
+/// 检查更新与取更新说明所用的 GitHub 仓库（汉化版），从其 GitHub Releases 拉取安装包；
+/// 旧名 MindFlowLab/zed-ZH_CN 只靠 GitHub 的重定向兼容，直接用现名省掉一次跳转。
+pub const GITHUB_RELEASE_REPO: &str = "ReachForStar/zed-ZH_CN";
 
 #[cfg(target_os = "linux")]
 fn linux_rsync_install_hint() -> &'static str {
@@ -337,18 +337,24 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     }
 }
 
+/// Release tag 名：只用主版本号，dev/preview 构建的 version 带 pre 与 build 元数据。
+fn release_tag(version: &Version) -> String {
+    let mut version = version.clone();
+    version.pre = semver::Prerelease::EMPTY;
+    version.build = semver::BuildMetadata::EMPTY;
+    format!("v{version}")
+}
+
 pub fn release_notes_url(cx: &mut App) -> Option<String> {
     let release_channel = ReleaseChannel::try_global(cx)?;
     let url = match release_channel {
         ReleaseChannel::Stable | ReleaseChannel::Preview => {
             let auto_updater = AutoUpdater::get(cx)?;
             let auto_updater = auto_updater.read(cx);
-            let mut current_version = auto_updater.current_version.clone();
-            current_version.pre = semver::Prerelease::EMPTY;
-            current_version.build = semver::BuildMetadata::EMPTY;
-            let release_channel = release_channel.dev_name();
-            let path = format!("/releases/{release_channel}/{current_version}");
-            auto_updater.client.http_client().build_url(&path)
+            let tag = release_tag(&auto_updater.current_version);
+            // zed.dev 的 /releases 页面只为上游正式发布过的版本存在，汉化版版本号常超前；
+            // 更新说明统一指汉化版自己的 GitHub Release 页面。
+            format!("https://github.com/{GITHUB_RELEASE_REPO}/releases/tag/{tag}")
         }
         ReleaseChannel::Nightly => {
             "https://github.com/zed-industries/zed/commits/nightly/".to_string()
@@ -374,11 +380,7 @@ pub async fn fork_release_notes(
     version: &Version,
     http_client: Arc<dyn HttpClient>,
 ) -> Option<String> {
-    // tag 只用主版本号：dev/preview 构建的 version 带 build metadata
-    let mut version = version.clone();
-    version.pre = semver::Prerelease::EMPTY;
-    version.build = semver::BuildMetadata::EMPTY;
-    let tag = format!("v{version}");
+    let tag = release_tag(version);
     let release = match github_releases::get_release_by_tag_name(
         GITHUB_RELEASE_REPO,
         &tag,
@@ -719,10 +721,8 @@ impl AutoUpdater {
 
         // 从 GitHub Releases 拉取：指定版本时按 tag 查询，否则取最新 release
         let release = match version {
-            Some(mut version) => {
-                version.pre = semver::Prerelease::EMPTY;
-                version.build = semver::BuildMetadata::EMPTY;
-                let tag = format!("v{version}");
+            Some(version) => {
+                let tag = release_tag(&version);
                 github_releases::get_release_by_tag_name(GITHUB_RELEASE_REPO, &tag, http_client)
                     .await
                     .with_context(|| format!("error fetching release {tag}"))?
@@ -1090,7 +1090,7 @@ async fn cleanup_remote_server_cache(
 
 /// 根据目标平台从 GitHub Release 资产列表中挑选匹配的安装包下载地址。
 ///
-/// 各平台资产命名约定（MindFlowLab/zed-ZH_CN）：
+/// 各平台资产命名约定（汉化版发布仓库）：
 /// - 主程序 linux:   `zed-linux-{arch}.tar.gz`
 /// - 主程序 windows: `Zed-{arch}.exe`
 /// - 主程序 macos:   `Zed-{arch}.dmg`
@@ -1477,6 +1477,33 @@ mod tests {
         cx.run_until_parked();
     }
 
+    #[gpui::test]
+    fn test_release_notes_url_points_to_fork_release(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            settings::init(cx);
+            release_channel::init_test(
+                semver::Version::parse("1.31.0+stable").unwrap(),
+                ReleaseChannel::Stable,
+                cx,
+            );
+            let client = Client::new(
+                Arc::new(FakeSystemClock::new()),
+                FakeHttpClient::with_404_response(),
+                cx,
+            );
+            crate::init(client, cx);
+
+            // build 元数据不进 tag；链接指汉化版自己的 Release 页面，不再依赖 zed.dev 的 /releases
+            assert_eq!(
+                release_notes_url(cx).as_deref(),
+                Some(
+                    format!("https://github.com/{GITHUB_RELEASE_REPO}/releases/tag/v1.31.0")
+                        .as_str()
+                )
+            );
+        });
+    }
+
     pub(super) struct InstallOverride(pub Rc<dyn Fn(&Path, &AsyncApp) -> Result<Option<PathBuf>>>);
     impl Global for InstallOverride {}
 
@@ -1516,7 +1543,7 @@ mod tests {
                 let release_available = release_available.load(atomic::Ordering::Relaxed);
                 let dmg_rx = dmg_rx.clone();
                 async move {
-                if req.uri().path() == "/repos/MindFlowLab/zed-ZH_CN/releases" {
+                if req.uri().path() == format!("/repos/{GITHUB_RELEASE_REPO}/releases") {
                     // 根据当前平台构造与 select_github_asset 匹配的主程序资产名
                     let asset_name = match OS {
                         "windows" => format!("Zed-{ARCH}.exe"),
@@ -1619,7 +1646,7 @@ mod tests {
             }
         }
 
-        // 与 MindFlowLab/zed-ZH_CN 实际 release 资产名保持一致
+        // 与 汉化版发布仓库 实际 release 资产名保持一致
         let assets = vec![
             asset("zed-linux-x86_64.tar.gz"),
             asset("Zed-x86_64.exe"),

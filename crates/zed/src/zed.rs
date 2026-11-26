@@ -1496,8 +1496,9 @@ fn initialize_pane(
 }
 
 fn open_about_window(cx: &mut App) {
-    // 汉化分支源码仓库，用于关于页面标注修改版身份（GPL-3.0 §5 合规）
-    const ZH_CN_REPO_URL: &str = "https://github.com/MindFlowLab/zed-ZH_CN";
+    // 汉化分支源码仓库，用于关于页面标注修改版身份（GPL-3.0 §5 合规）；
+    // 与自建更新通道的 auto_update::GITHUB_RELEASE_REPO 同一仓库（旧名只靠重定向）
+    const ZH_CN_REPO_URL: &str = "https://github.com/ReachForStar/zed-ZH_CN";
 
     fn about_window_icon(release_channel: ReleaseChannel) -> Arc<Image> {
         let bytes = match release_channel {
