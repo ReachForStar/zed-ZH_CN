@@ -106,7 +106,7 @@ fn view_release_notes_locally(
         return;
     }
 
-    let version = AppVersion::global(cx).to_string();
+    let version = AppVersion::global(cx);
 
     let client = client::Client::global(cx).http_client();
     let url = client.build_url(&format!(
@@ -137,6 +137,14 @@ fn view_release_notes_locally(
 
         let res: Option<()> = maybe!(async {
             let body = body.ok()?;
+            // 上游 zed.dev 只为它自己发布过的版本给正文，汉化版版本号超前时为空串
+            let fork_notes = if body.release_notes.trim().is_empty() {
+                auto_update::fork_release_notes(&version, client.clone()).await
+            } else {
+                None
+            };
+            let release_notes =
+                auto_update::select_release_notes(&body.release_notes, fork_notes.as_deref())?;
             let project = workspace
                 .read_with(cx, |workspace, _| workspace.project().clone())
                 .ok()?;
@@ -148,7 +156,7 @@ fn view_release_notes_locally(
             });
             let buffer = buffer.await.ok()?;
             buffer.update(cx, |buffer, cx| {
-                buffer.edit([(0..0, body.release_notes)], None, cx)
+                buffer.edit([(0..0, release_notes)], None, cx)
             });
 
             let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx).with_title(body.title));

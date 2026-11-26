@@ -21,6 +21,10 @@ pub struct GithubRelease {
     pub assets: Vec<GithubReleaseAsset>,
     pub tarball_url: String,
     pub zipball_url: String,
+    /// Release 正文（Markdown）。上游调用方不读正文，且旧接口响应里可能没有该字段，
+    /// 故默认 None。
+    #[serde(default)]
+    pub body: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -181,10 +185,31 @@ pub fn build_asset_url(repo_name_with_owner: &str, tag: &str, kind: AssetKind) -
 #[cfg(test)]
 mod tests {
     use super::{
-        AssetKind, GITHUB_RELEASE_REQUEST_TIMEOUT, GithubReleaseAsset, build_asset_url,
-        github_api_request,
+        AssetKind, GITHUB_RELEASE_REQUEST_TIMEOUT, GithubRelease, GithubReleaseAsset,
+        build_asset_url, github_api_request,
     };
     use http_client::RequestTimeout;
+
+    #[test]
+    fn test_release_body_deserialization() {
+        // 字段取自真实 GitHub Releases API 响应（ReachForStar/zed-ZH_CN v1.31.0）的对应部分；
+        // 正文可能缺失，不能让整条 release 解析失败
+        let with_body: GithubRelease = serde_json::from_str(
+            r##"{"tag_name":"v1.31.0","prerelease":false,"assets":[],"tarball_url":"t","zipball_url":"z","body":"# 发布 v1.31.0\n\n- 新增修复"}"##,
+        )
+        .unwrap();
+        assert_eq!(with_body.tag_name, "v1.31.0");
+        assert_eq!(
+            with_body.body.as_deref(),
+            Some("# 发布 v1.31.0\n\n- 新增修复")
+        );
+
+        let without_body: GithubRelease = serde_json::from_str(
+            r#"{"tag_name":"v1.31.0","prerelease":false,"assets":[],"tarball_url":"t","zipball_url":"z"}"#,
+        )
+        .unwrap();
+        assert_eq!(without_body.body, None);
+    }
 
     #[test]
     fn test_asset_digest_deserialization() {

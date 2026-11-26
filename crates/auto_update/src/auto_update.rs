@@ -49,8 +49,9 @@ const POLL_INTERVAL: Duration = Duration::from_secs(60 * 60);
 const NIGHTLY_POLL_INTERVAL: Duration = Duration::from_secs(15 * 60);
 const REMOTE_SERVER_CACHE_LIMIT: usize = 5;
 
-/// 检查更新所用的 GitHub 仓库（MindFlowLab 汉化版），从其 GitHub Releases 拉取安装包
-const GITHUB_RELEASE_REPO: &str = "MindFlowLab/zed-ZH_CN";
+/// 检查更新所用的 GitHub 仓库（汉化版），从其 GitHub Releases 拉取安装包；
+/// 仓库改名后 GitHub API 仍会重定向，故保留历史地址。
+pub const GITHUB_RELEASE_REPO: &str = "MindFlowLab/zed-ZH_CN";
 
 #[cfg(target_os = "linux")]
 fn linux_rsync_install_hint() -> &'static str {
@@ -355,6 +356,45 @@ pub fn release_notes_url(cx: &mut App) -> Option<String> {
         ReleaseChannel::Dev => "https://github.com/zed-industries/zed/commits/main/".to_string(),
     };
     Some(url)
+}
+
+/// 更新说明正文的取舍：上游 zed.dev 只为它自己正式发布过的版本给正文，汉化版版本号按
+/// 上游 main 走、会超前于上游发布线，此时正文是空串，改用汉化版 GitHub Release 的正文；
+/// 两边都没有正文时返回 None，调用方给出错误提示而不是打开空白标签页。
+pub fn select_release_notes<'a>(from_zed: &'a str, from_fork: Option<&'a str>) -> Option<&'a str> {
+    if !from_zed.trim().is_empty() {
+        return Some(from_zed);
+    }
+    from_fork.filter(|notes| !notes.trim().is_empty())
+}
+
+/// 汉化版自建发布通道的 Release 正文（Markdown）。
+///
+/// zed.dev 的更新说明接口只为它自己正式发布过的版本给正文；汉化版版本号按上游 main
+/// 走，会超前于上游发布线，此时正文为空串。调用方据此回退到本仓库的 Release 正文。
+pub async fn fork_release_notes(
+    version: &Version,
+    http_client: Arc<dyn HttpClient>,
+) -> Option<String> {
+    // tag 只用主版本号：dev/preview 构建的 version 带 build metadata
+    let mut version = version.clone();
+    version.pre = semver::Prerelease::EMPTY;
+    version.build = semver::BuildMetadata::EMPTY;
+    let tag = format!("v{version}");
+    let release = match github_releases::get_release_by_tag_name(
+        GITHUB_RELEASE_REPO,
+        &tag,
+        http_client,
+    )
+    .await
+    {
+        Ok(release) => release,
+        Err(error) => {
+            log::warn!("Auto Update: fetching release notes for {tag} failed: {error:#}");
+            return None;
+        }
+    };
+    release.body.filter(|body| !body.trim().is_empty())
 }
 
 pub fn view_release_notes(_: &ViewReleaseNotes, cx: &mut App) -> Option<()> {
@@ -1397,6 +1437,47 @@ mod tests {
     }
 
     use super::*;
+
+    #[test]
+    fn test_select_release_notes_prefers_upstream_then_fork() {
+        assert_eq!(
+            super::select_release_notes("上游正文", Some("汉化版正文")),
+            Some("上游正文")
+        );
+        assert_eq!(
+            super::select_release_notes("", Some("汉化版正文")),
+            Some("汉化版正文")
+        );
+        // 汉化版版本号超前于上游发布线时，zed.dev 给空串、GitHub Release 正文缺失
+        assert_eq!(super::select_release_notes("   ", Some("  ")), None);
+        assert_eq!(super::select_release_notes("", None), None);
+    }
+
+    #[gpui::test]
+    async fn test_fork_release_notes_queries_stripped_version_tag(cx: &mut TestAppContext) {
+        let requested_path = Arc::new(parking_lot::Mutex::new(None::<String>));
+        let http = FakeHttpClient::create({
+            let requested_path = requested_path.clone();
+            move |req| {
+                *requested_path.lock() = Some(req.uri().path().to_string());
+                async move {
+                    // 字段取自真实 GitHub Releases API（汉化版 v1.31.0）响应的相关部分
+                    let body = r##"{"tag_name":"v1.31.0","prerelease":false,"assets":[],"tarball_url":"t","zipball_url":"z","body":"# 发布 v1.31.0：修复更新说明空白"}"##;
+                    Ok(Response::builder().status(200).body(body.into()).unwrap())
+                }
+            }
+        });
+
+        // 应用内版本带 build metadata，tag 查询要先去掉它
+        let version = semver::Version::parse("1.31.0+stable").unwrap();
+        let notes = fork_release_notes(&version, http).await;
+        assert_eq!(notes.as_deref(), Some("# 发布 v1.31.0：修复更新说明空白"));
+        assert_eq!(
+            requested_path.lock().as_deref(),
+            Some(format!("/repos/{GITHUB_RELEASE_REPO}/releases/tags/v1.31.0").as_str())
+        );
+        cx.run_until_parked();
+    }
 
     pub(super) struct InstallOverride(pub Rc<dyn Fn(&Path, &AsyncApp) -> Result<Option<PathBuf>>>);
     impl Global for InstallOverride {}
