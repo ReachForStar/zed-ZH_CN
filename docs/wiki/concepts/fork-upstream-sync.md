@@ -70,7 +70,7 @@ status: active
 - `.github/workflows/` 仅 `release.yml` + `run_tests.yml`（精简 CI，禁止 `cargo xtask workflows` 覆盖）；上游删除 workflow 文件与 fork 的删除产生 delete/modify 冲突时取删除。
 - `crates/agent_ui/src/conversation_view/thread_view.rs` 的 `render_sandbox_authorization_path_row` 必须保持上游 `granted: &settings::GrantedWritePath` 签名（含 Source / Target / Write Path 三态），fork 曾长期保留 #58358 之前的旧实现；标题走 `agent_ui.thread_view.{sandbox_source_path,sandbox_target_path,requested_write_path}`。
 - `crates/acp_thread/src/acp_thread.rs` 的 `resolve_location` 用 `project.fs().metadata()` 跳过目录路径（上游未修，会为每个目录位置记 EISDIR 错误并可能在项目外创建工作树）；合并后确认该判断仍在，`FakeFs::read_call_count` 仍是 `test_tool_locations_skip_directories` 的断言依据。
-- `crates/auto_update` 的自建更新通道：`GITHUB_RELEASE_REPO`（仓库改名后靠 301 重定向继续可用）、`select_github_asset` 资产选择，以及 `fork_release_notes` + `select_release_notes` 的更新说明三级兜底；上游若改 `github_releases::GithubRelease` 字段，fork 依赖的 `body` 要跟着核对。`crates/auto_update` 的 dev-dependencies 需保留 `db` 的 `test-support` feature，否则 `test_auto_update_downloads` 在 `db::ThreadSafeConnection::global` panic。
+- `crates/auto_update` 的自建更新通道：`GITHUB_RELEASE_REPO`（现名 `ReachForStar/zed-ZH_CN`）、`release_tag` 去 `pre`/`build` 后拼 tag、`select_github_asset` 资产选择、`fork_release_notes` + `select_release_notes` 的更新说明三级兜底，以及 `release_notes_url` 指汉化版 GitHub Release 页面；`crates/zed/src/zed.rs` 关于页的 `ZH_CN_REPO_URL` 必须是同一仓库。上游若改 `github_releases::GithubRelease` 字段，fork 依赖的 `body` 要跟着核对。`crates/auto_update` 的 dev-dependencies 需保留 `db` 的 `test-support` feature，否则 `test_auto_update_downloads` 在 `db::ThreadSafeConnection::global` panic。
 - `README.md` 顶部 `> [!IMPORTANT]` 与 `> Remove this line ...` 两行完好（.rules 硬规则，勿删）。
 
 ## 关联页面
