@@ -3,7 +3,7 @@ title: 汉化 fork 同步 upstream 的合并模式与特性保留清单
 type: concept
 tags: [fork, upstream, merge, i18n, workflow]
 created: 2026-09-26
-updated: 2026-11-25
+updated: 2026-11-26
 status: active
 ---
 
@@ -36,6 +36,8 @@ status: active
 - **fork 早期手工 backport × 上游后来正式实现 → 合并时静默丢失**：fork 曾手工 backport `markdown` 的 `pending_heading_scroll` 机制（提交 `fb319c54010`），上游后来正式实现并加入 `defer_parsing`。两套实现并存时 merge 把上游在 `reset()`/`parse()` 里的清理逻辑判成冲突并丢弃，fork HEAD 因此长期缺上游的 pending 清理。本轮按上游恢复（`reset()` 重新应用 pending 滚动、`parse()` 空源时清 pending）。
 - **合并两侧新增 `use` 要按字母序**：rustfmt 默认开启 `reorder_imports`，两侧各加一个 `use` 时直接并排会触发 `cargo fmt --check` 失败；按字母序放置（如 `use ui_input::InputField;` → `use util::ResultExt;` → `use zed_i18n::t;`）。
 - **上游删模块 × fork 依赖点**：`http_client` 删除 `github`/`github_download`（统一资产下载）后，fork 的 `auto_update` 自建 GitHub Releases 通道必须改用 `github_releases` crate（`latest_github_release`、`get_release_by_tag_name`、`GithubReleaseAsset` 同名同签名），并补 `Cargo.toml` 依赖；用 `github_releases::` 全路径，别用别名导入。
+- **上游把元组结构体改成带字段结构体 × fork 直读内部字段**：`fs` 的 `WatchPaths` 从 newtype（`.0` 为注册表）变成 `entries` / `exact_depths` / `folded_depths`，fork 的 `check_watch_health` 里 `state.paths.0.iter()` 报 E0609。合并后先 grep fork 特性里读上游私有字段的地方（`.paths`、`.0`），再跑 `cargo check`。
+- **版本行不在冲突位置时 git 会静默采用上游值**：上游升 `crates/zed/Cargo.toml` 版本号时，若 fork 的版本行与原行不相邻可能自动合并成上游值。合并后必须显式核对 `grep -m1 '^version' crates/zed/Cargo.toml`，不能只依赖冲突提示；改回后跑 `cargo metadata` 让 `Cargo.lock` 的 `zed` 条目跟上。
 - **上游把 struct 字段改成访问器**：ACP SDK 3.6 把 `AvailableCommand.name` 变成 `name()`，直接读字段报 `E0615`；fork 里凡是读 ACP schema 字段的钩子（如自动压缩找 `/compact` 命令）升级依赖后要跟着改。
 - **上游整块删除功能 × fork 的汉化键**：agent checkpoints 被上游整体移除（`eee7501970`），冲突里 Restore Checkpoint 按钮取删除即可；随后要清掉只剩 locale 里引用的死键（`agent_ui.restore_checkpoint*`），否则永久残留。
 - **冲突块跨越多个函数时逐个比对符号**：`subagent_card.rs` 的冲突块里夹着 `fullscreen_entry`，按冲突标记裁剪会把它一起删掉，只有编译报 `no method named ...` 才暴露。合并后对冲突文件做「上游 / fork HEAD / 合并结果」的函数名集合比对。
@@ -76,6 +78,7 @@ status: active
 ## 关联页面
 
 - [应用内查看 Release Note 空白](../queries/release-notes-blank-fork-channel.md) — 版本号超前于上游发布线时 zed.dev 更新说明正文为空；`auto_update` 以自建 GitHub Release 正文兜底。
+- [2026-11-26 合并 upstream/main（1.32 开发线，11 提交）](../queries/upstream-merge-2026-11-26.md) — 单冲突（`fs_watcher.rs` 的 `std::collections` 导入两侧合并）、`WatchPaths` 结构变更导致的 E0609、版本行被静默抬到 1.32.0 的核对点。
 - [2026-11-25 合并 upstream/main（1.31.0 线，68 提交）](../queries/upstream-merge-2026-11-25.md) — 本轮 13 处冲突判定、上游旧实现回填、ACP SDK `MaybeUndefined` 适配、`LC_ALL=C` 测试环境坑与「上游新增行集合核对」方法，38 套件 7030 项测试数值。
 - [2026-11-23 合并上游 main（1.31.0，135 提交）](../queries/upstream-merge-2026-11-23.md) — 本轮冲突判定、`language_model_selector` 缺 `zed_i18n` 的编译失败、既有 fork 回归（窗口失活守卫、删除确认框收敛、`location()` 语义）修复与验证数值。
 - [2026-11 合并上游 main：冲突消解、编译失败链与 fork 特性核对](../queries/upstream-merge-2026-11.md) — 本轮（1.29.0，77 提交）的冲突决策、编译失败链与 fork 修复核对表。
