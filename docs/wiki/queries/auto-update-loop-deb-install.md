@@ -39,11 +39,20 @@ deb 包安装到 `/usr/lib/zed/{bin,lib,libexec}`，运行路径 `/usr/lib/zed/l
 
 `check_if_fetched_version_is_newer_non_nightly` 只比版本号，无法感知「新版本已经下载过」，因此每轮都会重新下载。
 
-## 解法（三选一，均需用户决定）
+## 解法
 
-1. **用 deb 覆盖 deb 安装（推荐，最简单）**：`sudo dpkg -i zed-zh-cn_1.31.0_amd64.deb`，随后删除 `~/.local/zed.app` 避免两份 1.31.0 混淆。deb 侧变成 1.31.0 后版本号相等，不再下载。
-2. **改用 zed.app 布局**：卸载 deb，把桌面项 `Exec` 改成 `~/.local/zed.app/bin/zed`（或 `~/.local/bin/zed`），此后自动更新可以正常替换自身。
-3. **代码层面收口**（上游同样不支持 deb 自更新）：从非 `zed.app` 布局启动时禁用自动更新并提示「请用包管理器更新」，避免每小时下载 90 MB。是否需要上游式改动待用户决定。
+三条路径，本机已按第 2 条实施（2026-11-26）：
+
+1. **用 deb 覆盖 deb 安装**：`sudo dpkg -i zed-zh-cn_1.31.0_amd64.deb`，删掉 `~/.local/zed.app`。deb 侧版本追平后不再下载，但今后每次升级仍需手动装包。
+2. **改用 zed.app 布局（已实施）**：让日常启动的二进制落在 `~/.local/zed.app`，`install_release_linux` 才能匹配前缀并原地替换。具体改动都在用户目录，不需要 root：
+   - `~/.local/bin/zed` → `~/.local/zed.app/bin/zed` 软链（`~/.local/bin` 在 PATH 中位于 `/usr/bin` 之前，`zed` 命令即指向 bundle）；
+   - `~/.local/share/icons/hicolor/{512x512,1024x1024}/apps/zed.png` → bundle 内同名图标（`Icon=zed` 才能解析；软链指向 `zed.app` 内部路径，更新替换内容后仍有效）；
+   - `~/.local/share/applications/dev.zed.Zed.desktop` 覆盖 `/usr/share/applications/dev.zed.Zed.desktop`，`Exec` / `TryExec` / `NewWorkspace` 改用绝对路径 `/home/asus/.local/zed.app/bin/zed`，避免启动器的 PATH 差异。
+   - 验证：`which zed` → `~/.local/bin/zed`；`zed --version` → `Zed 1.31.0 199b8cfa…`；`desktop-file-validate` 通过（`Categories` 的多主类 hint 与上游桌面项一致，未改）；前缀匹配实测 `…/zed.app/libexec/zed-editor` 去掉 `zed.app/libexec/zed-editor` 得 `/home/asus/.local/`，即 rsync 目标 `~/.local/zed.app`。
+   - 遗留：`/usr/lib/zed` 的 deb 1.29.1 仍在，需要用户执行 `sudo dpkg -r zed-zh-cn` 卸载（会同时移除 `/usr/bin/zed` 与系统桌面项/图标），不影响切换结果，只留一份无用副本。
+3. **代码层面收口**（未做）：从非 `zed.app` 布局启动时禁用自动更新并提示「请用包管理器更新」，避免每小时下载 90 MB。上游同样不支持 deb 自更新，此改动属新增行为。
+
+切换后注意：正在运行的旧实例（deb 的 1.29.1）在重启前仍会按小时下载，重启一次即进入 bundle 版本，版本号相等后自然停止。
 
 ## 复发预防
 
